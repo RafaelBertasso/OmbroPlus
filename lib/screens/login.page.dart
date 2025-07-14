@@ -4,7 +4,7 @@ class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage>
@@ -23,51 +23,7 @@ class _LoginPageState extends State<LoginPage>
     super.dispose();
   }
 
-  Widget _buildEspecialistaForm() {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(10),
-      child: Padding(
-        padding: const EdgeInsets.all(15.0),
-        child: Column(
-          children: [
-            TextField(decoration: InputDecoration(labelText: 'E-mail')),
-            SizedBox(height: 10),
-            TextField(
-              decoration: InputDecoration(labelText: 'Senha'),
-              obscureText: true,
-            ),
-            SizedBox(height: 15),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF8FC1A9),
-                minimumSize: Size(double.infinity, 48),
-              ),
-              onPressed: () {},
-              child: Text(
-                'Entrar',
-                style: TextStyle(color: const Color.fromARGB(255, 0, 0, 0)),
-              ),
-            ),
-            SizedBox(height: 10),
-            Text('ou'),
-            SizedBox(height: 10),
-            OutlinedButton(
-              onPressed: () => Navigator.pushNamed(context, '/register'),
-              child: Text(
-                'Criar Conta',
-                style: TextStyle(color: Color(0xFF2A5C7D)),
-              ),
-            ),
-            SizedBox(height: 10),
-            SizedBox(height: 10),
-            TextButton(onPressed: () {}, child: Text('Esqueceu a senha?')),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPacienteForm() {
+  Widget _buildFormLogin() {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -88,7 +44,12 @@ class _LoginPageState extends State<LoginPage>
             child: Text('Entrar', style: TextStyle(color: Colors.black)),
           ),
           SizedBox(height: 16),
-          TextButton(onPressed: () {}, child: Text('Esqueceu a senha?')),
+          TextButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/forgot-password');
+            },
+            child: Text('Esqueceu a senha?'),
+          ),
         ],
       ),
     );
@@ -138,10 +99,7 @@ class _LoginPageState extends State<LoginPage>
                       height: 420,
                       child: TabBarView(
                         controller: _tabController,
-                        children: [
-                          _buildEspecialistaForm(),
-                          _buildPacienteForm(),
-                        ],
+                        children: [_buildFormLogin(), _buildFormLogin()],
                       ),
                     ),
                   ],
