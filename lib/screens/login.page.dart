@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -40,7 +41,13 @@ class _LoginPageState extends State<LoginPage>
               backgroundColor: Color(0xFF8FC1A9),
               minimumSize: Size(double.infinity, 48),
             ),
-            onPressed: () {},
+            onPressed: () {
+              if (_tabController.index == 0) {
+                Navigator.pushReplacementNamed(context, '/doctor-home');
+              } else {
+                Navigator.pushReplacementNamed(context, '/patient-home');
+              }
+            },
             child: Text('Entrar', style: TextStyle(color: Colors.black)),
           ),
           SizedBox(height: 16),
@@ -48,7 +55,13 @@ class _LoginPageState extends State<LoginPage>
             onPressed: () {
               Navigator.pushNamed(context, '/forgot-password');
             },
-            child: Text('Esqueceu a senha?'),
+            child: Text(
+              'Esqueceu a senha?',
+              style: GoogleFonts.openSans(
+                fontSize: 16,
+                color: Color(0xFF2A5C7D),
+              ),
+            ),
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app_tg/screens/doctor.home.page.dart';
 import 'package:flutter_app_tg/screens/forgot.password.page.dart';
 import 'package:flutter_app_tg/screens/login.page.dart';
 import 'package:flutter_app_tg/screens/register.page.dart';
@@ -12,8 +13,9 @@ class Rehapp extends StatelessWidget {
       home: LoginPage(),
       routes: {
         '/login': (context) => LoginPage(),
-        '/register' : (context) => RegisterPage(),
+        '/register': (context) => RegisterPage(),
         '/forgot-password': (context) => ForgotPasswordPage(),
+        '/doctor-home': (context) => DoctorHomePage(),
       },
       debugShowCheckedModeBanner: false,
     );
