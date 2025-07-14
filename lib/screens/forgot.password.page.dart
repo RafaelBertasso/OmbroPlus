@@ -121,6 +121,19 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                               ),
                             ),
                           ),
+                          SizedBox(height: 16),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: Text(
+                              'Voltar ao Login',
+                              style: GoogleFonts.openSans(
+                                fontSize: 16,
+                                color: Color(0xFF2A5C7D),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
