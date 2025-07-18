@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app_tg/screens/doctor.home.page.dart';
+import 'package:flutter_app_tg/screens/doctor/doctor.dashboard.page.dart';
+import 'package:flutter_app_tg/screens/doctor/doctor.home.page.dart';
 import 'package:flutter_app_tg/screens/forgot.password.page.dart';
 import 'package:flutter_app_tg/screens/login.page.dart';
 import 'package:flutter_app_tg/screens/register.page.dart';
@@ -16,6 +17,7 @@ class Rehapp extends StatelessWidget {
         '/register': (context) => RegisterPage(),
         '/forgot-password': (context) => ForgotPasswordPage(),
         '/doctor-home': (context) => DoctorHomePage(),
+        '/doctor-dashboard': (context) => DoctorDashboardPage(),
       },
       debugShowCheckedModeBanner: false,
     );

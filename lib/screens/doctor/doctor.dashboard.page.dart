@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app_tg/components/doctor.navbar.dart';
 
-class DoctorHomePage extends StatefulWidget {
-  const DoctorHomePage({super.key});
+class DoctorDashboardPage extends StatefulWidget {
+  const DoctorDashboardPage({super.key});
 
   @override
-  State<DoctorHomePage> createState() => _DoctorHomePageState();
+  State<DoctorDashboardPage> createState() => _DoctorDashboardPageState();
 }
 
-class _DoctorHomePageState extends State<DoctorHomePage> {
-  int _selectedIndex = 0;
+class _DoctorDashboardPageState extends State<DoctorDashboardPage> {
+  int _selectedIndex = 1;
+  String? selectedPatient;
+  final List<String> patients = ['Patient 1', 'Patient 2', 'Patient 3'];
 
   void _onTabTapped(int index) {
     setState(() {
@@ -22,7 +24,8 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: Text('Home')),
+      backgroundColor: const Color(0xFFF4F7F6),
+      body: Text('oi'),
       bottomNavigationBar: DoctorNavbar(
         currentIndex: _selectedIndex,
         onTap: _onTabTapped,
