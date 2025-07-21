@@ -1,6 +1,6 @@
+import 'package:Ombro_Plus/components/doctor.navbar.dart';
+import 'package:Ombro_Plus/components/feature.card.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_app_tg/components/doctor.navbar.dart';
-import 'package:flutter_app_tg/components/feature.card.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class DoctorHomePage extends StatefulWidget {
@@ -28,12 +28,28 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
       body: Column(
         children: [
           Padding(
-            padding: EdgeInsetsGeometry.only(top: 18, bottom: 8),
-            child: Center(
-              child: Image.asset(
-                'assets/images/logo-app.png',
-                width: 100,
-                height: 100,
+            padding: EdgeInsets.only(top: 18, bottom: 8),
+            child: SizedBox(
+              height: 100,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Center(
+                    child: Image.asset(
+                      'assets/images/logo-app.png',
+                      width: 100,
+                      height: 100,
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    top: 30,
+                    child: IconButton(
+                      onPressed: () {},
+                      icon: Icon(Icons.settings, color: Color(0xFF2A5C7D)),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

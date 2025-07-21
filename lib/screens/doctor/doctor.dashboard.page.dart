@@ -1,5 +1,5 @@
+import 'package:Ombro_Plus/components/doctor.navbar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_app_tg/components/doctor.navbar.dart';
 
 class DoctorDashboardPage extends StatefulWidget {
   const DoctorDashboardPage({super.key});
