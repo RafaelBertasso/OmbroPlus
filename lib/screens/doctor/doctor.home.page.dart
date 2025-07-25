@@ -11,14 +11,26 @@ class DoctorHomePage extends StatefulWidget {
 }
 
 class _DoctorHomePageState extends State<DoctorHomePage> {
-  int _selectedIndex = 0;
+  final int _selectedIndex = 0;
 
   void _onTabTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    // Aqui você pode adicionar lógica para navegar para diferentes páginas
-    // dependendo do índice selecionado, se necessário.
+    if (index == _selectedIndex) return;
+    switch (index) {
+      case 1:
+        Navigator.pushReplacementNamed(context, '/doctor-dashboard');
+        break;
+      case 2:
+        Navigator.pushReplacementNamed(context, '/doctor-protocols');
+        break;
+      case 3:
+        Navigator.pushReplacementNamed(context, '/doctor-main-chat');
+        break;
+      case 4:
+        Navigator.pushReplacementNamed(context, '/doctor-profile');
+        break;
+      default:
+        break;
+    }
   }
 
   @override
@@ -46,7 +58,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                     top: 30,
                     child: IconButton(
                       onPressed: () {},
-                      icon: Icon(Icons.settings, color: Color(0xFF2A5C7D)),
+                      icon: Icon(Icons.settings, color: Colors.black),
                     ),
                   ),
                 ],

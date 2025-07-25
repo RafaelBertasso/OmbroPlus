@@ -1,5 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+// import 'package:firebase_core/firebase_core.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,6 +14,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final ValueNotifier<bool> _obscurePassword = ValueNotifier(true);
 
   @override
   void initState() {
@@ -24,16 +29,62 @@ class _LoginPageState extends State<LoginPage>
     super.dispose();
   }
 
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  Future<void> _loginEspecialista(BuildContext context) async {
+    //   if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+    //     final snackBar = SnackBar(content: Text('Preencha todos os campos'));
+    //     ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    //     return;
+    //   }
+    //   try {
+    //     UserCredential credential = await _auth.signInWithEmailAndPassword(
+    //       email: _emailController.text,
+    //       password: _passwordController.text
+    //     );
+
+    //     final doc = await FirebaseFirestore.instance
+    //         .collection('especialista')
+    //         .doc(credential.user!.uid)
+    //         .get();
+
+    //     if (doc.exists) {
+    Navigator.pushReplacementNamed(context, '/doctor-home');
+    //     } else {
+    //       ScaffoldMessenger.of(context).showSnackBar(
+    //         SnackBar(content: Text('Conta não cadastrada como especialista')),
+    //       );
+    //       await FirebaseAuth.instance.signOut();
+    //     }
+    //   } on FirebaseAuthException catch (e) {
+    //     String message = 'Erro ao fazer login';
+    //     if (e.code == 'user-not-found') {
+    //       message = 'Usuário não encontrado';
+    //     } else if (e.code == 'wrong-password') {
+    //       message = 'Senha incorreta';
+    //     }
+    //     ScaffoldMessenger.of(
+    //       context,
+    //     ).showSnackBar(SnackBar(content: Text(message)));
+    //   }
+  }
+
   Widget _buildFormLogin() {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         children: [
-          TextField(decoration: InputDecoration(labelText: 'E-mail')),
+          TextField(
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(labelText: 'E-mail'),
+            controller: _emailController,
+          ),
           SizedBox(height: 16),
           TextField(
             decoration: InputDecoration(labelText: 'Senha'),
             obscureText: true,
+            controller: _passwordController,
           ),
           SizedBox(height: 24),
           ElevatedButton(
@@ -41,13 +92,7 @@ class _LoginPageState extends State<LoginPage>
               backgroundColor: Color(0xFF8FC1A9),
               minimumSize: Size(double.infinity, 48),
             ),
-            onPressed: () {
-              if (_tabController.index == 0) {
-                Navigator.pushReplacementNamed(context, '/doctor-home');
-              } else {
-                Navigator.pushReplacementNamed(context, '/patient-home');
-              }
-            },
+            onPressed: () => _loginEspecialista(context),
             child: Text('Entrar', style: TextStyle(color: Colors.black)),
           ),
           SizedBox(height: 16),
