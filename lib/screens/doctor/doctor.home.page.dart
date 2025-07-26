@@ -89,7 +89,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                         Expanded(
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF2a5C7D),
+                              backgroundColor: Color(0xFF0E382C),
                               minimumSize: Size(0, 48),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadiusGeometry.circular(8),
@@ -106,7 +106,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                         Expanded(
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xffd9e3e8),
+                              backgroundColor: Color.fromARGB(112, 145, 228, 205),
                               minimumSize: Size(0, 48),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadiusGeometry.circular(8),
@@ -115,7 +115,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                             onPressed: () {},
                             child: Text(
                               'Pacientes',
-                              style: TextStyle(color: Color(0xFF2A5C7D)),
+                              style: TextStyle(color: Color(0xFF0E382C)),
                             ),
                           ),
                         ),

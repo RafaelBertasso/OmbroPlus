@@ -89,11 +89,11 @@ class _LoginPageState extends State<LoginPage>
           SizedBox(height: 24),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF8FC1A9),
+              backgroundColor: Color(0xFF0E382C),
               minimumSize: Size(double.infinity, 48),
             ),
             onPressed: () => _loginEspecialista(context),
-            child: Text('Entrar', style: TextStyle(color: Colors.black)),
+            child: Text('Entrar', style: TextStyle(color: Colors.white)),
           ),
           SizedBox(height: 16),
           TextButton(
@@ -145,9 +145,9 @@ class _LoginPageState extends State<LoginPage>
                   children: [
                     TabBar(
                       controller: _tabController,
-                      labelColor: Color(0xFF2A5C7D),
+                      labelColor: Color(0xFF0E382C),
                       unselectedLabelColor: Color.fromARGB(255, 87, 173, 131),
-                      indicatorColor: Color(0xFF2A5C7D),
+                      indicatorColor: Color(0xFF0E382C),
                       tabs: [
                         Tab(text: 'Especialista'),
                         Tab(text: 'Paciente'),

@@ -126,7 +126,7 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
                                 ),
                                 child: ListTile(
                                   leading: CircleAvatar(
-                                    backgroundColor: Color(0xFF8FC1A9),
+                                    backgroundColor: Color(0xFF0E382C),
                                     child: Text(
                                       chat['name']![0],
                                       style: GoogleFonts.montserrat(

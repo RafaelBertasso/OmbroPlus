@@ -24,52 +24,32 @@ String getDayLabel(DateTime date, DateTime now) {
   return DateFormat('dd/MM/yyyy').format(date);
 }
 
-class DoctorChatPage extends StatelessWidget {
-  final List<Map<String, dynamic>> messages = [
-    {
-      'sender': 'especialista',
-      'name': 'Dr. João Silva',
-      'content': 'Olá, como posso ajudar hoje?',
-      'date': DateTime.now().subtract(Duration(hours: 4)),
-    },
-    {
-      'sender': 'paciente',
-      'name': 'Maria Oliveira',
-      'content': 'Oi Dr. João, estou com uma dor no ombro.',
-      'date': DateTime.now().subtract(Duration(days: 3)),
-    },
-    {
-      'sender': 'especialista',
-      'name': 'Dr. João Silva',
-      'content': 'Entendi, Maria. Pode me contar mais sobre a dor?',
-      'date': DateTime.now().subtract(Duration(days: DateTime.now().weekday)),
-    },
-    {
-      'sender': 'paciente',
-      'name': 'Maria Oliveira',
-      'content': 'É uma dor aguda, especialmente quando movo o braço.',
-      'date': DateTime.now().subtract(Duration(days: 15)),
-    },
-    {
-      'sender': 'especialista',
-      'name': 'Dr. João Silva',
-      'content': 'Certo, vou precisar de alguns exames para entender melhor.',
-      'date': DateTime.now().subtract(Duration(minutes: 30)),
-    },
-    {
-      'sender': 'paciente',
-      'name': 'Maria Oliveira',
-      'content': 'Claro, quais exames você recomenda?',
-      'date': DateTime.now().subtract(Duration(days: 6)),
-    },
-    {
-      'sender': 'especialista',
-      'name': 'Dr. João Silva',
-      'content': 'Um ultrassom e uma ressonância magnética seriam ideais.',
-      'date': DateTime.now().subtract(Duration(minutes: 5)),
-    },
-  ];
-  DoctorChatPage({super.key});
+class DoctorChatPage extends StatefulWidget {
+  const DoctorChatPage({super.key});
+
+  @override
+  State<DoctorChatPage> createState() => _DoctorChatPageState();
+}
+
+class _DoctorChatPageState extends State<DoctorChatPage> {
+  final List<Map<String, dynamic>> messages = [];
+
+  final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  void _sendMessage() {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+
+    setState(() {
+      messages.add({
+        'sender': 'especialista',
+        'content': text,
+        'date': DateTime.now(),
+      });
+      _controller.clear();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -201,7 +181,7 @@ class DoctorChatPage extends StatelessWidget {
         title: Row(
           children: [
             CircleAvatar(
-              backgroundColor: Color(0xFF8FC1A9),
+              backgroundColor: Color(0xFF0E382C),
               child: Icon(Icons.person, color: Colors.white),
             ),
             SizedBox(width: 12),
@@ -227,6 +207,9 @@ class DoctorChatPage extends StatelessWidget {
               children: [
                 Expanded(
                   child: TextField(
+                    controller: _controller,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => _sendMessage(),
                     decoration: InputDecoration(
                       hintText: 'Escreva uma mensagem...',
                       border: OutlineInputBorder(
@@ -244,8 +227,8 @@ class DoctorChatPage extends StatelessWidget {
                 ),
                 SizedBox(width: 8),
                 IconButton(
-                  onPressed: () {},
-                  icon: Icon(Icons.send, color: Color(0xFF2A5C7D)),
+                  onPressed: _sendMessage,
+                  icon: Icon(Icons.send, color: Color(0xFF0E382C)),
                 ),
               ],
             ),
