@@ -35,7 +35,6 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
   final List<Map<String, dynamic>> messages = [];
 
   final TextEditingController _controller = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
 
   void _sendMessage() {
     final text = _controller.text.trim();

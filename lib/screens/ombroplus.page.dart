@@ -2,6 +2,10 @@ import 'package:Ombro_Plus/screens/doctor/doctor.chat.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.main.chat.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.profile.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.protocols.page.dart';
+import 'package:Ombro_Plus/screens/doctor/patient.detail.page.dart';
+import 'package:Ombro_Plus/screens/doctor/patient.list.page.dart';
+import 'package:Ombro_Plus/screens/patient/patient.home.page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:Ombro_Plus/screens/login.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.dashboard.page.dart';
@@ -10,7 +14,8 @@ import 'package:Ombro_Plus/screens/forgot.password.page.dart';
 import 'package:Ombro_Plus/screens/register.page.dart';
 
 class OmbroPlus extends StatelessWidget {
-  const OmbroPlus({super.key});
+  OmbroPlus({super.key});
+  final _auth = FirebaseAuth.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +31,11 @@ class OmbroPlus extends StatelessWidget {
         '/doctor-main-chat': (context) => DoctorMainChatPage(),
         '/doctor-profile': (context) => DoctorProfilePage(),
         '/chat-detail': (context) => DoctorChatPage(),
+        '/patient-list': (context) => PatientListPage(),
+        '/patient-detail': (context) => PatientDetailPage(),
+        '/patient-home': (context) => PatientHomePage(),
       },
+      initialRoute: _auth.currentUser == null ? '/login' : '/doctor-home',
       debugShowCheckedModeBanner: false,
     );
   }

@@ -61,6 +61,8 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
     },
   ];
 
+  String searchText = '';
+
   void _onTabTapped(int index) {
     if (index == _selectedIndex) return;
     switch (index) {
@@ -83,6 +85,11 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    final filteredChats = chats.where((chat) {
+      final name = chat['name']!.toLowerCase();
+      final query = searchText.toLowerCase();
+      return name.contains(query);
+    }).toList();
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F6),
       body: Column(
@@ -102,8 +109,31 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
                       color: Colors.black,
                     ),
                   ),
+                  SizedBox(height: 10),
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Pesquisar conversas',
+                      prefixIcon: Icon(Icons.search, color: Color(0xFF0E382C)),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 0,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    onChanged: (text) {
+                      setState(() {
+                        searchText = text;
+                      });
+                    },
+                  ),
+                  SizedBox(height: 18),
                   Expanded(
-                    child: chats.isEmpty
+                    child: filteredChats.isEmpty
                         ? Center(
                             child: Text(
                               'Nenhuma conversa',
@@ -113,11 +143,11 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
                             ),
                           )
                         : ListView.separated(
-                            itemCount: chats.length,
+                            itemCount: filteredChats.length,
                             separatorBuilder: (_, __) =>
                                 const SizedBox(height: 10),
                             itemBuilder: (context, index) {
-                              final chat = chats[index];
+                              final chat = filteredChats[index];
                               return Card(
                                 color: const Color(0xFFF4F7F6),
                                 elevation: 2,

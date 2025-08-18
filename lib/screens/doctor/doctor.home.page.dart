@@ -106,13 +106,19 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                         Expanded(
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color.fromARGB(112, 145, 228, 205),
+                              backgroundColor: Color.fromARGB(
+                                112,
+                                145,
+                                228,
+                                205,
+                              ),
                               minimumSize: Size(0, 48),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadiusGeometry.circular(8),
                               ),
                             ),
-                            onPressed: () {},
+                            onPressed: () =>
+                                Navigator.pushNamed(context, '/patient-list'),
                             child: Text(
                               'Pacientes',
                               style: TextStyle(color: Color(0xFF0E382C)),

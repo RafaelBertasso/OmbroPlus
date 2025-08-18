@@ -1,10 +1,13 @@
 import 'package:Ombro_Plus/components/app.logo.dart';
 import 'package:Ombro_Plus/components/doctor.navbar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class DoctorProfilePage extends StatelessWidget {
-  const DoctorProfilePage({super.key});
+  DoctorProfilePage({super.key});
+  final _auth = FirebaseAuth.instance;
+  final user = FirebaseAuth.instance.currentUser;
   final int _selectedIndex = 4;
   void _onTabTapped(BuildContext context, int index) {
     if (index == _selectedIndex) return;
@@ -129,7 +132,18 @@ class DoctorProfilePage extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: () {
                       //implementar lógica de logout com firebase auth
-                      Navigator.pushReplacementNamed(context, '/login');
+                      // _auth.signOut().then((_) {
+                      //   Navigator.pushAndRemoveUntil(
+                      //     context,
+                      //     '/login' as Route<Object?>,
+                      //     (route) => false,
+                      //   );
+                      // });
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/login',
+                        (route) => false,
+                      );
                     },
                     icon: Icon(Icons.logout, color: Colors.white),
                     label: Text(

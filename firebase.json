@@ -1,1 +1,41 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"ombroplus","appId":"1:395624918290:android:564e515c0ba02a9dbdd7cb","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"ombroplus","configurations":{"android":"1:395624918290:android:564e515c0ba02a9dbdd7cb","ios":"1:395624918290:ios:6e5420b30845f54cbdd7cb","macos":"1:395624918290:ios:6e5420b30845f54cbdd7cb","web":"1:395624918290:web:b50d5a678b3a796ebdd7cb","windows":"1:395624918290:web:7be7adc7ab874da7bdd7cb"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "ombroplus",
+          "appId": "1:395624918290:android:564e515c0ba02a9dbdd7cb",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "ombroplus",
+          "configurations": {
+            "android": "1:395624918290:android:564e515c0ba02a9dbdd7cb",
+            "ios": "1:395624918290:ios:6e5420b30845f54cbdd7cb",
+            "macos": "1:395624918290:ios:6e5420b30845f54cbdd7cb",
+            "web": "1:395624918290:web:b50d5a678b3a796ebdd7cb",
+            "windows": "1:395624918290:web:7be7adc7ab874da7bdd7cb"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint"
+      ]
+    }
+  ]
+}
