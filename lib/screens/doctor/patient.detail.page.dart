@@ -80,7 +80,7 @@ class PatientDetailPage extends StatelessWidget {
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
-                    height: 40,
+                    height: 50,
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
                         backgroundColor: const Color.fromARGB(
@@ -219,6 +219,39 @@ class PatientDetailPage extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 10),
+          Column(
+            children: [
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(163, 183, 183, 183),
+                    side: const BorderSide(
+                      color: Color.fromARGB(255, 255, 255, 255),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    '/patient-log',
+                    arguments: {'name': patientName},
+                  ),
+                  child: Text(
+                    'Ver todos os acessos',
+                    style: GoogleFonts.montserrat(
+                      fontSize: 16,
+                      color: Colors.black87,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 26),
           Text(

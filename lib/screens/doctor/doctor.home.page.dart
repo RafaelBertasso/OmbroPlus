@@ -53,14 +53,6 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                       height: 100,
                     ),
                   ),
-                  Positioned(
-                    right: 0,
-                    top: 30,
-                    child: IconButton(
-                      onPressed: () {},
-                      icon: Icon(Icons.settings, color: Colors.black),
-                    ),
-                  ),
                 ],
               ),
             ),

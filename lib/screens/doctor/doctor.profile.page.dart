@@ -131,19 +131,13 @@ class DoctorProfilePage extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 8),
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      //implementar lógica de logout com firebase auth
-                      // _auth.signOut().then((_) {
-                      //   Navigator.pushAndRemoveUntil(
-                      //     context,
-                      //     '/login' as Route<Object?>,
-                      //     (route) => false,
-                      //   );
-                      // });
-                      Navigator.pushNamedAndRemoveUntil(
-                        context,
-                        '/login',
-                        (route) => false,
-                      );
+                      _auth.signOut().then((_) {
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          '/login',
+                          (route) => false,
+                        );
+                      });
                     },
                     icon: Icon(Icons.logout, color: Colors.white),
                     label: Text(

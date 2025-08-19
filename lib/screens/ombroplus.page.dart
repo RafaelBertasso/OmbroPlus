@@ -4,6 +4,7 @@ import 'package:Ombro_Plus/screens/doctor/doctor.profile.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.protocols.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.detail.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.list.page.dart';
+import 'package:Ombro_Plus/screens/doctor/patient.log.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.home.page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -34,6 +35,7 @@ class OmbroPlus extends StatelessWidget {
         '/patient-list': (context) => PatientListPage(),
         '/patient-detail': (context) => PatientDetailPage(),
         '/patient-home': (context) => PatientHomePage(),
+        '/patient-log': (context) => PatientLogPage(),
       },
       initialRoute: _auth.currentUser == null ? '/login' : '/doctor-home',
       debugShowCheckedModeBanner: false,
