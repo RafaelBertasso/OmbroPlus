@@ -44,8 +44,8 @@ class _DoctorProtocolsPageState extends State<DoctorProtocolsPage> {
     return Scaffold(
       backgroundColor: Color(0xFFF4F7F6),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: Color(0xFF2A5C7D),
+        onPressed: () => Navigator.pushNamed(context, '/new-protocol'),
+        backgroundColor: Color(0xFF0E382C),
         tooltip: 'Adicionar Protocolo',
         child: Icon(Icons.add, color: Colors.white),
       ),
@@ -95,7 +95,10 @@ class _DoctorProtocolsPageState extends State<DoctorProtocolsPage> {
                               style: GoogleFonts.openSans(fontSize: 13),
                             ),
                             onTap: () {},
-                            trailing: Icon(Icons.chevron_right, color: Colors.grey),
+                            trailing: Icon(
+                              Icons.chevron_right,
+                              color: Colors.grey,
+                            ),
                           ),
                         );
                       },

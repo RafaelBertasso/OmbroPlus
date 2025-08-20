@@ -2,6 +2,8 @@ import 'package:Ombro_Plus/screens/doctor/doctor.chat.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.main.chat.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.profile.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.protocols.page.dart';
+import 'package:Ombro_Plus/screens/doctor/new.exercise.page.dart';
+import 'package:Ombro_Plus/screens/doctor/new.protocol.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.detail.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.list.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.log.page.dart';
@@ -36,6 +38,8 @@ class OmbroPlus extends StatelessWidget {
         '/patient-detail': (context) => PatientDetailPage(),
         '/patient-home': (context) => PatientHomePage(),
         '/patient-log': (context) => PatientLogPage(),
+        '/new-protocol': (context) => NewProtocolPage(),
+        '/new-exercise': (context) => NewExercisePage(),
       },
       initialRoute: _auth.currentUser == null ? '/login' : '/doctor-home',
       debugShowCheckedModeBanner: false,

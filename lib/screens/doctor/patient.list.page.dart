@@ -46,13 +46,12 @@ class _PatientListPageState extends State<PatientListPage> {
             fontSize: 20,
           ),
         ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.add, color: Colors.white, size: 25),
-            tooltip: 'Adicionar paciente',
-          ),
-        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Navigator.pushNamed(context, '/new-patient'),
+        backgroundColor: Color(0xFF0E382C),
+        tooltip: 'Adicionar Paciente',
+        child: Icon(Icons.add, color: Colors.white),
       ),
       body: Column(
         children: [
@@ -86,7 +85,7 @@ class _PatientListPageState extends State<PatientListPage> {
                 return ListTile(
                   leading: CircleAvatar(
                     radius: 25,
-                    backgroundColor: Color(0xFFFFECB3),
+                    backgroundColor: Color(0xFFF4F7F6),
                     child: Icon(Icons.person, color: Colors.black, size: 30),
                   ),
                   title: Text(

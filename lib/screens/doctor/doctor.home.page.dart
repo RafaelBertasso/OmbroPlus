@@ -2,6 +2,7 @@ import 'package:Ombro_Plus/components/doctor.navbar.dart';
 import 'package:Ombro_Plus/components/feature.card.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DoctorHomePage extends StatefulWidget {
   const DoctorHomePage({super.key});
@@ -12,6 +13,7 @@ class DoctorHomePage extends StatefulWidget {
 
 class _DoctorHomePageState extends State<DoctorHomePage> {
   final int _selectedIndex = 0;
+  final user = FirebaseAuth.instance.currentUser;
 
   void _onTabTapped(int index) {
     if (index == _selectedIndex) return;
@@ -68,7 +70,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Bem vindo, [Nome do Médico]',
+                      'Bem vindo, ${user?.displayName ?? "Médico"}',
                       style: GoogleFonts.montserrat(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -87,7 +89,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                                 borderRadius: BorderRadiusGeometry.circular(8),
                               ),
                             ),
-                            onPressed: () {},
+                            onPressed: () => Navigator.pushNamed(context, '/new-protocol'),
                             child: Text(
                               'Nova sessão',
                               style: TextStyle(color: Colors.white),
