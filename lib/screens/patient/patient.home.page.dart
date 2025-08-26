@@ -1,3 +1,4 @@
+import 'package:Ombro_Plus/components/exercise.card.dart';
 import 'package:flutter/material.dart';
 import 'package:Ombro_Plus/components/patient.navbar.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -53,15 +54,49 @@ class PatientHomePage extends StatelessWidget {
           Expanded(
             child: SingleChildScrollView(
               child: Padding(
-                padding: EdgeInsets.only(left: 0, top: 10, right: 18, bottom: 10),
+                padding: EdgeInsets.only(
+                  left: 8,
+                  top: 10,
+                  right: 18,
+                  bottom: 10,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Exercícios do dia',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Exercícios do dia',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    SizedBox(
+                      height: 180,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          ExerciseCard(
+                            title: 'Exercício 1',
+                            subtitle: 'Descrição do exercício 1',
+                            onTap: () {},
+                          ),
+                          ExerciseCard(
+                            title: 'Exercício 2',
+                            subtitle: 'Descrição do exercício 2',
+                          ),
+                          ExerciseCard(
+                            title: 'Exercício 3',
+                            subtitle: 'Descrição do exercício 3',
+                          ),
+                          ExerciseCard(
+                            title: 'Exercício 4',
+                            subtitle: 'Descrição do exercício 4',
+                          ),
+                        ],
                       ),
                     ),
                   ],

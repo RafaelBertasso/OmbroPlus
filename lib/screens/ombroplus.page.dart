@@ -7,6 +7,7 @@ import 'package:Ombro_Plus/screens/doctor/new.protocol.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.detail.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.list.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.log.page.dart';
+import 'package:Ombro_Plus/screens/initial.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.home.page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -23,8 +24,8 @@ class OmbroPlus extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: LoginPage(),
       routes: {
+        '/': (context) => InitialPage(),
         '/login': (context) => LoginPage(),
         '/register': (context) => RegisterPage(),
         '/forgot-password': (context) => ForgotPasswordPage(),
@@ -41,7 +42,7 @@ class OmbroPlus extends StatelessWidget {
         '/new-exercise': (context) => NewExercisePage(),
         '/patient-home': (context) => PatientHomePage(),
       },
-      initialRoute: _auth.currentUser == null ? '/login' : '/doctor-home',
+      initialRoute: _auth.currentUser == null ? '/login' : '/initial',
       debugShowCheckedModeBanner: false,
     );
   }
