@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -9,29 +10,37 @@ class ForgotPasswordPage extends StatefulWidget {
 }
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController _emailController = TextEditingController();
+  final txtEmail = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    txtEmail.dispose();
     super.dispose();
   }
 
-  void _sendResetLink() async {
-    if (_formKey.currentState!.validate()) {
-      // lógica para enviar o link de recuperação
+  Future<void> _resetPassword(BuildContext context) async {
+    final email = txtEmail.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Insira um e-mail válido')));
+      return;
+    }
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Link de recuperação enviado para o e-mail informado'),
-          duration: Duration(seconds: 2),
+          content: Text(
+            'E-mail de recuperação enviado! Verifique sua caixa de entrada',
+          ),
         ),
       );
-      await Future.delayed(Duration(seconds: 5));
-      if (mounted) {
-        Navigator.pop(context);
-      }
+      Navigator.pushReplacementNamed(context, '/login');
+    } on FirebaseAuthException catch (_) {
+      final snackBar = SnackBar(content: Text('Erro ao enviar e-mail'));
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
     }
   }
 
@@ -72,7 +81,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       ],
                     ),
                     child: Form(
-                      key: _formKey,
                       child: Column(
                         children: [
                           Text(
@@ -85,7 +93,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           ),
                           SizedBox(height: 16),
                           TextFormField(
-                            controller: _emailController,
+                            controller: txtEmail,
                             keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
                               labelText: 'E-mail',
@@ -111,7 +119,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            onPressed: _sendResetLink,
+                            onPressed: () => _resetPassword(context),
                             child: Text(
                               'Enviar',
                               style: GoogleFonts.openSans(

@@ -242,10 +242,6 @@ class PatientHomePage extends StatelessWidget {
           ),
         ],
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () => Navigator.pushNamed(context, '/login'),
-      //   child: Icon(Icons.arrow_back),
-      // ),
       bottomNavigationBar: PatientNavbar(
         currentIndex: _selectedIndex,
         onTap: (index) => _onTabTapped(context, index),
