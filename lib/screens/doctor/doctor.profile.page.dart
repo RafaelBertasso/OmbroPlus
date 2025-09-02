@@ -1,5 +1,6 @@
 import 'package:Ombro_Plus/components/app.logo.dart';
 import 'package:Ombro_Plus/components/doctor.navbar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -29,6 +30,26 @@ class DoctorProfilePage extends StatelessWidget {
     }
   }
 
+  Future<String> getUserName() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return '';
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+    return doc.data()?['nome'] ?? '';
+  }
+
+  Future<String> getUserEmail() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return '';
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+    return doc.data()?['email'] ?? '';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,21 +68,52 @@ class DoctorProfilePage extends StatelessWidget {
                   child: Icon(Icons.person, color: Colors.white, size: 54),
                 ),
                 SizedBox(height: 8),
-                Text(
-                  'Nome',
-                  style: GoogleFonts.montserrat(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
+                FutureBuilder(
+                  future: getUserName(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Text(
+                        '',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      );
+                    }
+                    final nome = snapshot.data ?? 'Médico';
+                    return Text(
+                      nome,
+                      style: GoogleFonts.montserrat(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    );
+                  },
                 ),
                 SizedBox(height: 4),
-                Text(
-                  'Email',
-                  style: GoogleFonts.openSans(
-                    fontSize: 15,
-                    color: Colors.black45,
-                  ),
+                FutureBuilder(
+                  future: getUserEmail(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Text(
+                        '',
+                        style: GoogleFonts.openSans(
+                          fontSize: 14,
+                          color: Colors.black54,
+                        ),
+                      );
+                    }
+                    final email = snapshot.data ?? '';
+                    return Text(
+                      email,
+                      style: GoogleFonts.openSans(
+                        fontSize: 14,
+                        color: Colors.black54,
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

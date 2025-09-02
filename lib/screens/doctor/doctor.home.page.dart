@@ -1,5 +1,6 @@
 import 'package:Ombro_Plus/components/doctor.navbar.dart';
 import 'package:Ombro_Plus/components/feature.card.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -33,6 +34,16 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
       default:
         break;
     }
+  }
+
+  Future<String> getUserName() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return '';
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+    return doc.data()?['nome'] ?? '';
   }
 
   @override
@@ -69,13 +80,30 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Bem vindo, ${user?.displayName ?? "Médico"}',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
+                    FutureBuilder(
+                      future: getUserName(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Text(
+                            'Bem vindo, ...',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          );
+                        }
+                        final nome = snapshot.data ?? 'Médico';
+                        return Text(
+                          'Bem vindo, $nome',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        );
+                      },
                     ),
                     SizedBox(height: 24),
                     Row(
@@ -89,7 +117,8 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                                 borderRadius: BorderRadiusGeometry.circular(8),
                               ),
                             ),
-                            onPressed: () => Navigator.pushNamed(context, '/new-protocol'),
+                            onPressed: () =>
+                                Navigator.pushNamed(context, '/new-protocol'),
                             child: Text(
                               'Nova sessão',
                               style: TextStyle(color: Colors.white),
