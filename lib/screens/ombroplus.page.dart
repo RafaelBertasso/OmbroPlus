@@ -8,7 +8,11 @@ import 'package:Ombro_Plus/screens/doctor/patient.detail.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.list.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.log.page.dart';
 import 'package:Ombro_Plus/screens/initial.page.dart';
+import 'package:Ombro_Plus/screens/patient/patient.dashboard.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.home.page.dart';
+import 'package:Ombro_Plus/screens/patient/patient.main.chat.page.dart';
+import 'package:Ombro_Plus/screens/patient/patient.profile.page.dart';
+import 'package:Ombro_Plus/screens/patient/patient.protocol.page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:Ombro_Plus/screens/login.page.dart';
@@ -41,6 +45,10 @@ class OmbroPlus extends StatelessWidget {
         '/new-protocol': (context) => NewProtocolPage(),
         '/new-exercise': (context) => NewExercisePage(),
         '/patient-home': (context) => PatientHomePage(),
+        '/patient-dashboard': (context) => PatientDashboardPage(),
+        '/patient-protocols': (context) => PatientProtocolPage(),
+        '/patient-main-chat': (context) => PatientMainChatPage(),
+        '/patient-profile': (context) => PatientProfilePage(),
       },
       initialRoute: _auth.currentUser == null ? '/login' : '/initial',
       debugShowCheckedModeBanner: false,
