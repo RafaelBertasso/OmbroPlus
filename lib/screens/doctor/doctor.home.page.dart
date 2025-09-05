@@ -164,7 +164,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                     ),
                     SizedBox(height: 18),
                     //TODO = Consertar feed de notícias
-                    PhysioNewsFeed(apiKey: '615ab4d3c0f8498a99d9cb6de0118e0d'),
+                    PhysioNewsFeed(apiKey: apiKey),
                   ],
                 ),
               ),
