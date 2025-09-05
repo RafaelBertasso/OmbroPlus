@@ -1,12 +1,14 @@
 import 'package:Ombro_Plus/components/doctor.navbar.dart';
-import 'package:Ombro_Plus/components/feature.card.dart';
+import 'package:Ombro_Plus/components/physio.news.feed.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class DoctorHomePage extends StatefulWidget {
-  const DoctorHomePage({super.key});
+  final String apiKey;
+  const DoctorHomePage({super.key, required this.apiKey});
 
   @override
   State<DoctorHomePage> createState() => _DoctorHomePageState();
@@ -15,6 +17,7 @@ class DoctorHomePage extends StatefulWidget {
 class _DoctorHomePageState extends State<DoctorHomePage> {
   final int _selectedIndex = 0;
   final user = FirebaseAuth.instance.currentUser;
+  final apiKey = dotenv.env['NEWS_API_KEY'] ?? '';
 
   void _onTabTapped(int index) {
     if (index == _selectedIndex) return;
@@ -152,7 +155,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                     ),
                     SizedBox(height: 60),
                     Text(
-                      'Funcionalidades Principais',
+                      'Principais Notícias de Hoje',
                       style: GoogleFonts.montserrat(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
@@ -160,32 +163,8 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                       ),
                     ),
                     SizedBox(height: 18),
-                    FeatureCard(
-                      title: 'Avaliar progresso',
-                      description:
-                          'Monitore a recuperação dos pacientes com métricas detalhadas e relatórios visuais.',
-                      icon: Icons.bar_chart,
-                      color: Color.fromARGB(255, 255, 255, 255),
-                      onTap: () {},
-                    ),
-                    SizedBox(height: 10),
-                    FeatureCard(
-                      title: 'Planos customizados',
-                      description:
-                          'Acesse protocolos baseados em evidências para reabilitação.',
-                      icon: Icons.assignment_turned_in,
-                      color: Color.fromARGB(255, 255, 255, 255),
-                      onTap: () {},
-                    ),
-                    SizedBox(height: 10),
-                    FeatureCard(
-                      title: 'Gerenciar pacientes',
-                      description:
-                          'Gerencie perfis, evoluções e protocolos dos pacientes.',
-                      icon: Icons.people_alt,
-                      color: Color.fromARGB(255, 255, 255, 255),
-                      onTap: () {},
-                    ),
+                    //TODO = Consertar feed de notícias
+                    PhysioNewsFeed(apiKey: '615ab4d3c0f8498a99d9cb6de0118e0d'),
                   ],
                 ),
               ),

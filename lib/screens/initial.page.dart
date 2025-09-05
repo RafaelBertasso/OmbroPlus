@@ -6,6 +6,8 @@ import 'package:Ombro_Plus/screens/patient/patient.home.page.dart';
 import 'package:Ombro_Plus/screens/login.page.dart';
 
 class InitialPage extends StatelessWidget {
+  final String apiKey;
+  InitialPage({super.key, required this.apiKey});
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -38,7 +40,9 @@ class InitialPage extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(
+              child: CircularProgressIndicator(color: Color(0xFF0E382C)),
+            ),
           );
         }
         if (!snapshot.hasData) {
@@ -46,7 +50,7 @@ class InitialPage extends StatelessWidget {
         }
         final role = snapshot.data;
         if (role == 'especialista') {
-          return DoctorHomePage();
+          return DoctorHomePage(apiKey: apiKey);
         } else if (role == 'paciente') {
           return PatientHomePage();
         } else {

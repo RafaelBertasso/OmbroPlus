@@ -1,3 +1,4 @@
+import 'package:Ombro_Plus/components/app.logo.dart';
 import 'package:Ombro_Plus/components/exercise.card.dart';
 import 'package:flutter/material.dart';
 import 'package:Ombro_Plus/components/patient.navbar.dart';
@@ -14,7 +15,7 @@ class PatientHomePage extends StatelessWidget {
         Navigator.pushReplacementNamed(context, '/patient-dashboard');
         break;
       case 2:
-        Navigator.pushReplacementNamed(context, '/patient-protocol');
+        Navigator.pushReplacementNamed(context, '/patient-protocols');
         break;
       case 3:
         Navigator.pushReplacementNamed(context, '/patient-main-chat');
@@ -33,24 +34,7 @@ class PatientHomePage extends StatelessWidget {
       backgroundColor: Color(0xFFF4F7F6),
       body: Column(
         children: [
-          Padding(
-            padding: EdgeInsets.only(top: 18, bottom: 8),
-            child: SizedBox(
-              height: 100,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Center(
-                    child: Image.asset(
-                      'assets/images/logo-app.png',
-                      width: 100,
-                      height: 100,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          AppLogo(),
           Expanded(
             child: SingleChildScrollView(
               child: Padding(

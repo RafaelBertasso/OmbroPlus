@@ -22,18 +22,19 @@ import 'package:Ombro_Plus/screens/forgot.password.page.dart';
 import 'package:Ombro_Plus/screens/register.page.dart';
 
 class OmbroPlus extends StatelessWidget {
-  OmbroPlus({super.key});
+  final String apiKey;
+  OmbroPlus({super.key, required this.apiKey});
   final _auth = FirebaseAuth.instance;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       routes: {
-        '/': (context) => InitialPage(),
+        '/': (context) => InitialPage(apiKey: apiKey),
         '/login': (context) => LoginPage(),
         '/register': (context) => RegisterPage(),
         '/forgot-password': (context) => ForgotPasswordPage(),
-        '/doctor-home': (context) => DoctorHomePage(),
+        '/doctor-home': (context) => DoctorHomePage(apiKey: apiKey),
         '/doctor-dashboard': (context) => DoctorDashboardPage(),
         '/doctor-protocols': (context) => DoctorProtocolsPage(),
         '/doctor-main-chat': (context) => DoctorMainChatPage(),
@@ -50,7 +51,7 @@ class OmbroPlus extends StatelessWidget {
         '/patient-main-chat': (context) => PatientMainChatPage(),
         '/patient-profile': (context) => PatientProfilePage(),
       },
-      initialRoute: _auth.currentUser == null ? '/login' : '/initial',
+      initialRoute: _auth.currentUser == null ? '/login' : '/',
       debugShowCheckedModeBanner: false,
     );
   }
