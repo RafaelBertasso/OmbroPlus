@@ -9,7 +9,6 @@ class InitialPage extends StatelessWidget {
   final String apiKey;
   InitialPage({super.key, required this.apiKey});
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<String> getUserRole() async {
     final user = _auth.currentUser;
