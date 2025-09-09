@@ -78,7 +78,7 @@ class _PatientListPageState extends State<PatientListPage> {
                 if (snapshot.hasError) {
                   return Center(
                     child: Text(
-                      'Erro: ${snapshot.error}',
+                      'Erro ao carregar pacientes',
                       style: GoogleFonts.montserrat(
                         fontSize: 16,
                         color: Colors.grey[700],
