@@ -37,6 +37,7 @@ flutter:
   - 'assets/images/logo-app-imagem.png'
   - 'assets/images/exercicio.jpg'
   - .env
+  - 'assets/images/shoulder.png'
 
 names_launcher:
   name: "Ombro Plus"

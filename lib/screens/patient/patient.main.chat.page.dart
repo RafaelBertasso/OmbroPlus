@@ -13,51 +13,15 @@ class PatientMainChatPage extends StatefulWidget {
 class _PatientMainChatPageState extends State<PatientMainChatPage> {
   final int _selectedIndex = 3;
   final List<Map<String, String>> chats = [
-    {'name': 'Rodrigo Garro', 'lastMessage': 'Olá, doutor!', 'time': '10:30'},
     {
-      'name': 'André Ramalho',
-      'lastMessage': 'Estou me sentindo melhor.',
+      'name': 'Dra. Juliana',
+      'lastMessage': 'Olá! Como está hoje?',
+      'time': '10:30',
+    },
+    {
+      'name': 'Cefis',
+      'lastMessage': 'Sua próxima sessão é amanhã.',
       'time': '15:37',
-    },
-    {
-      'name': 'Cássio Ramos',
-      'lastMessage': 'Preciso de uma consulta.',
-      'time': '08:45',
-    },
-    {
-      'name': 'Matheus Bidu',
-      'lastMessage': 'Obrigado pelo atendimento.',
-      'time': '12:15',
-    },
-    {
-      'name': 'Gustavo Scarpa',
-      'lastMessage': 'Quando é a próxima consulta?',
-      'time': '09:00',
-    },
-    {
-      'name': 'Rafael Sobis',
-      'lastMessage': 'Estou com dúvidas sobre o tratamento.',
-      'time': '14:20',
-    },
-    {
-      'name': 'Bruno Rodrigues',
-      'lastMessage': 'Agradeço pela ajuda.',
-      'time': '11:05',
-    },
-    {
-      'name': 'Lucas Lima',
-      'lastMessage': 'Estou seguindo as orientações.',
-      'time': '16:50',
-    },
-    {
-      'name': 'Felipe Melo',
-      'lastMessage': 'Como está meu progresso?',
-      'time': '13:30',
-    },
-    {
-      'name': 'Eduardo Vargas',
-      'lastMessage': 'Obrigado pelo suporte.',
-      'time': '17:15',
     },
   ];
 
@@ -104,7 +68,7 @@ class _PatientMainChatPageState extends State<PatientMainChatPage> {
                   Text(
                     'Chats',
                     style: GoogleFonts.montserrat(
-                      fontSize: 20,
+                      fontSize: 22,
                       fontWeight: FontWeight.w700,
                       color: Colors.black,
                     ),
@@ -192,7 +156,7 @@ class _PatientMainChatPageState extends State<PatientMainChatPage> {
                                   onTap: () {
                                     Navigator.pushNamed(
                                       context,
-                                      '/chat-detail',
+                                      '/patient-chat',
                                       arguments: chat,
                                     );
                                   },

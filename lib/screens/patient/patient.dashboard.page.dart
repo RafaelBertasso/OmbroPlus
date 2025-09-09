@@ -64,16 +64,6 @@ class _PatientDashboardPageState extends State<PatientDashboardPage> {
                       ),
                     ),
                     SizedBox(height: 25),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Gráfico 1',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
                     GraphicCard(),
                   ],
                 ),
