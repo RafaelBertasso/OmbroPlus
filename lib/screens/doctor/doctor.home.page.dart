@@ -154,6 +154,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                       ],
                     ),
                     SizedBox(height: 60),
+                    //TODO: Trocar essa parte
                     Text(
                       'Principais Notícias de Hoje',
                       style: GoogleFonts.montserrat(
@@ -163,7 +164,6 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                       ),
                     ),
                     SizedBox(height: 18),
-                    //TODO = Consertar feed de notícias
                     PhysioNewsFeed(apiKey: apiKey),
                   ],
                 ),

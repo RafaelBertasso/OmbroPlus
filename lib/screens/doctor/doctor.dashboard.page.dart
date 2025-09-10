@@ -2,6 +2,8 @@ import 'package:Ombro_Plus/components/app.logo.dart';
 import 'package:Ombro_Plus/components/doctor.navbar.dart';
 import 'package:Ombro_Plus/components/metric.card.dart';
 import 'package:Ombro_Plus/components/metric.large.card.dart';
+import 'package:Ombro_Plus/components/patient.dropdown.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -15,7 +17,6 @@ class DoctorDashboardPage extends StatefulWidget {
 class _DoctorDashboardPageState extends State<DoctorDashboardPage> {
   final int _selectedIndex = 1;
   String? selectedPatient;
-  final List<String> patients = ['Patient 1', 'Patient 2', 'Patient 3'];
 
   void _onTabTapped(int index) {
     if (index == _selectedIndex) return;
@@ -61,7 +62,32 @@ class _DoctorDashboardPageState extends State<DoctorDashboardPage> {
                   SizedBox(height: 16),
                   Row(
                     children: [
-                      MetricCard(title: 'Pacientes Ativos', value: '25'),
+                      FutureBuilder<QuerySnapshot>(
+                        future: FirebaseFirestore.instance
+                            .collection('users')
+                            .where('role', isEqualTo: 'paciente')
+                            .get(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return MetricCard(
+                              title: 'Pacientes Ativos',
+                              value: '...',
+                            );
+                          } else if (snapshot.hasError) {
+                            return MetricCard(
+                              title: 'Pacientes Ativos',
+                              value: 'Erro',
+                            );
+                          } else {
+                            final count = snapshot.data?.docs.length ?? 0;
+                            return MetricCard(
+                              title: 'Pacientes Ativos',
+                              value: count.toString(),
+                            );
+                          }
+                        },
+                      ),
                       SizedBox(width: 16),
                       MetricCard(title: 'Duração Média', value: '15 min'),
                     ],
@@ -69,28 +95,13 @@ class _DoctorDashboardPageState extends State<DoctorDashboardPage> {
                   SizedBox(height: 12),
                   MetricLargeCard(title: 'Redução de Dor', value: '30%'),
                   SizedBox(height: 18),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 13, vertical: 6),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Color(0xFFD9E3E8)),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.white,
-                    ),
-                    child: DropdownButton<String>(
-                      isExpanded: true,
-                      hint: const Text('Selecione o Paciente'),
-                      value: selectedPatient,
-                      underline: SizedBox(),
-                      items: patients.map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value, style: GoogleFonts.openSans()),
-                        );
-                      }).toList(),
-                      onChanged: (value) => setState(() {
-                        selectedPatient = value;
-                      }),
-                    ),
+                  PatientDropdown(
+                    selectedPatient: selectedPatient,
+                    onPatientSelected: (String? id) {
+                      setState(() {
+                        selectedPatient = id;
+                      });
+                    },
                   ),
                   SizedBox(height: 28),
                   // Placeholder: Gráfico de evolução
