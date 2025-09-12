@@ -149,6 +149,7 @@ class _LoginPageState extends State<LoginPage>
     required TextEditingController emailController,
     required TextEditingController passwordController,
     required VoidCallback onLoginPressed,
+    bool showRegister = false,
   }) {
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -184,6 +185,7 @@ class _LoginPageState extends State<LoginPage>
                   );
                 },
               ),
+              SizedBox(height: 8),
             ],
           ),
           SizedBox(height: 24),
@@ -199,6 +201,19 @@ class _LoginPageState extends State<LoginPage>
             child: Text('Entrar', style: TextStyle(color: Colors.white)),
           ),
           SizedBox(height: 16),
+          if (showRegister)
+            TextButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/patient-register');
+              },
+              child: Text(
+                'Criar Conta',
+                style: GoogleFonts.openSans(
+                  fontSize: 16,
+                  color: Color(0xFF0E382C),
+                ),
+              ),
+            ),
           TextButton(
             onPressed: () {
               Navigator.pushNamed(context, '/forgot-password');
@@ -207,7 +222,7 @@ class _LoginPageState extends State<LoginPage>
               'Esqueceu a senha?',
               style: GoogleFonts.openSans(
                 fontSize: 16,
-                color: Color(0xFF2A5C7D),
+                color: Color(0xFF0E382C),
               ),
             ),
           ),
@@ -265,11 +280,13 @@ class _LoginPageState extends State<LoginPage>
                             emailController: _emailEspecialistaController,
                             passwordController: _passwordEspecialistaController,
                             onLoginPressed: () => _loginEspecialista(context),
+                            showRegister: false,
                           ),
                           _buildFormLogin(
                             emailController: _emailPacienteController,
                             passwordController: _passwordPacienteController,
                             onLoginPressed: () => _loginPaciente(context),
+                            showRegister: true,
                           ),
                         ],
                       ),

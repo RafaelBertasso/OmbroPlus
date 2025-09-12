@@ -8,6 +8,7 @@ import 'package:Ombro_Plus/screens/doctor/patient.detail.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.list.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.log.page.dart';
 import 'package:Ombro_Plus/screens/initial.page.dart';
+import 'package:Ombro_Plus/screens/patient.register.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.chat.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.dashboard.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.home.page.dart';
@@ -20,7 +21,6 @@ import 'package:Ombro_Plus/screens/login.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.dashboard.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.home.page.dart';
 import 'package:Ombro_Plus/screens/forgot.password.page.dart';
-import 'package:Ombro_Plus/screens/register.page.dart';
 
 class OmbroPlus extends StatelessWidget {
   final String apiKey;
@@ -33,7 +33,7 @@ class OmbroPlus extends StatelessWidget {
       routes: {
         '/': (context) => InitialPage(apiKey: apiKey),
         '/login': (context) => LoginPage(),
-        '/register': (context) => RegisterPage(),
+        '/patient-register': (context) => PatientRegisterPage(),
         '/forgot-password': (context) => ForgotPasswordPage(),
         '/doctor-home': (context) => DoctorHomePage(apiKey: apiKey),
         '/doctor-dashboard': (context) => DoctorDashboardPage(),
