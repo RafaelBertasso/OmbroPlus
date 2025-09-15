@@ -55,6 +55,17 @@ class OmbroPlus extends StatelessWidget {
       },
       initialRoute: _auth.currentUser == null ? '/login' : '/',
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        inputDecorationTheme: InputDecorationTheme(
+          labelStyle: TextStyle(color: Color(0xFF0E382C)),
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Color(0xFF0E382C), width: 2),
+          ),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.grey),
+          ),
+        ),
+      ),
     );
   }
 }

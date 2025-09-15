@@ -117,14 +117,24 @@ class _LoginPageState extends State<LoginPage>
         password: _passwordPacienteController.text.trim(),
       );
 
-      final role = await getUserRole();
-      if (role == 'paciente') {
+      final User? user = userCredential.user;
+      if (user == null) {
+        throw Exception('Usuário não encontrado.');
+      }
+
+      final patientDoc = await FirebaseFirestore.instance
+          .collection('pacientes')
+          .doc(user.uid)
+          .get();
+
+      if (patientDoc.exists) {
         Navigator.pushReplacementNamed(context, '/patient-home');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Essa conta não é um paciente.')),
         );
         await _auth.signOut();
+        return;
       }
     } on FirebaseAuthException catch (e) {
       String message;
@@ -140,7 +150,11 @@ class _LoginPageState extends State<LoginPage>
       ).showSnackBar(SnackBar(content: Text(message)));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao fazer login. Tente novamente.')),
+        SnackBar(
+          content: Text(
+            'Erro ao fazer login. Tente novamente.',
+          ),
+        ),
       );
     }
   }
