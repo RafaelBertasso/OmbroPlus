@@ -1,14 +1,11 @@
 import 'package:Ombro_Plus/components/doctor.navbar.dart';
-import 'package:Ombro_Plus/components/physio.news.feed.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class DoctorHomePage extends StatefulWidget {
-  final String apiKey;
-  const DoctorHomePage({super.key, required this.apiKey});
+  const DoctorHomePage({super.key});
 
   @override
   State<DoctorHomePage> createState() => _DoctorHomePageState();
@@ -17,7 +14,6 @@ class DoctorHomePage extends StatefulWidget {
 class _DoctorHomePageState extends State<DoctorHomePage> {
   final int _selectedIndex = 0;
   final user = FirebaseAuth.instance.currentUser;
-  final apiKey = dotenv.env['NEWS_API_KEY'] ?? '';
 
   void _onTabTapped(int index) {
     if (index == _selectedIndex) return;
@@ -43,7 +39,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return '';
     final doc = await FirebaseFirestore.instance
-        .collection('users')
+        .collection('especialistas')
         .doc(user.uid)
         .get();
     return doc.data()?['nome'] ?? '';
@@ -164,7 +160,6 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                       ),
                     ),
                     SizedBox(height: 18),
-                    PhysioNewsFeed(apiKey: apiKey),
                   ],
                 ),
               ),

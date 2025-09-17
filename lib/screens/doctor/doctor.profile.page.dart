@@ -34,7 +34,7 @@ class DoctorProfilePage extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return '';
     final doc = await FirebaseFirestore.instance
-        .collection('users')
+        .collection('especialistas')
         .doc(user.uid)
         .get();
     return doc.data()?['nome'] ?? '';
@@ -44,7 +44,7 @@ class DoctorProfilePage extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return '';
     final doc = await FirebaseFirestore.instance
-        .collection('users')
+        .collection('especialistas')
         .doc(user.uid)
         .get();
     return doc.data()?['email'] ?? '';

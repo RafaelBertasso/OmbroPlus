@@ -34,7 +34,7 @@ class _PatientListPageState extends State<PatientListPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.pushNamed(context, '/new-patient'),
+        onPressed: () => Navigator.pushNamed(context, '/patient-register'),
         backgroundColor: Color(0xFF0E382C),
         tooltip: 'Adicionar Paciente',
         child: Icon(Icons.add, color: Colors.white),
@@ -66,8 +66,7 @@ class _PatientListPageState extends State<PatientListPage> {
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
-                  .collection('users')
-                  .where('role', isEqualTo: 'paciente')
+                  .collection('pacientes')
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {

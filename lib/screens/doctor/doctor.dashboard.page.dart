@@ -64,8 +64,7 @@ class _DoctorDashboardPageState extends State<DoctorDashboardPage> {
                     children: [
                       FutureBuilder<QuerySnapshot>(
                         future: FirebaseFirestore.instance
-                            .collection('users')
-                            .where('role', isEqualTo: 'paciente')
+                            .collection('pacientes')
                             .get(),
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==

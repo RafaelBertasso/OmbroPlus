@@ -207,239 +207,260 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFFF4F7F6),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            SizedBox(height: 60),
-            Center(
-              child: Image.asset(
-                'assets/images/logo-app.png',
-                width: 150,
-                height: 150,
+      body: Column(
+        children: [
+          Row(
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: Icon(Icons.arrow_back, color: Colors.black),
+                  onPressed: () => Navigator.pop(context),
+                  tooltip: 'Voltar',
+                ),
               ),
-            ),
-            SizedBox(height: 20),
-            Padding(
-              padding: EdgeInsets.all(24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: InputDecoration(labelText: 'Nome completo'),
-                    ),
-                    SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _birthDateController,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [maskFormatter],
-                            decoration: InputDecoration(
-                              labelText: 'Data de Nascimento',
+              Spacer(),
+              Center(
+                child: Image.asset(
+                  'assets/images/logo-app.png',
+                  width: 150,
+                  height: 150,
+                ),
+              ),
+              Spacer(),
+              SizedBox(width: 48),
+            ],
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _nameController,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: InputDecoration(labelText: 'Nome completo'),
+                      ),
+                      SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _birthDateController,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [maskFormatter],
+                              decoration: InputDecoration(
+                                labelText: 'Data de Nascimento',
 
-                              contentPadding: EdgeInsets.symmetric(
-                                vertical: 15,
-                                horizontal: 12,
-                              ),
-                            ),
-                            style: GoogleFonts.openSans(fontSize: 16),
-                            //TODO: Corrigir a validação da data
-                            validator: validateDate,
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Container(
-                          width: 60,
-                          child: TextFormField(
-                            enabled: false,
-                            decoration: InputDecoration(labelText: 'Idade'),
-                            controller: _ageController,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Sexo', style: GoogleFonts.openSans(fontSize: 16)),
-                        SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Radio(
-                              value: 'masculino',
-                              groupValue: sex,
-                              fillColor: radioFillColor(),
-                              onChanged: (value) => setState(() {
-                                sex = 'masculino';
-                              }),
-                            ),
-                            Text(
-                              'Masculino',
-                              style: GoogleFonts.openSans(fontSize: 16),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Radio(
-                              value: 'feminino',
-                              groupValue: sex,
-                              fillColor: radioFillColor(),
-                              onChanged: (value) => setState(() {
-                                sex = 'feminino';
-                              }),
-                            ),
-                            Text(
-                              'Feminino',
-                              style: GoogleFonts.openSans(fontSize: 16),
-                            ),
-                          ],
-                        ),
-                        if (sex != 'masculino' && sex != 'feminino')
-                          Container(),
-                        Column(
-                          children: [
-                            Row(
-                              children: [
-                                Radio(
-                                  value: 'outro',
-                                  groupValue: sex,
-                                  fillColor: radioFillColor(),
-                                  onChanged: (value) => setState(() {
-                                    sex = 'outro';
-                                  }),
+                                contentPadding: EdgeInsets.symmetric(
+                                  vertical: 15,
+                                  horizontal: 12,
                                 ),
-                                Expanded(
-                                  child: Padding(
-                                    padding: EdgeInsets.only(left: 8),
-                                    child: TextFormField(
-                                      controller: _otherSexController,
-                                      decoration: InputDecoration(
-                                        labelText: 'Escreva aqui',
+                              ),
+                              style: GoogleFonts.openSans(fontSize: 16),
+                              //TODO: Corrigir a validação da data
+                              validator: validateDate,
+                            ),
+                          ),
+                          SizedBox(width: 12),
+                          Container(
+                            width: 60,
+                            child: TextFormField(
+                              enabled: false,
+                              decoration: InputDecoration(labelText: 'Idade'),
+                              controller: _ageController,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Sexo',
+                            style: GoogleFonts.openSans(fontSize: 16),
+                          ),
+                          SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Radio(
+                                value: 'masculino',
+                                groupValue: sex,
+                                fillColor: radioFillColor(),
+                                onChanged: (value) => setState(() {
+                                  sex = 'masculino';
+                                }),
+                              ),
+                              Text(
+                                'Masculino',
+                                style: GoogleFonts.openSans(fontSize: 16),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Radio(
+                                value: 'feminino',
+                                groupValue: sex,
+                                fillColor: radioFillColor(),
+                                onChanged: (value) => setState(() {
+                                  sex = 'feminino';
+                                }),
+                              ),
+                              Text(
+                                'Feminino',
+                                style: GoogleFonts.openSans(fontSize: 16),
+                              ),
+                            ],
+                          ),
+                          if (sex != 'masculino' && sex != 'feminino')
+                            Container(),
+                          Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Radio(
+                                    value: 'outro',
+                                    groupValue: sex,
+                                    fillColor: radioFillColor(),
+                                    onChanged: (value) => setState(() {
+                                      sex = 'outro';
+                                    }),
+                                  ),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: EdgeInsets.only(left: 8),
+                                      child: TextFormField(
+                                        controller: _otherSexController,
+                                        decoration: InputDecoration(
+                                          labelText: 'Escreva aqui',
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'Contatos',
-                          style: GoogleFonts.openSans(fontSize: 16),
-                        ),
-                        SizedBox(height: 8),
-                        TextFormField(
-                          controller: _emailController,
-                          decoration: InputDecoration(
-                            labelText: 'Email para contato e login',
+                                ],
+                              ),
+                            ],
                           ),
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-                        SizedBox(height: 16),
-                        TextFormField(
-                          controller: _phoneController,
-                          decoration: InputDecoration(
-                            labelText: 'Telefone/WhatsApp',
-                            hint: Text(
-                              '(99) 99999-9999',
-                              style: TextStyle(
-                                color: Color.fromARGB(130, 14, 56, 44),
+                          SizedBox(height: 16),
+                          Text(
+                            'Contatos',
+                            style: GoogleFonts.openSans(fontSize: 16),
+                          ),
+                          SizedBox(height: 8),
+                          TextFormField(
+                            controller: _emailController,
+                            decoration: InputDecoration(
+                              labelText: 'Email para contato e login',
+                            ),
+                            keyboardType: TextInputType.emailAddress,
+                          ),
+                          SizedBox(height: 16),
+                          TextFormField(
+                            controller: _phoneController,
+                            decoration: InputDecoration(
+                              labelText: 'Telefone/WhatsApp',
+                              hint: Text(
+                                '(99) 99999-9999',
+                                style: TextStyle(
+                                  color: Color.fromARGB(130, 14, 56, 44),
+                                ),
                               ),
                             ),
+                            keyboardType: TextInputType.phone,
+                            inputFormatters: [
+                              PhoneInputFormatter(
+                                defaultCountryCode: 'BR',
+                                allowEndlessPhone: false,
+                              ),
+                            ],
                           ),
-                          keyboardType: TextInputType.phone,
-                          inputFormatters: [
-                            PhoneInputFormatter(
-                              defaultCountryCode: 'BR',
-                              allowEndlessPhone: false,
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 16),
-                        ValueListenableBuilder<bool>(
-                          valueListenable: _obscurePassword,
-                          builder: (context, value, child) {
-                            return TextFormField(
-                              controller: _passwordController,
-                              decoration: InputDecoration(
-                                labelText: 'Senha',
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    value
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
+                          SizedBox(height: 16),
+                          ValueListenableBuilder<bool>(
+                            valueListenable: _obscurePassword,
+                            builder: (context, value, child) {
+                              return TextFormField(
+                                controller: _passwordController,
+                                decoration: InputDecoration(
+                                  labelText: 'Senha',
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      value
+                                          ? Icons.visibility_off
+                                          : Icons.visibility,
+                                    ),
+                                    onPressed: () =>
+                                        _obscurePassword.value = !value,
                                   ),
-                                  onPressed: () =>
-                                      _obscurePassword.value = !value,
                                 ),
-                              ),
-                              obscureText: value,
-                            );
-                          },
-                        ),
-                        SizedBox(height: 16),
-                        ValueListenableBuilder<bool>(
-                          valueListenable: _obscureConfirmPassword,
-                          builder: (context, value, child) {
-                            return TextFormField(
-                              controller: _confirmPasswordController,
-                              decoration: InputDecoration(
-                                labelText: 'Confirmar Senha',
-                                labelStyle: TextStyle(color: Color(0xFF0E382C)),
-                                focusedBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(
+                                obscureText: value,
+                              );
+                            },
+                          ),
+                          SizedBox(height: 16),
+                          ValueListenableBuilder<bool>(
+                            valueListenable: _obscureConfirmPassword,
+                            builder: (context, value, child) {
+                              return TextFormField(
+                                controller: _confirmPasswordController,
+                                decoration: InputDecoration(
+                                  labelText: 'Confirmar Senha',
+                                  labelStyle: TextStyle(
                                     color: Color(0xFF0E382C),
                                   ),
-                                ),
-                                enabledBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
-                                ),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    value
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
+                                  focusedBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: Color(0xFF0E382C),
+                                    ),
                                   ),
-                                  onPressed: () =>
-                                      _obscureConfirmPassword.value = !value,
+                                  enabledBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      value
+                                          ? Icons.visibility_off
+                                          : Icons.visibility,
+                                    ),
+                                    onPressed: () =>
+                                        _obscureConfirmPassword.value = !value,
+                                  ),
                                 ),
-                              ),
-                              obscureText: value,
-                              validator: validatePassword,
-                            );
-                          },
-                        ),
+                                obscureText: value,
+                                validator: validatePassword,
+                              );
+                            },
+                          ),
 
-                        SizedBox(height: 24),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF0E382C),
-                            minimumSize: Size(double.infinity, 50),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                          SizedBox(height: 24),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF0E382C),
+                              minimumSize: Size(double.infinity, 50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: () => registerPatient(),
+                            child: Text(
+                              'Cadastrar',
+                              style: TextStyle(color: Colors.white),
                             ),
                           ),
-                          onPressed: () => registerPatient(),
-                          child: Text(
-                            'Cadastrar',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

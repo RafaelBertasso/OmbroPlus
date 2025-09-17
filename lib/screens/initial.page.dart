@@ -6,8 +6,7 @@ import 'package:Ombro_Plus/screens/patient/patient.home.page.dart';
 import 'package:Ombro_Plus/screens/login.page.dart';
 
 class InitialPage extends StatelessWidget {
-  final String apiKey;
-  InitialPage({super.key, required this.apiKey});
+  InitialPage({super.key});
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<String> getUserRole() async {
@@ -49,7 +48,7 @@ class InitialPage extends StatelessWidget {
         }
         final role = snapshot.data;
         if (role == 'especialista') {
-          return DoctorHomePage(apiKey: apiKey);
+          return DoctorHomePage();
         } else if (role == 'paciente') {
           return PatientHomePage();
         } else {

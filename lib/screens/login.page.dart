@@ -39,28 +39,6 @@ class _LoginPageState extends State<LoginPage>
     super.dispose();
   }
 
-  Future<String> getUserRole() async {
-    final user = _auth.currentUser;
-    if (user == null) {
-      return 'deslogado';
-    }
-
-    try {
-      final docSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-
-      if (docSnapshot.exists) {
-        final data = docSnapshot.data();
-        return data?['role'];
-      }
-    } catch (e) {
-      print('Erro ao buscar a role do usuário: $e');
-    }
-    return 'cliente';
-  }
-
   Future<void> _loginEspecialista(BuildContext context) async {
     if (_emailEspecialistaController.text.isEmpty ||
         _passwordEspecialistaController.text.isEmpty) {
@@ -75,14 +53,24 @@ class _LoginPageState extends State<LoginPage>
         password: _passwordEspecialistaController.text.trim(),
       );
 
-      final role = await getUserRole();
-      if (role == 'especialista') {
+      final User? user = userCredential.user;
+      if (user == null) {
+        throw Exception('Usuário não encontrado.');
+      }
+
+      final specialistDoc = await FirebaseFirestore.instance
+          .collection('especialistas')
+          .doc(user.uid)
+          .get();
+
+      if (specialistDoc.exists) {
         Navigator.pushReplacementNamed(context, '/doctor-home');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Essa conta não é um especialista.')),
         );
         await _auth.signOut();
+        return;
       }
     } on FirebaseAuthException catch (e) {
       String message;
@@ -150,11 +138,7 @@ class _LoginPageState extends State<LoginPage>
       ).showSnackBar(SnackBar(content: Text(message)));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Erro ao fazer login. Tente novamente.',
-          ),
-        ),
+        SnackBar(content: Text('Erro ao fazer login. Tente novamente.')),
       );
     }
   }

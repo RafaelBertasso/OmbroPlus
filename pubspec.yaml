@@ -16,21 +16,19 @@ dependencies:
   intl: any
   cupertino_icons: ^1.0.0
   image_picker: ^1.0.7
-  http: any
-  dart_rss: ^3.0.3
   url_launcher: ^6.3.2
-  flutter_dotenv: ^6.0.0
   fl_chart: ^1.1.0
   dropdown_button2: ^2.3.9
   flutter_multi_formatter: ^2.13.10
   mask_text_input_formatter: ^2.9.0
+  flutter_native_splash: ^2.4.6
+  flutter_icons_null_safety: ^1.1.0 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   names_launcher: ^0.0.2
-  flutter_native_splash: ^2.3.8
 
 flutter:
   uses-material-design: true
@@ -39,7 +37,6 @@ flutter:
   - 'assets/images/logo-app.png'
   - 'assets/images/logo-app-imagem.png'
   - 'assets/images/exercicio.jpg'
-  - .env
   - 'assets/images/shoulder.png'
 
 names_launcher:
@@ -50,5 +47,13 @@ names_launcher:
     ios:
       enable: true
 
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo-app-imagem.png"
+
 flutter_native_splash:
-  image: assets/images/logo-app-imagem.png
+  color: "#0E382C"
+  image: 'assets/images/logo-app-imagem.png'
+  android: true
+  ios: true
