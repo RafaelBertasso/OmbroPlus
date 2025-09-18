@@ -1,3 +1,4 @@
+import 'package:Ombro_Plus/screens/doctor.register.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.chat.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.main.chat.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.profile.page.dart';
@@ -33,6 +34,7 @@ class OmbroPlus extends StatelessWidget {
         '/': (context) => InitialPage(),
         '/login': (context) => LoginPage(),
         '/patient-register': (context) => PatientRegisterPage(),
+        '/specialist-register': (context) => DoctorRegisterPage(),
         '/forgot-password': (context) => ForgotPasswordPage(),
         '/doctor-home': (context) => DoctorHomePage(),
         '/doctor-dashboard': (context) => DoctorDashboardPage(),

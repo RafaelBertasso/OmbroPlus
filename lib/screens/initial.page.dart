@@ -16,19 +16,25 @@ class InitialPage extends StatelessWidget {
     }
 
     try {
-      final docSnapshot = await FirebaseFirestore.instance
-          .collection('users')
+      final specialistDoc = await FirebaseFirestore.instance
+          .collection('especialistas')
           .doc(user.uid)
           .get();
+      if (specialistDoc.exists) {
+        return 'especialista';
+      }
 
-      if (docSnapshot.exists) {
-        final data = docSnapshot.data();
-        return data?['role'];
+      final patientDoc = await FirebaseFirestore.instance
+          .collection('pacientes')
+          .doc(user.uid)
+          .get();
+      if (patientDoc.exists) {
+        return 'paciente';
       }
     } catch (e) {
       print('Erro ao buscar a role do usuário: $e');
     }
-    return 'cliente';
+    return 'deslogado';
   }
 
   @override
@@ -42,9 +48,6 @@ class InitialPage extends StatelessWidget {
               child: CircularProgressIndicator(color: Color(0xFF0E382C)),
             ),
           );
-        }
-        if (!snapshot.hasData) {
-          return LoginPage();
         }
         final role = snapshot.data;
         if (role == 'especialista') {

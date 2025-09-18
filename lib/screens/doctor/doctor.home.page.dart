@@ -14,6 +14,7 @@ class DoctorHomePage extends StatefulWidget {
 class _DoctorHomePageState extends State<DoctorHomePage> {
   final int _selectedIndex = 0;
   final user = FirebaseAuth.instance.currentUser;
+  final bool _isAdmin = true;
 
   void _onTabTapped(int index) {
     if (index == _selectedIndex) return;
@@ -34,6 +35,14 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
         break;
     }
   }
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAdminStatus();
+  }
+
+  void _checkAdminStatus() async {}
 
   Future<String> getUserName() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -167,6 +176,15 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
           ),
         ],
       ),
+      floatingActionButton: _isAdmin
+          ? FloatingActionButton(
+              onPressed: () =>
+                  Navigator.pushNamed(context, '/specialist-register'),
+              backgroundColor: Color(0xFF0E382C),
+              tooltip: 'Adicionar Especialista',
+              child: Icon(Icons.person_add, color: Colors.white),
+            )
+          : null,
       bottomNavigationBar: DoctorNavbar(
         currentIndex: _selectedIndex,
         onTap: _onTabTapped,
