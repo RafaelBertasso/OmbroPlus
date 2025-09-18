@@ -28,6 +28,20 @@ class _DoctorRegisterPageState extends State<DoctorRegisterPage> {
     filter: {"#": RegExp(r'[0-9]')},
   );
 
+  final crefitoMaskFormatter = MaskTextInputFormatter(
+    mask: '######-A',
+    filter: {"#": RegExp(r'[0-9]'), "A": RegExp(r'[A-Za-z]')},
+  );
+
+  final crmMaskFormatter = MaskTextInputFormatter(
+    mask: '########-#/BR',
+    filter: {
+      "#": RegExp(r'[0-9]'),
+      "B": RegExp(r'[A-Za-z]'),
+      "R": RegExp(r'[A-Za-z]'),
+    },
+  );
+
   final ValueNotifier<bool> _obscurePassword = ValueNotifier<bool>(true);
   final ValueNotifier<bool> _obscureConfirmPassword = ValueNotifier<bool>(true);
 
@@ -71,12 +85,34 @@ class _DoctorRegisterPageState extends State<DoctorRegisterPage> {
         'telefone': _phoneController.text.trim(),
         'data_cadastro': DateTime.now().toIso8601String(),
         'isAdmin': _role == 'administrador',
+        'crefito': _crefitoController.text.trim(),
+        'crm': _crmController.text.trim(),
       };
       final docRef = FirebaseFirestore.instance
           .collection('especialistas')
           .doc(uid);
       await docRef.set(specialistData);
-      Navigator.pushNamed(context, '/doctor-home');
+      final message = ScaffoldMessenger.of(context);
+      message.showMaterialBanner(
+        MaterialBanner(
+          content: Text(
+            'Conta criada com sucesso!',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Color(0xFF0E382C),
+          leading: Icon(Icons.check_circle_outline, color: Colors.white),
+          actions: [
+            TextButton(
+              onPressed: () => message.hideCurrentMaterialBanner(),
+              child: Icon(Icons.close, color: Colors.white),
+            ),
+          ],
+        ),
+      );
+      Future.delayed(Duration(seconds: 3), () {
+        message.hideCurrentMaterialBanner();
+      });
+      Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       String message = 'Erro ao cadastrar conta';
       if (e.code == 'email-already-in-use') {
@@ -101,6 +137,8 @@ class _DoctorRegisterPageState extends State<DoctorRegisterPage> {
     _confirmPasswordController.dispose();
     _crefitoController.dispose();
     _crmController.dispose();
+    _obscurePassword.dispose();
+    _obscureConfirmPassword.dispose();
     super.dispose();
   }
 
@@ -178,6 +216,22 @@ class _DoctorRegisterPageState extends State<DoctorRegisterPage> {
                             allowEndlessPhone: false,
                           ),
                         ],
+                      ),
+                      SizedBox(height: 16),
+                      TextFormField(
+                        controller: _crefitoController,
+                        decoration: InputDecoration(
+                          labelText: 'CREFITO (Opcional)',
+                        ),
+                        inputFormatters: [crefitoMaskFormatter],
+                      ),
+                      SizedBox(height: 16),
+                      TextFormField(
+                        controller: _crmController,
+                        decoration: InputDecoration(
+                          labelText: 'CRM (Opcional)',
+                        ),
+                        inputFormatters: [crmMaskFormatter],
                       ),
                       SizedBox(height: 16),
                       Column(
