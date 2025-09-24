@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:Ombro_Plus/components/app.logo.dart';
+import 'package:Ombro_Plus/components/build.info.row.dart';
 import 'package:Ombro_Plus/components/doctor.navbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -70,28 +71,28 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
 
   void _showImageOptions() {
     showModalBottomSheet(
-      backgroundColor: Color(0xFFF4F7F6),
+      backgroundColor: Color(0xFF0E382C),
       context: context,
       builder: (context) => SafeArea(
         child: Wrap(
           children: [
             ListTile(
-              leading: Icon(Icons.photo_library, color: Color(0xFF0E382C)),
+              leading: Icon(Icons.photo_library, color: Color(0xFFF4F7F6)),
               title: Text(
                 'Galeria',
                 style: GoogleFonts.openSans(
-                  color: Color(0xFF0E382C),
+                  color: Color(0xFFF4F7F6),
                   fontWeight: FontWeight.w600,
                 ),
               ),
               onTap: () => _pickImage(ImageSource.gallery),
             ),
             ListTile(
-              leading: Icon(Icons.camera_alt, color: Color(0xFF0E382C)),
+              leading: Icon(Icons.camera_alt, color: Color(0xFFF4F7F6)),
               title: Text(
                 'Câmera',
                 style: GoogleFonts.openSans(
-                  color: Color(0xFF0E382C),
+                  color: Color(0xFFF4F7F6),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -136,6 +137,76 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
     }
   }
 
+  void _confirmDeleteAccount() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Color(0xFF0E382C),
+        title: Center(
+          child: Text(
+            'Excluir conta',
+            style: GoogleFonts.montserrat(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        content: Text(
+          'Tem certeza que deseja excluir sua conta? Esta ação é irreversível.',
+          style: GoogleFonts.openSans(
+            color: Colors.white,
+            fontWeight: FontWeight.w400,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancelar',
+              style: GoogleFonts.openSans(
+                color: Color(0xFFF4F7F6),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              try {
+                await _auth.currentUser?.delete();
+                await FirebaseFirestore.instance
+                    .collection('especialistas')
+                    .doc(user?.uid)
+                    .delete();
+                Navigator.pop(context);
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/login',
+                  (route) => false,
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Erro ao excluir a conta.'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                Navigator.pop(context);
+              }
+            },
+            child: Text(
+              'Excluir',
+              style: GoogleFonts.openSans(
+                color: Color(0xFFF4F7F6),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -158,44 +229,34 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
           final crm = userData['crm'] ?? 'Não informado';
           return Column(
             children: [
-              AppLogo(),
-              Container(
-                padding: EdgeInsets.only(top: 50, bottom: 15),
-                alignment: Alignment.center,
-                child: Column(
+              SizedBox(
+                height: 300,
+                child: Stack(
+                  alignment: Alignment.topCenter,
                   children: [
-                    GestureDetector(
-                      onTap: _showImageOptions,
-                      child: CircleAvatar(
-                        radius: 46,
-                        backgroundColor: Color(0xFF0E382C),
-                        child: _profileImage != null
-                            ? ClipOval(
-                                child: Image.memory(
-                                  base64Decode(_profileImage!),
-                                  width: 92,
-                                  height: 92,
-                                  fit: BoxFit.cover,
+                    AppLogo(),
+                    Positioned(
+                      top: 150,
+                      child: GestureDetector(
+                        onTap: _showImageOptions,
+                        child: CircleAvatar(
+                          radius: 60,
+                          backgroundColor: Color(0xFF0E382C),
+                          child: _profileImage != null
+                              ? ClipOval(
+                                  child: Image.memory(
+                                    base64Decode(_profileImage!),
+                                    width: 120,
+                                    height: 120,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Icon(
+                                  Icons.person,
+                                  color: Colors.white,
+                                  size: 54,
                                 ),
-                              )
-                            : Icon(Icons.person, color: Colors.white, size: 54),
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      nome,
-                      style: GoogleFonts.montserrat(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      email,
-                      style: GoogleFonts.openSans(
-                        fontSize: 14,
-                        color: Colors.black54,
+                        ),
                       ),
                     ),
                   ],
@@ -206,35 +267,42 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
                 child: ListView(
                   padding: EdgeInsets.symmetric(horizontal: 16),
                   children: [
-                    Card(
-                      color: Color(0xFFF4F7F6),
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: ListTile(
-                        leading: Icon(
-                          Icons.account_circle,
-                          color: Color(0xFF0E382C),
-                          size: 30,
-                        ),
-                        title: Text(
+                    Row(
+                      children: [
+                        Text(
                           'Dados Pessoais',
                           style: GoogleFonts.openSans(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 18,
+                            color: Color(0xFF0E382C),
                           ),
                         ),
-                        trailing: Icon(
-                          Icons.arrow_forward_ios,
-                          size: 18,
-                          color: Colors.grey[400],
+                        Spacer(),
+                        IconButton(
+                          onPressed: () => Navigator.pushNamed(
+                            context,
+                            '/doctor-edit-profile',
+                          ),
+                          icon: Icon(Icons.edit, color: Color(0xFF0E382C)),
                         ),
-                        onTap: () => Navigator.pushNamed(
-                          context,
-                          '/doctor-edit-profile',
-                        ),
-                      ),
+                      ],
+                    ),
+                    Divider(color: Color(0xFF0E382C)),
+                    SizedBox(height: 10),
+                    BuildInfoRow(
+                      label: 'Nome',
+                      value: nome,
+                      icon: Icons.person_2_outlined,
+                    ),
+                    BuildInfoRow(
+                      label: 'Telefone',
+                      value: userData['telefone'] ?? 'Não informado',
+                      icon: Icons.phone_android,
+                    ),
+                    BuildInfoRow(
+                      label: 'E-mail',
+                      value: email,
+                      icon: Icons.email_outlined,
                     ),
                     SizedBox(height: 20),
                     Text(
@@ -242,113 +310,104 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
                       style: GoogleFonts.openSans(
                         fontWeight: FontWeight.w700,
                         fontSize: 18,
+                        color: Color(0xFF0E382C),
                       ),
                     ),
-                    SizedBox(height: 8),
-                    Card(
-                      color: Color(0xFFF4F7F6),
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (crefito != null &&
-                                crefito.isNotEmpty &&
-                                crefito != 'Não informado')
-                              Text(
-                                'CREFITO: $crefito',
-                                style: GoogleFonts.openSans(fontSize: 16),
-                              )
-                            else if (crm != null &&
-                                crm.isNotEmpty &&
-                                crm != 'Não informado')
-                              Text(
-                                'CRM: $crm',
-                                style: GoogleFonts.openSans(fontSize: 16),
-                              )
-                            else
-                              Text(
-                                'Dados profissionais não informados',
-                                style: GoogleFonts.openSans(
-                                  fontSize: 16,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                          ],
+                    Divider(color: Color(0xFF0E382C)),
+                    SizedBox(height: 10),
+                    if ((crefito != null && crefito != 'Não informado') ||
+                        (crm != null && crm != 'Não informado')) ...[
+                      if (crefito != null && crefito != 'Não informado')
+                        BuildInfoRow(
+                          label: 'CREFITO',
+                          value: crefito,
+                          icon: Icons.badge_outlined,
+                        ),
+                      if (crm != null && crm != 'Não informado')
+                        BuildInfoRow(
+                          label: 'CRM',
+                          value: crm,
+                          icon: Icons.medical_services_outlined,
+                        ),
+                    ] else ...[
+                      Text(
+                        'Dados profissionais não informados',
+                        style: GoogleFonts.openSans(
+                          fontSize: 16,
+                          color: Colors.grey,
                         ),
                       ),
-                    ),
-                    SizedBox(height: 8),
+                    ],
+                    SizedBox(height: 20),
                     Text(
                       'Configurações',
                       style: GoogleFonts.openSans(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
+                        color: Color(0xFF0E382C),
                       ),
                     ),
-                    SizedBox(height: 8),
-                    Card(
-                      color: Color(0xFFF4F7F6),
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                    Divider(color: Color(0xFF0E382C)),
+                    SizedBox(height: 10),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        _auth.signOut().then((_) {
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/login',
+                            (route) => false,
+                          );
+                        });
+                      },
+                      icon: Icon(Icons.logout_outlined, color: Colors.white),
+                      label: Text(
+                        'Sair',
+                        style: GoogleFonts.openSans(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 17,
+                        ),
                       ),
-                      child: ListTile(
-                        leading: Icon(
-                          Icons.settings,
-                          color: Color(0xFF0E382C),
-                          size: 30,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF0E382C),
+                        minimumSize: Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        title: Text(
-                          'Gerenciar Conta',
-                          style: GoogleFonts.openSans(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        trailing: Icon(
-                          Icons.arrow_forward_ios,
-                          size: 18,
-                          color: Colors.grey[400],
-                        ),
-                        onTap: () {
-                          //TODO: criar a tela de configurações
-                        },
                       ),
                     ),
-                    SizedBox(height: 30),
+                    SizedBox(height: 10),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8),
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          _auth.signOut().then((_) {
-                            Navigator.pushNamedAndRemoveUntil(
-                              context,
-                              '/login',
-                              (route) => false,
-                            );
-                          });
-                        },
-                        icon: Icon(Icons.logout, color: Colors.white),
-                        label: Text(
-                          'Sair',
-                          style: GoogleFonts.openSans(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 17,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 200,
+                            child: ElevatedButton.icon(
+                              onPressed: _confirmDeleteAccount,
+                              icon: Icon(
+                                Icons.delete_forever_outlined,
+                                color: Colors.white,
+                              ),
+                              label: Text(
+                                'Excluir Conta',
+                                style: GoogleFonts.openSans(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 17,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                minimumSize: Size(0, 50),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF0E382C),
-                          minimumSize: Size(double.infinity, 50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
+                        ],
                       ),
                     ),
                   ],
@@ -358,7 +417,6 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
           );
         },
       ),
-
       bottomNavigationBar: DoctorNavbar(
         currentIndex: _selectedIndex,
         onTap: (index) => _onTabTapped(context, index),
