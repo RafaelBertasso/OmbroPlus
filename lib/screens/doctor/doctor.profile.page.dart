@@ -239,23 +239,49 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
                       top: 150,
                       child: GestureDetector(
                         onTap: _showImageOptions,
-                        child: CircleAvatar(
-                          radius: 60,
-                          backgroundColor: Color(0xFF0E382C),
-                          child: _profileImage != null
-                              ? ClipOval(
-                                  child: Image.memory(
-                                    base64Decode(_profileImage!),
-                                    width: 120,
-                                    height: 120,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : Icon(
-                                  Icons.person,
+                        child: Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            CircleAvatar(
+                              radius: 60,
+                              backgroundColor: Color(0xFF0E382C),
+                              child: _profileImage != null
+                                  ? ClipOval(
+                                      child: Image.memory(
+                                        base64Decode(_profileImage!),
+                                        width: 120,
+                                        height: 120,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : Text(
+                                      (nome.isNotEmpty && nome.length >= 2)
+                                          ? nome.substring(0, 2).toUpperCase()
+                                          : '',
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 48,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                            ),
+                            Container(
+                              padding: EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[400],
+                                shape: BoxShape.circle,
+                                border: Border.all(
                                   color: Colors.white,
-                                  size: 54,
+                                  width: 2,
                                 ),
+                              ),
+                              child: Icon(
+                                Icons.photo,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
