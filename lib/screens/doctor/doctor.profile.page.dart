@@ -185,6 +185,7 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
                   (route) => false,
                 );
               } catch (e) {
+                //TODO: Consertar o botão de excluir conta
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Erro ao excluir a conta.'),

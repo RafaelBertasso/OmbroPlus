@@ -1,16 +1,57 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
-class PatientListPage extends StatefulWidget {
-  const PatientListPage({super.key});
+class DoctorListPage extends StatefulWidget {
+  const DoctorListPage({super.key});
 
   @override
-  State<PatientListPage> createState() => _PatientListPageState();
+  State<DoctorListPage> createState() => _DoctorListPageState();
 }
 
-class _PatientListPageState extends State<PatientListPage> {
+class _DoctorListPageState extends State<DoctorListPage> {
   String _search = '';
+
+  Widget _buildLeadingAvatar(DocumentSnapshot specialist) {
+    final name =
+        (specialist.data() as Map<String, dynamic>?)?['nome'] as String? ?? '';
+    final profileImageUrl =
+        (specialist.data() as Map<String, dynamic>?)?['profileImage']
+            as String?;
+
+    if (profileImageUrl != null && profileImageUrl.isNotEmpty) {
+      try {
+        final Uint8List bytes = base64Decode(profileImageUrl);
+        return CircleAvatar(
+          radius: 25,
+          backgroundColor: Color(0xFF0E382C),
+          backgroundImage: MemoryImage(bytes),
+        );
+      } catch (e) {
+        print('Erro ao decodificar Base64 para $name: $e');
+      }
+    }
+    final initials = name.length >= 2
+        ? name.substring(0, 2).toUpperCase()
+        : name;
+
+    return CircleAvatar(
+      radius: 25,
+      backgroundColor: Color(0xFF0E382C),
+      child: Text(
+        initials,
+        style: GoogleFonts.montserrat(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,14 +59,14 @@ class _PatientListPageState extends State<PatientListPage> {
       body: Column(
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(12, 12, 12, 4),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Buscar paciente',
-                prefixIcon: Icon(Icons.search, color: Colors.black),
+                hintText: 'Buscar especialista',
+                prefixIcon: const Icon(Icons.search, color: Colors.black),
                 filled: true,
-                fillColor: Color(0xFFF4F7F6),
-                contentPadding: EdgeInsets.symmetric(
+                fillColor: const Color(0xFFF4F7F6),
+                contentPadding: const EdgeInsets.symmetric(
                   vertical: 12,
                   horizontal: 0,
                 ),
@@ -42,18 +83,18 @@ class _PatientListPageState extends State<PatientListPage> {
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
-                  .collection('pacientes')
+                  .collection('especialistas')
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(
+                  return const Center(
                     child: CircularProgressIndicator(color: Color(0xFF0E382C)),
                   );
                 }
                 if (snapshot.hasError) {
                   return Center(
                     child: Text(
-                      'Erro ao carregar pacientes',
+                      'Erro ao carregar especialistas',
                       style: GoogleFonts.montserrat(
                         fontSize: 16,
                         color: Colors.grey[700],
@@ -66,10 +107,11 @@ class _PatientListPageState extends State<PatientListPage> {
                   final nome = (doc['nome'] ?? '').toString().toLowerCase();
                   return nome.contains(_search.toLowerCase());
                 }).toList();
+
                 if (filtered.isEmpty) {
                   return Center(
                     child: Text(
-                      'Nenhum paciente encontrado',
+                      'Nenhum especialista encontrado',
                       style: GoogleFonts.montserrat(
                         fontSize: 16,
                         color: Colors.black54,
@@ -77,22 +119,16 @@ class _PatientListPageState extends State<PatientListPage> {
                     ),
                   );
                 }
+
                 return ListView.separated(
-                  padding: EdgeInsets.only(top: 10),
+                  padding: const EdgeInsets.only(top: 10),
                   itemBuilder: (context, index) {
-                    final patient = filtered[index];
+                    final specialist = filtered[index];
                     return ListTile(
-                      leading: CircleAvatar(
-                        radius: 25,
-                        backgroundColor: Color(0xFF0E382C),
-                        child: Icon(
-                          Icons.person,
-                          color: Colors.white,
-                          size: 30,
-                        ),
-                      ),
+                      leading: _buildLeadingAvatar(specialist),
+
                       title: Text(
-                        patient['nome'] ?? '',
+                        specialist['nome'] ?? '',
                         style: GoogleFonts.montserrat(
                           fontSize: 16,
                           color: Colors.black,
@@ -102,20 +138,20 @@ class _PatientListPageState extends State<PatientListPage> {
                       onTap: () {
                         Navigator.pushNamed(
                           context,
-                          '/patient-detail',
+                          '/specialist-details',
                           arguments: {
-                            'name': patient['nome'],
-                            'id': patient.id,
+                            'name': specialist['nome'],
+                            'id': specialist.id,
                           },
                         );
                       },
-                      contentPadding: EdgeInsets.symmetric(
+                      contentPadding: const EdgeInsets.symmetric(
                         horizontal: 18,
                         vertical: 2,
                       ),
                     );
                   },
-                  separatorBuilder: (_, __) => SizedBox(height: 4),
+                  separatorBuilder: (_, __) => const SizedBox(height: 4),
                   itemCount: filtered.length,
                 );
               },

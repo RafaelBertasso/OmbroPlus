@@ -1,6 +1,7 @@
 import 'package:Ombro_Plus/screens/doctor.register.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.chat.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.edit.profile.page.dart';
+import 'package:Ombro_Plus/screens/doctor/doctor.list.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.main.chat.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.profile.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.protocols.page.dart';
@@ -17,6 +18,7 @@ import 'package:Ombro_Plus/screens/patient/patient.home.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.main.chat.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.profile.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.protocol.page.dart';
+import 'package:Ombro_Plus/screens/user.list.page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:Ombro_Plus/screens/login.page.dart';
@@ -36,6 +38,8 @@ class OmbroPlus extends StatelessWidget {
         '/login': (context) => LoginPage(),
         '/patient-register': (context) => PatientRegisterPage(),
         '/specialist-register': (context) => DoctorRegisterPage(),
+        '/doctor-list': (context) => DoctorListPage(),
+        '/user-list': (context) => UserListPage(),
         '/doctor-edit-profile': (context) => DoctorEditProfilePage(),
         '/forgot-password': (context) => ForgotPasswordPage(),
         '/doctor-home': (context) => DoctorHomePage(),
