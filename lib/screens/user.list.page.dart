@@ -67,7 +67,7 @@ class _UserListPageState extends State<UserListPage>
         child: Icon(Icons.add, color: Colors.white),
         onPressed: () {
           final route = _tabController.index == 0
-              ? '/patient-register'
+              ? '/patient-invite'
               : '/specialist-register';
           Navigator.pushNamed(context, route);
         },
