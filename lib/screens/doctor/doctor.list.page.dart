@@ -138,7 +138,7 @@ class _DoctorListPageState extends State<DoctorListPage> {
                       onTap: () {
                         Navigator.pushNamed(
                           context,
-                          '/specialist-details',
+                          '/doctor-edit-profile',
                           arguments: {
                             'name': specialist['nome'],
                             'id': specialist.id,

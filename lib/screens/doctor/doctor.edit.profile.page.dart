@@ -24,28 +24,47 @@ class _DoctorEditProfilePageState extends State<DoctorEditProfilePage> {
   final crmMaskFormatter = MaskedInputFormatter('00000000-0/BR');
 
   bool _isSaving = false;
+  String? _specialistId;
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
   }
 
-  Future<void> _loadUserData() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final doc = await FirebaseFirestore.instance
-          .collection('especialistas')
-          .doc(user.uid)
-          .get();
-      final data = doc.data();
-      if (data != null) {
-        _nameController.text = data['nome'] ?? '';
-        _emailController.text = data['email'] ?? '';
-        _phoneController.text = data['telefone'] ?? '';
-        _crefitoController.text = data['crefito'] ?? '';
-        _crmController.text = data['crm'] ?? '';
-      }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_specialistId == null) {
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      final passedId = args?['id'] as String;
+
+      _specialistId = passedId;
+      _loadUserData(_specialistId!);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Erro: ID do especialista não encontrado. Certifique-se de estar logado ou de ter navegado a partir da lista.',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _loadUserData(String docId) async {
+    final doc = await FirebaseFirestore.instance
+        .collection('especialistas')
+        .doc(docId)
+        .get();
+    final data = doc.data();
+    if (data != null) {
+      _nameController.text = data['nome'] ?? '';
+      _emailController.text = data['email'] ?? '';
+      _phoneController.text = data['telefone'] ?? '';
+      _crefitoController.text = data['crefito'] ?? '';
+      _crmController.text = data['crm'] ?? '';
     }
   }
 
@@ -57,24 +76,17 @@ class _DoctorEditProfilePageState extends State<DoctorEditProfilePage> {
     setState(() {
       _isSaving = true;
     });
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      try {
-        final isEmailChanged = user.email != _emailController.text.trim();
+    final targetDocId = _specialistId!;
+    final currentUser = FirebaseAuth.instance.currentUser;
+    try {
+      final isEditingSelf = currentUser?.uid == targetDocId;
+      if (isEditingSelf) {
+        final isEmailChanged =
+            currentUser!.email != _emailController.text.trim();
         if (isEmailChanged) {
-          await user.verifyBeforeUpdateEmail(_emailController.text.trim());
-        }
-        await FirebaseFirestore.instance
-            .collection('especialistas')
-            .doc(user.uid)
-            .update({
-              'email': _emailController.text.trim(),
-              'telefone': _phoneController.text.trim(),
-              'crefito': _crefitoController.text.trim(),
-              'crm': _crmController.text.trim(),
-            });
-
-        if (isEmailChanged) {
+          await currentUser.verifyBeforeUpdateEmail(
+            _emailController.text.trim(),
+          );
           showDialog(
             context: context,
             barrierDismissible: false,
@@ -113,42 +125,51 @@ class _DoctorEditProfilePageState extends State<DoctorEditProfilePage> {
               );
             },
           );
-        } else {
-          final messenger = ScaffoldMessenger.of(context);
-          messenger.showMaterialBanner(
-            MaterialBanner(
-              content: Text(
-                'Perfil atualizado com sucesso!',
-                style: TextStyle(color: Colors.white),
-              ),
-              backgroundColor: Color(0xFF0E382C),
-              leading: Icon(Icons.check_circle_outline, color: Colors.white),
-              actions: [
-                TextButton(
-                  onPressed: () => messenger.hideCurrentMaterialBanner(),
-                  child: Icon(Icons.close, color: Colors.white),
-                ),
-              ],
-            ),
-          );
-          Future.delayed(Duration(seconds: 3), () {
-            messenger.hideCurrentMaterialBanner();
-          });
-          Navigator.pop(context);
         }
-      } catch (e) {
-        print(e.toString());
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro ao salvar o perfil.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      } finally {
-        setState(() {
-          _isSaving = false;
-        });
       }
+      await FirebaseFirestore.instance
+          .collection('especialistas')
+          .doc(targetDocId)
+          .update({
+            'email': _emailController.text.trim(),
+            'telefone': _phoneController.text.trim(),
+            'crefito': _crefitoController.text.trim(),
+            'crm': _crmController.text.trim(),
+          });
+
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.showMaterialBanner(
+        MaterialBanner(
+          content: Text(
+            'Perfil atualizado com sucesso!',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Color(0xFF0E382C),
+          leading: Icon(Icons.check_circle_outline, color: Colors.white),
+          actions: [
+            TextButton(
+              onPressed: () => messenger.hideCurrentMaterialBanner(),
+              child: Icon(Icons.close, color: Colors.white),
+            ),
+          ],
+        ),
+      );
+      Future.delayed(Duration(seconds: 3), () {
+        messenger.hideCurrentMaterialBanner();
+      });
+      Navigator.pop(context);
+    } catch (e) {
+      print(e.toString());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao salvar o perfil.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isSaving = false;
+      });
     }
   }
 

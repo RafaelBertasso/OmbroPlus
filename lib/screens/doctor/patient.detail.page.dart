@@ -11,6 +11,9 @@ class PatientDetailPage extends StatelessWidget {
     final patientName = args != null && args['name'] != null
         ? args['name'] as String
         : 'Paciente';
+    final patientId = args != null && args['id'] != null
+        ? args['id'] as String
+        : 'ID_NAO_ENCONTRADO';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F6),
@@ -95,7 +98,11 @@ class PatientDetailPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      onPressed: () {},
+                      onPressed: () => Navigator.pushNamed(
+                        context,
+                        '/patient-edit-profile',
+                        arguments: {'name': patientName, 'id': patientId},
+                      ),
                       child: Text(
                         'Editar',
                         style: GoogleFonts.montserrat(
