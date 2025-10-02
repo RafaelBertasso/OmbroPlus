@@ -113,6 +113,42 @@ class PatientDetailPage extends StatelessWidget {
                       ),
                     ),
                   ),
+                  SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF0E382C),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadiusGeometry.circular(16),
+                        ),
+                      ),
+                      icon: Icon(
+                        Icons.description_outlined,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {
+                        final patientId = args != null && args['id'] != null
+                            ? args['id'] as String
+                            : 'ID_NAO_ENCONTRADO';
+
+                        Navigator.pushNamed(
+                          context,
+                          '/patient-clinical-form',
+                          arguments: {'id': patientId},
+                        );
+                      },
+                      label: Text(
+                        'Preencher Ficha Clínica',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

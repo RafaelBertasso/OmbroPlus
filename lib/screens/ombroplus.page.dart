@@ -14,6 +14,7 @@ import 'package:Ombro_Plus/screens/doctor/patient.log.page.dart';
 import 'package:Ombro_Plus/screens/initial.page.dart';
 import 'package:Ombro_Plus/screens/patient.register.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.chat.page.dart';
+import 'package:Ombro_Plus/screens/patient/patient.clinical.form.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.dashboard.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.home.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.main.chat.page.dart';
@@ -61,6 +62,7 @@ class OmbroPlus extends StatelessWidget {
         '/patient-main-chat': (context) => PatientMainChatPage(),
         '/patient-profile': (context) => PatientProfilePage(),
         '/patient-chat': (context) => PatientChatPage(),
+        '/patient-clinical-form': (context) => PatientClinicalFormPage(),
       },
       initialRoute: _auth.currentUser == null ? '/login' : '/',
       debugShowCheckedModeBanner: false,

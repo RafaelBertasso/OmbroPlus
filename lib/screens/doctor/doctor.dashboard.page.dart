@@ -62,10 +62,10 @@ class _DoctorDashboardPageState extends State<DoctorDashboardPage> {
                   SizedBox(height: 16),
                   Row(
                     children: [
-                      FutureBuilder<QuerySnapshot>(
-                        future: FirebaseFirestore.instance
+                      StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance
                             .collection('pacientes')
-                            .get(),
+                            .snapshots(),
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {

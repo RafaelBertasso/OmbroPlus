@@ -14,8 +14,6 @@ class DoctorHomePage extends StatefulWidget {
 class _DoctorHomePageState extends State<DoctorHomePage> {
   final int _selectedIndex = 0;
   final user = FirebaseAuth.instance.currentUser;
-  bool _isAdmin = false;
-  bool _isCheckingAdmin = true;
 
   void _onTabTapped(int index) {
     if (index == _selectedIndex) return;
@@ -40,42 +38,6 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
   @override
   void initState() {
     super.initState();
-    _checkAdminStatus();
-  }
-
-  Future<void> _checkAdminStatus() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      setState(() {
-        _isAdmin = false;
-        _isCheckingAdmin = false;
-      });
-      return;
-    }
-    try {
-      final docSnapshot = await FirebaseFirestore.instance
-          .collection('especialistas')
-          .doc(user.uid)
-          .get();
-
-      if (docSnapshot.exists) {
-        final data = docSnapshot.data();
-        if (data?['isAdmin'] == true) {
-          setState(() {
-            _isAdmin = true;
-          });
-        }
-      }
-    } catch (e) {
-      print("Erro ao verificar status de administrador: $e");
-      setState(() {
-        _isAdmin = false;
-      });
-    } finally {
-      setState(() {
-        _isCheckingAdmin = false;
-      });
-    }
   }
 
   Future<String> getUserName() async {
@@ -90,13 +52,6 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isCheckingAdmin) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(color: Color(0xFF0E382C)),
-        ),
-      );
-    }
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F6),
       body: Column(
@@ -217,15 +172,6 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
           ),
         ],
       ),
-      floatingActionButton: _isAdmin
-          ? FloatingActionButton(
-              onPressed: () =>
-                  Navigator.pushNamed(context, '/specialist-register'),
-              backgroundColor: Color(0xFF0E382C),
-              tooltip: 'Adicionar Especialista',
-              child: Icon(Icons.person_add, color: Colors.white),
-            )
-          : null,
       bottomNavigationBar: DoctorNavbar(
         currentIndex: _selectedIndex,
         onTap: _onTabTapped,

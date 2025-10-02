@@ -23,8 +23,7 @@ class _PatientDropdownState extends State<PatientDropdown> {
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('users')
-          .where('role', isEqualTo: 'paciente')
+          .collection('pacientes')
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {

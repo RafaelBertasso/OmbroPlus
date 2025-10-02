@@ -123,7 +123,7 @@ class _PatientInvitePageState extends State<PatientInvitePage> {
         ? 'Olá ${patientName.split(' ')[0]}, '
         : 'Olá!';
     final String message =
-        '$welcomeMessage Seu fisioterapeuta enviou um convite para o acompanhamento do seu caso. \n'
+        '$welcomeMessage seu fisioterapeuta enviou um convite para o acompanhamento do seu caso. \n'
         '1. Clique no link para ir ao portal do aplicativo: $appDistributionLink \n'
         '2. No portal, insira seu e-mail para receber o link de downaload. \n'
         '3. Verifique seu e-mail e instale o app. \n'
