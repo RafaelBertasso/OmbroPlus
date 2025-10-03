@@ -68,6 +68,7 @@ class _PatientClinicalFormPageState extends State<PatientClinicalFormPage> {
     'Estética',
     'Outro',
   ];
+  String _patientName = 'Paciente';
 
   @override
   void didChangeDependencies() {
@@ -119,8 +120,73 @@ class _PatientClinicalFormPageState extends State<PatientClinicalFormPage> {
         final data = doc.data()!;
 
         setState(() {
-          _diagnosticoPrincipal = data['diagnosticoPrincipal'];
-          //TODO: completar carregamento dos campos
+          _patientName = data['nome'];
+          final ladoAfetadoString = data['ladoAfetado'] as String?;
+          if (ladoAfetadoString != null) {
+            _ladoAfetado = LadoAfetado.values.firstWhere(
+              (e) => e.name == ladoAfetadoString,
+              orElse: () => LadoAfetado.direito,
+            );
+          }
+          _fezFisioterapiaAntes = data['fezFisioterapiaAntes'] as bool?;
+          _doencasAssociadasController.text = data['doencasAssociadas'] ?? '';
+
+          final diagnostico = data['diagnosticoPrincipal'] as String?;
+          if (diagnostico != null && diagnostico.startsWith('Outro:')) {
+            _diagnosticoPrincipal = 'Outro';
+            _isDiagnosticoOutroSelected = true;
+            _diagnosticoOutroController.text = diagnostico.substring(7).trim();
+          } else {
+            _diagnosticoPrincipal = diagnostico;
+          }
+
+          _tipoTratamento = data['tipoTratamento'];
+          _detalhesTratamentoController.text = data['detalhesTratamento'] ?? '';
+          _dataTratamentoController.text = data['dataTratamento'] ?? '';
+          _medicoResponsavelController.text = data['medicoResponsavel'] ?? '';
+
+          final nivelDorString = data['nivelDor'] as String?;
+          if (nivelDorString != null) {
+            _nivelDor = NivelDor.values.firstWhere(
+              (e) => e.name == nivelDorString,
+              orElse: () => NivelDor.leve,
+            );
+          }
+
+          final mobilidadeOmbroString = data['mobilidadeOmbro'] as String?;
+          if (mobilidadeOmbroString != null) {
+            _mobilidadeOmbro = NivelMobilidade.values.firstWhere(
+              (e) => e.name == mobilidadeOmbroString,
+              orElse: () => NivelMobilidade.limitada,
+            );
+          }
+
+          final objetivo = data['objetivoTratamento'] as String?;
+          if (objetivo != null && objetivo.startsWith('Outro:')) {
+            _objetivoTratamento = 'Outro';
+            _isObjetivoOutroSelected = true;
+            _objetivoOutroController.text = objetivo.substring(7).trim();
+          } else {
+            _objetivoTratamento = objetivo;
+          }
+
+          final dificuldadesSalvas =
+              data['dificuldadesPrincipais'] as List<dynamic>? ?? [];
+          _dificuldadesPrincipais.keys.forEach((key) {
+            _dificuldadesPrincipais[key] = dificuldadesSalvas.contains(key);
+          });
+
+          final dificuldadeOutrasEntry = dificuldadesSalvas.firstWhere(
+            (item) => item.toString().startsWith('Outras:'),
+            orElse: () => null,
+          );
+          if (dificuldadeOutrasEntry != null) {
+            _dificuldadesPrincipais['Outros'] = true;
+            _dificuldadesOutrasController.text = dificuldadeOutrasEntry
+                .toString()
+                .substring(8)
+                .trim();
+          }
         });
       }
     } catch (e) {
@@ -187,6 +253,15 @@ class _PatientClinicalFormPageState extends State<PatientClinicalFormPage> {
 
             'lastClinicalUpdate': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
+
+      await FirebaseFirestore.instance.collection('activity_feed').add({
+        'type': 'CLINICAL_FORM_COMPLETED',
+        'patientName': _patientName,
+        'message': 'Ficha clínica de $_patientName preenchida/atualizada',
+        'timestamp': FieldValue.serverTimestamp(),
+        'patientId': _patientId,
+      });
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Ficha clínica salva com sucesso!')),
@@ -266,13 +341,15 @@ class _PatientClinicalFormPageState extends State<PatientClinicalFormPage> {
                     }),
                     values: LadoAfetado.values,
                   ),
-                  RadioGroupField(
+                  RadioGroupField<String>(
                     title: 'Já fez Fisioterapia antes?',
-                    groupValue: _fezFisioterapiaAntes,
+                    groupValue: _fezFisioterapiaAntes == true
+                        ? 'Sim'
+                        : (_fezFisioterapiaAntes == false ? 'Não' : null),
                     onChanged: (val) => setState(() {
-                      _fezFisioterapiaAntes = val;
+                      _fezFisioterapiaAntes = val == 'Sim';
                     }),
-                    values: [true, false],
+                    values: const ['Sim', 'Não'],
                   ),
                   TextFormField(
                     controller: _doencasAssociadasController,

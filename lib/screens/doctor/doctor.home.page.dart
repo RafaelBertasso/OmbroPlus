@@ -1,3 +1,4 @@
+import 'package:Ombro_Plus/components/Activity.item.dart';
 import 'package:Ombro_Plus/components/doctor.navbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ class DoctorHomePage extends StatefulWidget {
 class _DoctorHomePageState extends State<DoctorHomePage> {
   final int _selectedIndex = 0;
   final user = FirebaseAuth.instance.currentUser;
+  String? _specialistId;
 
   void _onTabTapped(int index) {
     if (index == _selectedIndex) return;
@@ -35,9 +37,44 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
     }
   }
 
+  IconData _getIconForActivityType(String type) {
+    switch (type) {
+      case 'EXERCISE_COMPLETED':
+        return Icons.check_circle_outline;
+      case 'NEW_PATIENT':
+        return Icons.person_add;
+      case 'PAIN_ALERT':
+        return Icons.warning_amber_rounded;
+      case 'PROTOCOL_FINISHED':
+        return Icons.star;
+      case 'INACTIVITY': // 🟢 AÇÃO ADICIONAL
+        return Icons.timer_off;
+      default:
+        return Icons.info_outline;
+    }
+  }
+
+  Color _getColorForActivityType(String type) {
+    switch (type) {
+      case 'EXERCISE_COMPLETED':
+        return Colors.green.shade700;
+      case 'NEW_PATIENT':
+        return const Color(0xFF0E382C);
+      case 'PAIN_ALERT':
+        return Colors.red.shade700;
+      case 'PROTOCOL_FINISHED':
+        return Colors.amber.shade800;
+      case 'INACTIVITY': // 🟢 AÇÃO ADICIONAL
+        return Colors.orange.shade700;
+      default:
+        return Colors.grey;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _specialistId = user?.uid;
   }
 
   Future<String> getUserName() async {
@@ -157,7 +194,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                     SizedBox(height: 60),
                     //TODO: Trocar essa parte
                     Text(
-                      'Principais Notícias de Hoje',
+                      'Atividades Recentes',
                       style: GoogleFonts.montserrat(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
@@ -165,6 +202,61 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                       ),
                     ),
                     SizedBox(height: 18),
+                    StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('activity_feed')
+                          .orderBy('timestamp', descending: true)
+                          .limit(6)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF0E382C),
+                            ),
+                          );
+                        }
+                        if (snapshot.hasError) {
+                          return Text(
+                            'Erro ao carregar o feed de atividades',
+                            style: TextStyle(color: Colors.red),
+                          );
+                        }
+                        final documents = snapshot.data?.docs ?? [];
+                        if (documents.isEmpty) {
+                          return Text('Nenhuma atividade recente encontrada.');
+                        }
+                        return ListView.builder(
+                          physics: NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount: documents.length,
+                          itemBuilder: (context, index) {
+                            final activity =
+                                documents[index].data() as Map<String, dynamic>;
+                            final type =
+                                activity['type'] as String? ?? 'DEFAULT';
+                            final iconData = _getIconForActivityType(type);
+                            final iconColor = _getColorForActivityType(type);
+
+                            return Padding(
+                              padding: EdgeInsetsGeometry.only(bottom: 8),
+                              child: ActivityItem(
+                                title: activity['patientName'],
+                                subtitle: activity['message'],
+                                icon: iconData,
+                                iconColor: iconColor,
+                                onTap: () => Navigator.pushNamed(
+                                  context,
+                                  activity['relatedRoute'],
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    SizedBox(height: 30),
                   ],
                 ),
               ),
