@@ -1,7 +1,10 @@
 import 'package:Ombro_Plus/components/app.logo.dart';
 import 'package:Ombro_Plus/components/doctor.navbar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 class DoctorMainChatPage extends StatefulWidget {
   const DoctorMainChatPage({super.key});
@@ -12,55 +15,7 @@ class DoctorMainChatPage extends StatefulWidget {
 
 class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
   final int _selectedIndex = 3;
-  final List<Map<String, String>> chats = [
-    {'name': 'Rodrigo Garro', 'lastMessage': 'Olá, doutor!', 'time': '10:30'},
-    {
-      'name': 'André Ramalho',
-      'lastMessage': 'Estou me sentindo melhor.',
-      'time': '15:37',
-    },
-    {
-      'name': 'Cássio Ramos',
-      'lastMessage': 'Preciso de uma consulta.',
-      'time': '08:45',
-    },
-    {
-      'name': 'Matheus Bidu',
-      'lastMessage': 'Obrigado pelo atendimento.',
-      'time': '12:15',
-    },
-    {
-      'name': 'Gustavo Scarpa',
-      'lastMessage': 'Quando é a próxima consulta?',
-      'time': '09:00',
-    },
-    {
-      'name': 'Rafael Sobis',
-      'lastMessage': 'Estou com dúvidas sobre o tratamento.',
-      'time': '14:20',
-    },
-    {
-      'name': 'Bruno Rodrigues',
-      'lastMessage': 'Agradeço pela ajuda.',
-      'time': '11:05',
-    },
-    {
-      'name': 'Lucas Lima',
-      'lastMessage': 'Estou seguindo as orientações.',
-      'time': '16:50',
-    },
-    {
-      'name': 'Felipe Melo',
-      'lastMessage': 'Como está meu progresso?',
-      'time': '13:30',
-    },
-    {
-      'name': 'Eduardo Vargas',
-      'lastMessage': 'Obrigado pelo suporte.',
-      'time': '17:15',
-    },
-  ];
-
+  String? _specialistId;
   String searchText = '';
 
   void _onTabTapped(int index) {
@@ -84,12 +39,14 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _specialistId = FirebaseAuth.instance.currentUser?.uid;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final filteredChats = chats.where((chat) {
-      final name = chat['name']!.toLowerCase();
-      final query = searchText.toLowerCase();
-      return name.contains(query);
-    }).toList();
+    final currentSpecialistId = _specialistId;
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F6),
       body: Column(
@@ -115,10 +72,10 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
                       hintText: 'Pesquisar conversas',
                       prefixIcon: Icon(Icons.search, color: Color(0xFF0E382C)),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: Color(0xFFF4F7F6),
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 16,
-                        vertical: 0,
+                        vertical: 12,
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -133,79 +90,150 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
                   ),
                   SizedBox(height: 18),
                   Expanded(
-                    child: filteredChats.isEmpty
-                        ? Center(
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: currentSpecialistId == null
+                          ? null
+                          : FirebaseFirestore.instance
+                                .collection('chats')
+                                .where(
+                                  'specialistId',
+                                  isEqualTo: currentSpecialistId,
+                                )
+                                .orderBy(
+                                  'lastMessageTimestamp',
+                                  descending: true,
+                                )
+                                .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF0E382C),
+                            ),
+                          );
+                        }
+                        if (snapshot.hasError) {
+                          print(
+                            'Erro ao carregar conversas: ${snapshot.error}',
+                          );
+                          return Center(
+                            child: Text('Erro ao carregar conversas'),
+                          );
+                        }
+
+                        final activeChats = snapshot.data?.docs ?? [];
+                        final filteredChats = activeChats.where((doc) {
+                          final name = (doc['patientName'] ?? '')
+                              .toString()
+                              .toLowerCase();
+                          final query = searchText.toLowerCase();
+                          return name.contains(query);
+                        }).toList();
+                        if (filteredChats.isEmpty) {
+                          return Center(
                             child: Text(
-                              'Nenhuma conversa',
+                              'Nenhuma conversa encontrada',
                               style: GoogleFonts.openSans(
                                 color: Colors.black54,
                               ),
                             ),
-                          )
-                        : ListView.separated(
-                            itemCount: filteredChats.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: 10),
-                            itemBuilder: (context, index) {
-                              final chat = filteredChats[index];
-                              return Card(
-                                color: const Color(0xFFF4F7F6),
-                                elevation: 2,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundColor: Color(0xFF0E382C),
-                                    child: Text(
-                                      chat['name']![0],
-                                      style: GoogleFonts.montserrat(
-                                        color: Colors.white,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  title: Text(
-                                    chat['name'] ?? '',
+                          );
+                        }
+                        return ListView.separated(
+                          itemCount: filteredChats.length,
+                          separatorBuilder: (_, __) => SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            final chatRoom = filteredChats[index];
+                            final chatData =
+                                chatRoom.data() as Map<String, dynamic>;
+                            final patientName =
+                                chatData['patientName'] ?? 'Paciente';
+                            final lastMessage =
+                                chatData['lastMessage'] ?? 'Inicie a conversa';
+
+                            final timestamp =
+                                chatData['lastMessageTimestamp'] as Timestamp?;
+                            final timeString = timestamp != null
+                                ? DateFormat('HH:mm').format(timestamp.toDate())
+                                : '';
+                            final initialLetter = patientName.isNotEmpty
+                                ? patientName[0].toUpperCase()
+                                : '?';
+
+                            return Card(
+                              color: Color(0xFFF4F7F6),
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: Color(0xFF0E382C),
+                                  child: Text(
+                                    initialLetter,
                                     style: GoogleFonts.montserrat(
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black,
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  subtitle: Text(
-                                    chat['lastMessage'] ?? '',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.openSans(
-                                      color: Colors.black54,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  trailing: Text(
-                                    chat['time'] ?? '',
-                                    style: GoogleFonts.openSans(
-                                      color: Colors.black54,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  onTap: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/chat-detail',
-                                      arguments: chat,
-                                    );
-                                  },
                                 ),
-                              );
-                            },
-                          ),
+                                title: Text(
+                                  patientName,
+                                  style: GoogleFonts.montserrat(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  lastMessage,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.openSans(
+                                    color: Colors.black54,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                trailing: Text(
+                                  timeString,
+                                  style: GoogleFonts.openSans(
+                                    color: Colors.black54,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/chat-detail',
+                                    arguments: {
+                                      'roomId': chatRoom.id,
+                                      'name': patientName,
+                                      'patientId': chatRoom.id
+                                          .replaceAll('_', '')
+                                          .replaceAll(currentSpecialistId!, ''),
+                                    },
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pushNamed(context, '/doctor-new-chat');
+        },
+        backgroundColor: Color(0xFF0E382C),
+        child: Icon(Icons.chat, color: Colors.white),
       ),
       bottomNavigationBar: DoctorNavbar(
         currentIndex: _selectedIndex,

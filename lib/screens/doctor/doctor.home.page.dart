@@ -47,7 +47,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
         return Icons.warning_amber_rounded;
       case 'PROTOCOL_FINISHED':
         return Icons.star;
-      case 'INACTIVITY': // 🟢 AÇÃO ADICIONAL
+      case 'INACTIVITY':
         return Icons.timer_off;
       default:
         return Icons.info_outline;
@@ -64,7 +64,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
         return Colors.red.shade700;
       case 'PROTOCOL_FINISHED':
         return Colors.amber.shade800;
-      case 'INACTIVITY': // 🟢 AÇÃO ADICIONAL
+      case 'INACTIVITY':
         return Colors.orange.shade700;
       default:
         return Colors.grey;
