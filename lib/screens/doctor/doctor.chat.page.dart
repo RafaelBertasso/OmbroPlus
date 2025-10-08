@@ -1,4 +1,3 @@
-import 'package:Ombro_Plus/components/chat.messages.list.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -226,7 +225,6 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
       body: Column(
         children: [
           Expanded(
-            // 🟢 STREAMBUILDER PARA MENSAGENS EM TEMPO REAL
             child: currentRoomId == null
                 ? const Center(
                     child: Text('Erro: Sala de chat não identificada.'),
@@ -236,10 +234,7 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
                         .collection('chats')
                         .doc(currentRoomId)
                         .collection('messages')
-                        .orderBy(
-                          'timestamp',
-                          descending: false,
-                        ) // Ordem ascendente para processamento
+                        .orderBy('timestamp', descending: false)
                         .snapshots(),
 
                     builder: (context, snapshot) {
@@ -261,13 +256,11 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
                       List<Widget> chatWidgets = [];
                       DateTime? lastDateLabel;
 
-                      // Processa as mensagens do Firestore (ascendente)
                       for (var doc in documents) {
                         final msg = doc.data() as Map<String, dynamic>;
                         final timestamp = msg['timestamp'] as Timestamp?;
                         final msgDate = timestamp?.toDate() ?? DateTime.now();
 
-                        // Lógica de Agrupamento de Data (Igual ao seu código)
                         bool shouldShowLabel =
                             lastDateLabel == null ||
                             !DateUtils.isSameDay(msgDate, lastDateLabel);
@@ -299,19 +292,15 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
                         );
                       }
 
-                      // Retorna o ListView: Invertemos o scroll para que a lista fique grudada no final
                       return ListView(
                         controller: _scrollController,
-                        reverse:
-                            true, // Mantém a lista grudada no campo de texto
-                        children: chatWidgets.reversed
-                            .toList(), // Inverte a ordem para que as últimas mensagens fiquem embaixo
+                        reverse: true,
+                        children: chatWidgets.reversed.toList(),
                       );
                     },
                   ),
           ),
 
-          // Campo de Entrada de Mensagem (Input Box)
           Container(
             color: Colors.grey[100],
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -320,6 +309,7 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
                 Expanded(
                   child: TextField(
                     controller: _controller,
+                    textCapitalization: TextCapitalization.sentences,
                     textInputAction: TextInputAction.send,
                     onSubmitted: (_) => _sendMessage(),
                     decoration: InputDecoration(

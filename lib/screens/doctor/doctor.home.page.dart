@@ -1,4 +1,4 @@
-import 'package:Ombro_Plus/components/Activity.item.dart';
+import 'package:Ombro_Plus/components/activity.item.dart';
 import 'package:Ombro_Plus/components/doctor.navbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';

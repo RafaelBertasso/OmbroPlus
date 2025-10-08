@@ -12,6 +12,7 @@ import 'package:Ombro_Plus/screens/doctor/patient.detail.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.list.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.invite.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.log.page.dart';
+import 'package:Ombro_Plus/screens/doctor/protocol.schedule.editor.page.dart';
 import 'package:Ombro_Plus/screens/initial.page.dart';
 import 'package:Ombro_Plus/screens/patient.register.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.chat.page.dart';
@@ -33,48 +34,97 @@ class OmbroPlus extends StatelessWidget {
   OmbroPlus({super.key});
   final _auth = FirebaseAuth.instance;
 
+  final Map<String, WidgetBuilder> _simpleRoutes = {
+    '/': (context) => InitialPage(),
+    '/login': (context) => LoginPage(),
+    '/patient-register': (context) => PatientRegisterPage(),
+    '/specialist-register': (context) => DoctorRegisterPage(),
+    '/doctor-list': (context) => DoctorListPage(),
+    '/user-list': (context) => UserListPage(),
+    '/doctor-edit-profile': (context) => DoctorEditProfilePage(),
+    '/patient-invite': (context) => PatientInvitePage(),
+    '/forgot-password': (context) => ForgotPasswordPage(),
+    '/doctor-home': (context) => DoctorHomePage(),
+    '/doctor-dashboard': (context) => DoctorDashboardPage(),
+    '/doctor-protocols': (context) => DoctorProtocolsPage(),
+    '/doctor-main-chat': (context) => DoctorMainChatPage(),
+    '/doctor-profile': (context) => DoctorProfilePage(),
+    '/chat-detail': (context) => DoctorChatPage(),
+    '/patient-list': (context) => PatientListPage(),
+    '/patient-detail': (context) => PatientDetailPage(),
+    '/patient-log': (context) => PatientLogPage(),
+    '/new-protocol': (context) => NewProtocolPage(),
+    '/new-exercise': (context) => NewExercisePage(),
+    '/patient-home': (context) => PatientHomePage(),
+    '/patient-dashboard': (context) => PatientDashboardPage(),
+    '/patient-protocols': (context) => PatientProtocolPage(),
+    '/patient-main-chat': (context) => PatientMainChatPage(),
+    '/patient-profile': (context) => PatientProfilePage(),
+    '/patient-chat': (context) => PatientChatPage(),
+    '/patient-clinical-form': (context) => PatientClinicalFormPage(),
+    '/doctor-new-chat': (context) => PatientSelectionForChatPage(),
+  };
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      routes: {
-        '/': (context) => InitialPage(),
-        '/login': (context) => LoginPage(),
-        '/patient-register': (context) => PatientRegisterPage(),
-        '/specialist-register': (context) => DoctorRegisterPage(),
-        '/doctor-list': (context) => DoctorListPage(),
-        '/user-list': (context) => UserListPage(),
-        '/doctor-edit-profile': (context) => DoctorEditProfilePage(),
-        '/patient-invite': (context) => PatientInvitePage(),
-        '/forgot-password': (context) => ForgotPasswordPage(),
-        '/doctor-home': (context) => DoctorHomePage(),
-        '/doctor-dashboard': (context) => DoctorDashboardPage(),
-        '/doctor-protocols': (context) => DoctorProtocolsPage(),
-        '/doctor-main-chat': (context) => DoctorMainChatPage(),
-        '/doctor-profile': (context) => DoctorProfilePage(),
-        '/chat-detail': (context) => DoctorChatPage(),
-        '/patient-list': (context) => PatientListPage(),
-        '/patient-detail': (context) => PatientDetailPage(),
-        '/patient-log': (context) => PatientLogPage(),
-        '/new-protocol': (context) => NewProtocolPage(),
-        '/new-exercise': (context) => NewExercisePage(),
-        '/patient-home': (context) => PatientHomePage(),
-        '/patient-dashboard': (context) => PatientDashboardPage(),
-        '/patient-protocols': (context) => PatientProtocolPage(),
-        '/patient-main-chat': (context) => PatientMainChatPage(),
-        '/patient-profile': (context) => PatientProfilePage(),
-        '/patient-chat': (context) => PatientChatPage(),
-        '/patient-clinical-form': (context) => PatientClinicalFormPage(),
-        '/doctor-new-chat': (context) => PatientSelectionForChatPage(),
+      routes: _simpleRoutes,
+
+      onGenerateRoute: (settings) {
+        if (settings.name == '/protocol-schedule-editor') {
+          final arguments = settings.arguments as Map<String, dynamic>?;
+
+          final String? patientId = arguments?['patientId'] as String?;
+          final String? startDateString = arguments?['startDate'] as String?;
+          final String? endDateString = arguments?['endDate'] as String?;
+
+          if (patientId != null &&
+              startDateString != null &&
+              endDateString != null) {
+            try {
+              final startDate = DateTime.parse(startDateString);
+              final endDate = DateTime.parse(endDateString);
+
+              return MaterialPageRoute(
+                builder: (context) {
+                  return ProtocolScheduleEditorPage(
+                    patientId: patientId,
+                    startDate: startDate,
+                    endDate: endDate,
+                  );
+                },
+                settings: settings,
+              );
+            } catch (e) {
+              debugPrint(
+                'Erro de parsing de data para ProtocolScheduleEditor: $e',
+              );
+            }
+          }
+          return MaterialPageRoute(
+            builder: (_) => Scaffold(
+              appBar: AppBar(title: const Text('Erro de Navegação')),
+              body: const Center(
+                child: Text(
+                  'Não foi possível carregar o editor de cronograma. Argumentos ausentes ou inválidos.',
+                ),
+              ),
+            ),
+          );
+        }
+
+        return null;
       },
+
       initialRoute: _auth.currentUser == null ? '/login' : '/',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         inputDecorationTheme: InputDecorationTheme(
-          labelStyle: TextStyle(color: Color(0xFF0E382C)),
+          labelStyle: const TextStyle(color: Color(0xFF0E382C)),
           focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: Color(0xFF0E382C), width: 2),
+            borderSide: const BorderSide(color: Color(0xFF0E382C), width: 2),
           ),
-          enabledBorder: UnderlineInputBorder(
+          enabledBorder: const UnderlineInputBorder(
             borderSide: BorderSide(color: Colors.grey),
           ),
         ),

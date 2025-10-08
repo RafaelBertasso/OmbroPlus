@@ -1,5 +1,8 @@
+import 'package:Ombro_Plus/components/patient.selection.modal.dart';
+import 'package:Ombro_Plus/components/section.title.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 class NewProtocolPage extends StatefulWidget {
   const NewProtocolPage({super.key});
@@ -9,13 +12,105 @@ class NewProtocolPage extends StatefulWidget {
 }
 
 class _NewProtocolPageState extends State<NewProtocolPage> {
+  String? _selectedPatientId;
+  String? _selectedPatientName;
+
   final _protocolNameController = TextEditingController();
-  final _patientNameController = TextEditingController();
   final _startDateController = TextEditingController();
   final _endDateController = TextEditingController();
   final _notesController = TextEditingController();
+  bool _isSaving = false;
 
-  List<Map<String, String>> exercises = [];
+  List<Map<String, String>> exercises = [
+    {'title': 'Rotação Externa', 'subtitle': '3 séries de 12 repetições'},
+    {'title': 'Elevação Frontal', 'subtitle': '3 séries de 10 repetições'},
+  ];
+
+  @override
+  void dispose() {
+    _protocolNameController.dispose();
+    _startDateController.dispose();
+    _endDateController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Future<void> _selectDate(TextEditingController controller) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF0E382C),
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF0E382C),
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        controller.text = DateFormat('dd/MM/yyyy').format(picked);
+      });
+    }
+  }
+
+  void _selectPatient() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.8,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) {
+          return PatientSelectionModal(
+            scrollController: scrollController,
+            onPatientSelected: (id, name) {
+              setState(() {
+                _selectedPatientId = id;
+                _selectedPatientName = name;
+              });
+              Navigator.pop(context);
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  void _saveProtocol() {
+    // TODO: Implementar a lógica de salvamento do protocolo
+  }
+
+  DateTime? _parseDateString(String dateString) {
+    try {
+      final parts = dateString.split('/');
+      if (parts.length == 3) {
+        return DateTime(
+          int.parse(parts[2]),
+          int.parse(parts[1]),
+          int.parse(parts[0]),
+        );
+      }
+    } catch (e) {
+      return null;
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +119,7 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF0E382C),
         title: Text(
-          'Criar Protocolo',
+          'Criar Novo Protocolo',
           style: GoogleFonts.montserrat(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -37,257 +132,219 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(18.0),
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Nome do protocolo e Paciente
-              TextField(
+              SectionTitle(title: 'Configurações Básicas'),
+              TextFormField(
                 controller: _protocolNameController,
                 decoration: InputDecoration(
-                  hint: Text(
-                    'Nome do Protocolo',
-                    style: GoogleFonts.openSans(color: Colors.black54),
-                  ),
+                  labelText: 'Nome do Protocolo',
+                  hintText: 'Ex: Fase 1 - Fortalecimento',
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                  fillColor: const Color.fromARGB(140, 181, 181, 181),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 14,
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   filled: true,
+                  fillColor: Color(0xFFF4F7F6),
                 ),
               ),
               SizedBox(height: 12),
-              TextField(
-                controller: _patientNameController,
-                decoration: InputDecoration(
-                  hint: Text(
-                    'Nome do Paciente',
-                    style: GoogleFonts.openSans(color: Colors.black54),
+              OutlinedButton.icon(
+                onPressed: _selectPatient,
+                icon: Icon(Icons.person_search, color: Color(0xFF0E382C)),
+                label: Text(
+                  _selectedPatientName != null
+                      ? 'Paciente: $_selectedPatientName'
+                      : 'Selecionar Paciente',
+                  style: GoogleFonts.montserrat(
+                    fontWeight: FontWeight.w600,
+                    color: _selectedPatientName != null
+                        ? Colors.black
+                        : Colors.black54,
+                    fontSize: 16,
                   ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(11),
+                ),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: Size(double.infinity, 50),
+                  padding: EdgeInsets.symmetric(vertical: 14),
+                  side: BorderSide(
+                    color: _selectedPatientName == null
+                        ? Colors.redAccent
+                        : Color(0xFF0E382C),
                   ),
-                  fillColor: const Color.fromARGB(140, 181, 181, 181),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 14,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  filled: true,
                 ),
               ),
-              SizedBox(height: 26),
+              SizedBox(height: 30),
 
-              // Exercícios
-              Text(
-                'Exercícios',
-                style: GoogleFonts.montserrat(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                ),
-              ),
-              SizedBox(height: 10),
+              SectionTitle(title: 'Cronograma de Exercícios'),
+              SizedBox(height: 12),
               Column(
                 children: [
-                  for (final ex in exercises)
-                    Card(
-                      color: Color(0xFFF4F7F6),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      margin: EdgeInsets.only(bottom: 8),
-                      elevation: 0.8,
-                      child: ListTile(
-                        leading: Icon(
-                          Icons.fitness_center,
-                          color: Color(0xFF667786),
-                        ),
-                        title: Text(
-                          ex['title']!,
-                          style: GoogleFonts.openSans(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                          ),
-                        ),
-                        subtitle: Text(
-                          ex['subtitle']!,
-                          style: GoogleFonts.openSans(
-                            fontSize: 14,
-                            color: Colors.black54,
-                          ),
-                        ),
-                        trailing: Icon(Icons.chevron_right),
-                        onTap: () {
-                          // Futuro: editar/excluir exercício
-                        },
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 4,
-                        ),
-                      ),
-                    ),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () =>
-                          Navigator.pushNamed(context, '/new-exercise'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(
-                          98,
-                          232,
-                          232,
-                          232,
-                        ),
-                        minimumSize: Size(double.infinity, 48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(9),
-                        ),
-                      ),
-                      child: Text(
-                        'Adicionar exercício',
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        final startDateString = _startDateController.text;
+                        final endDateString = _endDateController.text;
+
+                        if (_selectedPatientId == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Por favor, selecione um paciente antes de adicionar exercícios.',
+                              ),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                          return;
+                        }
+
+                        if (startDateString.isEmpty || endDateString.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Por favor, selecione as datas de início e término antes de adicionar exercícios.',
+                              ),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                          return;
+                        }
+                        final startDate = _parseDateString(startDateString);
+                        final endDate = _parseDateString(endDateString);
+
+                        if (startDate == null ||
+                            endDate == null ||
+                            endDate.isBefore(startDate)) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Por favor, verifique as datas. A data de término deve ser após a data de início.',
+                              ),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                          return;
+                        }
+
+                        Navigator.pushNamed(
+                          context,
+                          '/protocol-schedule-editor',
+                          arguments: {
+                            'patientId': _selectedPatientId,
+                            'startDate': startDate.toIso8601String(),
+                            'endDate': endDate.toIso8601String(),
+                          },
+                        );
+                      },
+                      icon: Icon(Icons.calendar_month, color: Colors.black),
+                      label: Text(
+                        'Editar Cronograma',
                         style: GoogleFonts.openSans(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                           color: Colors.black,
                         ),
                       ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFFE0E0E0),
+                        minimumSize: Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                     ),
                   ),
+                  SizedBox(height: 30),
+
+                  // Agendar
+                  SectionTitle(title: 'Agendamento e Notas'),
+                  SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _startDateController,
+                          readOnly: true,
+                          onTap: () => _selectDate(_startDateController),
+                          decoration: InputDecoration(
+                            labelText: 'Início',
+                            hintText: 'Data de Início',
+                            prefixIcon: Icon(Icons.calendar_today, size: 20),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            filled: true,
+                            fillColor: Color(0xFFF4F7F6),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _endDateController,
+                          readOnly: true,
+                          onTap: () => _selectDate(_endDateController),
+                          decoration: InputDecoration(
+                            labelText: 'Fim',
+                            hintText: 'Data de Término',
+                            prefixIcon: Icon(Icons.event_available, size: 20),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            filled: true,
+                            fillColor: Color(0xFFF4F7F6),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 26),
+
+                  TextFormField(
+                    controller: _notesController,
+                    maxLines: 6,
+                    decoration: InputDecoration(
+                      labelText: 'Anotações/Instruções para o Paciente',
+                      alignLabelWithHint: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      filled: true,
+                      fillColor: Color(0xFFF4F7F6),
+                    ),
+                  ),
+                  SizedBox(height: 30),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // TODO: Salvar protocolo
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF0E382C),
+                        minimumSize: Size(double.infinity, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                      ),
+                      child: Text(
+                        'Salvar Protocolo',
+                        style: GoogleFonts.openSans(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 20),
                 ],
               ),
-              SizedBox(height: 24),
-
-              // Agendar
-              Text(
-                'Agendar',
-                style: GoogleFonts.montserrat(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                ),
-              ),
-              SizedBox(height: 10),
-              TextField(
-                controller: _startDateController,
-                readOnly: true,
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2100),
-                  );
-                  if (picked != null) {
-                    _startDateController.text =
-                        '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
-                  }
-                },
-                decoration: InputDecoration(
-                  hint: Text(
-                    'Data de Início',
-                    style: GoogleFonts.openSans(color: Colors.black54),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                  fillColor: const Color.fromARGB(140, 181, 181, 181),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 14,
-                  ),
-                  filled: true,
-                ),
-              ),
-              SizedBox(height: 10),
-              TextField(
-                controller: _endDateController,
-                readOnly: true,
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2100),
-                  );
-                  if (picked != null) {
-                    _endDateController.text =
-                        '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
-                  }
-                },
-                decoration: InputDecoration(
-                  hint: Text(
-                    'Data Final',
-                    style: GoogleFonts.openSans(color: Colors.black54),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                  fillColor: const Color.fromARGB(140, 181, 181, 181),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 14,
-                  ),
-                  filled: true,
-                ),
-              ),
-              SizedBox(height: 26),
-
-              // Notas
-              Text(
-                'Notas',
-                style: GoogleFonts.montserrat(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                ),
-              ),
-              SizedBox(height: 10),
-              TextField(
-                controller: _notesController,
-                minLines: 3,
-                maxLines: 6,
-                decoration: InputDecoration(
-                  hint: Text(
-                    'Adicionar anotações para o paciente',
-                    style: GoogleFonts.openSans(color: Colors.black54),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                  fillColor: const Color.fromARGB(140, 181, 181, 181),
-                  filled: true,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 16,
-                  ),
-                ),
-              ),
-              SizedBox(height: 28),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Salvar protocolo
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF0E382C),
-                    minimumSize: Size(double.infinity, 48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                  ),
-                  child: Text(
-                    'Salvar Protocolo',
-                    style: GoogleFonts.openSans(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
             ],
           ),
         ),
