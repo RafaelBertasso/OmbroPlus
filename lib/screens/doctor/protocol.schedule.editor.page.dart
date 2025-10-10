@@ -1,16 +1,25 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+
+const String DATE_KEY_FORMAT = 'dd/MM/yyyy';
+const String DATE_KEY_LOCALE = 'pt_BR';
 
 class ProtocolScheduleEditorPage extends StatefulWidget {
   final String patientId;
   final DateTime startDate;
   final DateTime endDate;
+  final String? protocolId;
+  final Map<String, List<Map<String, dynamic>>>? currentSchedule;
   const ProtocolScheduleEditorPage({
     super.key,
     required this.patientId,
     required this.startDate,
     required this.endDate,
+    this.protocolId,
+    this.currentSchedule,
   });
 
   @override
@@ -23,7 +32,7 @@ class _ProtocolScheduleEditorPageState
   DateTime _selectedDate = DateTime.now();
   List<DateTime> _protocolDays = [];
 
-  Map<String, List<Map<String, String>>> _schedule = {};
+  Map<String, List<Map<String, dynamic>>> _schedule = {};
 
   @override
   void initState() {
@@ -37,10 +46,13 @@ class _ProtocolScheduleEditorPageState
         DateTime.now().year,
         DateTime.now().month,
         DateTime.now().day,
-      ); // Apenas data, sem hora
+      );
     }
-
-    _loadScheduleData();
+    if (widget.currentSchedule != null && widget.currentSchedule!.isNotEmpty) {
+      _schedule = Map.from(widget.currentSchedule!);
+    } else if (widget.protocolId != null) {
+      _loadScheduleData();
+    }
   }
 
   List<DateTime> _generateDays(DateTime start, DateTime end) {
@@ -52,20 +64,72 @@ class _ProtocolScheduleEditorPageState
     return days;
   }
 
-  void _loadScheduleData() {
-    final startDateString = DateFormat('dd/MM/yyyy').format(widget.startDate);
+  void _addScheduleExercises(Map<String, dynamic> scheduleEntry) {
+    final List<String> daysIso = scheduleEntry['diasIso'] as List<String>;
 
+    final exerciseDetails = {
+      'exercicioId': scheduleEntry['exercicioId'] as String,
+      'title': scheduleEntry['exercicioNome'] as String,
+      'subtitle':
+          '${scheduleEntry['series']} séries x ${scheduleEntry['repeticoes']} reps',
+      'series': scheduleEntry['series'],
+      'repeticoes': scheduleEntry['repeticoes'],
+    };
     setState(() {
-      _schedule[startDateString] = [
-        {'title': 'Rotação Externa', 'subtitle': '3 séries x 12 reps'},
-        {'title': 'Elevação Frontal', 'subtitle': '3 séries x 10 reps'},
-      ];
+      for (var dayIso in daysIso) {
+        final day = DateTime.parse(dayIso);
+        final dateKey = DateFormat(
+          DATE_KEY_FORMAT,
+          DATE_KEY_LOCALE,
+        ).format(day);
+        _schedule.putIfAbsent(dateKey, () => []).add(exerciseDetails);
+      }
     });
-    // TODO: buscar o 'schedule' do Firestore aqui.
   }
 
-  Future<void> _saveScheduleData() async {
-    // TODO: salvar o 'schedule' no Firestore aqui.
+  void _loadScheduleData() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('protocolos')
+          .doc(widget.protocolId)
+          .get();
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data() as Map<String, dynamic>;
+        final scheduleData = data['schedule'] as Map<String, dynamic>? ?? {};
+        final Map<String, List<Map<String, dynamic>>> loadedSchedule = {};
+        scheduleData.forEach((dateKey, exercisesList) {
+          if (exercisesList is List) {
+            loadedSchedule[dateKey] = exercisesList
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList();
+          }
+        });
+        setState(() {
+          _schedule = loadedSchedule;
+        });
+      } else {
+        print('Protocolo ${widget.protocolId} não encontrado.');
+      }
+    } catch (e) {
+      print('Erro ao carregar cronograma: $e');
+    }
+  }
+
+  Future<void> _finishEditingSchedule() async {
+    final specialistId = FirebaseAuth.instance.currentUser?.uid;
+    if (specialistId == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro: Usuário não autenticado.')));
+      return;
+    }
+    if (_schedule.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('O cronograma está vazio. Adicione exercícios')),
+      );
+      return;
+    }
+    Navigator.pop(context, _schedule);
   }
 
   Widget _buildDateSelectorItem(DateTime date) {
@@ -122,7 +186,10 @@ class _ProtocolScheduleEditorPageState
   }
 
   Widget _buildDailyScheduleList() {
-    final selectedDateKey = DateFormat('dd/MM/yyyy').format(_selectedDate);
+    final selectedDateKey = DateFormat(
+      DATE_KEY_FORMAT,
+      DATE_KEY_LOCALE,
+    ).format(_selectedDate);
     final exercisesForDay = _schedule[selectedDateKey] ?? [];
 
     return Column(
@@ -145,7 +212,22 @@ class _ProtocolScheduleEditorPageState
           child: SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () => Navigator.pushNamed(context, '/new-exercise'),
+              onPressed: () async {
+                final List<String> serializedDays = _protocolDays
+                    .map((d) => d.toIso8601String())
+                    .toList();
+                final result = await Navigator.pushNamed(
+                  context,
+                  '/add-exercise-to-protocol',
+                  arguments: {
+                    'patientId': widget.patientId,
+                    'protocolDays': serializedDays,
+                  },
+                );
+                if (result != null && result is Map<String, dynamic>) {
+                  _addScheduleExercises(result);
+                }
+              },
               icon: const Icon(
                 Icons.add_circle_outline,
                 color: Color(0xFF0E382C),
@@ -240,10 +322,7 @@ class _ProtocolScheduleEditorPageState
           IconButton(
             icon: Icon(Icons.save_as_outlined, color: Colors.white),
             onPressed: () async {
-              await _saveScheduleData();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Cronograma salvo com sucesso!')),
-              );
+              await _finishEditingSchedule();
             },
             tooltip: 'Salvar Cronograma',
           ),

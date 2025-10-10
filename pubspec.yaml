@@ -28,6 +28,7 @@ dependencies:
   qr_flutter: ^4.1.0
   font_awesome_flutter: ^10.10.0
   flutter_masked_text2: ^0.9.1
+  youtube_parser: ^2.1.4
 
 dev_dependencies:
   flutter_test:

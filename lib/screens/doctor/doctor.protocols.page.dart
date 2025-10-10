@@ -1,5 +1,7 @@
 import 'package:Ombro_Plus/components/app.logo.dart';
 import 'package:Ombro_Plus/components/doctor.navbar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -12,12 +14,7 @@ class DoctorProtocolsPage extends StatefulWidget {
 
 class _DoctorProtocolsPageState extends State<DoctorProtocolsPage> {
   final int _selectedIndex = 2;
-  final List<Map<String, String>> protocols = [
-    {'name': 'Protocolo 1', 'patient': 'Paciente A'},
-    {'name': 'Protocolo 2', 'patient': 'Paciente B'},
-    {'name': 'Protocolo 3', 'patient': 'Paciente C'},
-    {'name': 'Protocolo 4', 'patient': 'Paciente D'},
-  ];
+  final String? specialistId = FirebaseAuth.instance.currentUser?.uid;
 
   void _onTabTapped(BuildContext context, int index) {
     if (index == _selectedIndex) return;
@@ -67,39 +64,100 @@ class _DoctorProtocolsPageState extends State<DoctorProtocolsPage> {
                     ),
                   ),
                   Expanded(
-                    child: ListView.separated(
-                      itemCount: protocols.length,
-                      separatorBuilder: (_, __) => SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final protocol = protocols[index];
-                        return Card(
-                          color: Color(0xFFF4F7F6),
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: ListTile(
-                            leading: Icon(
-                              Icons.description,
-                              color: Colors.black,
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('protocolos')
+                          .where('especialistaId', isEqualTo: specialistId)
+                          .orderBy('criadoEm', descending: true)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF0E382C),
                             ),
-                            title: Text(
-                              protocol['name'] ?? '',
-                              style: GoogleFonts.montserrat(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
+                          );
+                        }
+                        if (snapshot.hasError) {
+                          print(snapshot.error);
+                          return Center(
+                            child: Text('Erro ao carregar protocolos.'),
+                          );
+                        }
+                        final protocolsDocs = snapshot.data?.docs ?? [];
+                        if (protocolsDocs.isEmpty) {
+                          return Center(
+                            child: Text(
+                              'Nenhum protocolo criado ainda. Crie um novo!',
+                              style: GoogleFonts.openSans(
+                                color: Colors.black54,
                               ),
                             ),
-                            subtitle: Text(
-                              'Paciente: ${protocol['patient'] ?? ''}',
-                              style: GoogleFonts.openSans(fontSize: 13),
-                            ),
-                            onTap: () {},
-                            trailing: Icon(
-                              Icons.chevron_right,
-                              color: Colors.grey,
-                            ),
-                          ),
+                          );
+                        }
+                        return ListView.separated(
+                          itemCount: protocolsDocs.length,
+                          separatorBuilder: (_, __) => SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final protocolData =
+                                protocolsDocs[index].data()
+                                    as Map<String, dynamic>;
+                            final protocolId = protocolsDocs[index].id;
+                            return FutureBuilder<DocumentSnapshot>(
+                              future: FirebaseFirestore.instance
+                                  .collection('pacientes')
+                                  .doc(protocolData['pacienteId'])
+                                  .get(),
+                              builder: (context, patientSnapshot) {
+                                String patientName = 'Carregando Paciente';
+                                if (patientSnapshot.hasData &&
+                                    patientSnapshot.data!.exists) {
+                                  patientName =
+                                      patientSnapshot.data!['nome'] ??
+                                      'Paciente sem nome';
+                                } else if (patientSnapshot.hasError) {
+                                  patientName = 'Erro ao carregar nome';
+                                }
+                                return Card(
+                                  color: Color(0xFFF4F7F6),
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: ListTile(
+                                    leading: Icon(
+                                      Icons.description,
+                                      color: Colors.black,
+                                    ),
+                                    title: Text(
+                                      protocolData['nome'] ??
+                                          'Protocolo sem nome',
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      'Paciente: $patientName',
+                                      style: GoogleFonts.openSans(fontSize: 13),
+                                    ),
+                                    onTap: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/protocol-details',
+                                        arguments: {'protocoloId': protocolId},
+                                      );
+                                    },
+                                    trailing: Icon(
+                                      Icons.chevron_right,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
                         );
                       },
                     ),

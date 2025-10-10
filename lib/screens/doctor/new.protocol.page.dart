@@ -1,5 +1,7 @@
 import 'package:Ombro_Plus/components/patient.selection.modal.dart';
 import 'package:Ombro_Plus/components/section.title.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -20,11 +22,7 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
   final _endDateController = TextEditingController();
   final _notesController = TextEditingController();
   bool _isSaving = false;
-
-  List<Map<String, String>> exercises = [
-    {'title': 'Rotação Externa', 'subtitle': '3 séries de 12 repetições'},
-    {'title': 'Elevação Frontal', 'subtitle': '3 séries de 10 repetições'},
-  ];
+  Map<String, List<Map<String, dynamic>>> _protocolSchedule = {};
 
   @override
   void dispose() {
@@ -92,8 +90,51 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
     );
   }
 
-  void _saveProtocol() {
-    // TODO: Implementar a lógica de salvamento do protocolo
+  void _saveProtocol() async {
+    if (_selectedPatientId == null || _protocolNameController.text.isEmpty) {
+      return;
+    }
+    if (_protocolSchedule.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Por favor, adicione exercícios ao cronograma'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+    setState(() {
+      _isSaving = true;
+    });
+    final specialistId = FirebaseAuth.instance.currentUser?.uid;
+    final newProtocolData = {
+      'nome': _protocolNameController.text.trim(),
+      'pacienteId': _selectedPatientId,
+      'especialistaId': specialistId,
+      'dataInicio': _parseDateString(_startDateController.text),
+      'dataFim': _parseDateString(_endDateController.text),
+      'notas': _notesController.text.trim(),
+      'schedule': _protocolSchedule,
+      'status': 'active',
+      'criadoEm': FieldValue.serverTimestamp(),
+    };
+    try {
+      await FirebaseFirestore.instance
+          .collection('protocolos')
+          .add(newProtocolData);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Protocolo criado e agendado com sucesso!')),
+      );
+      Navigator.pop(context);
+    } catch (_) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro ao salvar protocolo')));
+    } finally {
+      setState(() {
+        _isSaving = false;
+      });
+    }
   }
 
   DateTime? _parseDateString(String dateString) {
@@ -187,7 +228,7 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () {
+                      onPressed: () async {
                         final startDateString = _startDateController.text;
                         final endDateString = _endDateController.text;
 
@@ -231,15 +272,29 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
                           return;
                         }
 
-                        Navigator.pushNamed(
+                        final result = await Navigator.pushNamed(
                           context,
                           '/protocol-schedule-editor',
                           arguments: {
                             'patientId': _selectedPatientId,
                             'startDate': startDate.toIso8601String(),
                             'endDate': endDate.toIso8601String(),
+                            'currentSchedule': _protocolSchedule,
                           },
                         );
+                        if (result != null &&
+                            result is Map<String, List<Map<String, dynamic>>>) {
+                          setState(() {
+                            _protocolSchedule = result;
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Cronograma atualizado! Salve o protocolo para finalizar',
+                              ),
+                            ),
+                          );
+                        }
                       },
                       icon: Icon(Icons.calendar_month, color: Colors.black),
                       label: Text(
@@ -322,9 +377,7 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // TODO: Salvar protocolo
-                      },
+                      onPressed: _saveProtocol,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF0E382C),
                         minimumSize: Size(double.infinity, 48),

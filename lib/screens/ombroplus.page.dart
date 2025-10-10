@@ -12,6 +12,8 @@ import 'package:Ombro_Plus/screens/doctor/patient.detail.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.list.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.invite.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.log.page.dart';
+import 'package:Ombro_Plus/screens/doctor/protocol.details.page.dart';
+import 'package:Ombro_Plus/screens/doctor/protocol.exercise.adder.page.dart';
 import 'package:Ombro_Plus/screens/doctor/protocol.schedule.editor.page.dart';
 import 'package:Ombro_Plus/screens/initial.page.dart';
 import 'package:Ombro_Plus/screens/patient.register.page.dart';
@@ -109,6 +111,56 @@ class OmbroPlus extends StatelessWidget {
                   'Não foi possível carregar o editor de cronograma. Argumentos ausentes ou inválidos.',
                 ),
               ),
+            ),
+          );
+        }
+
+        if (settings.name == '/add-exercise-to-protocol') {
+          final arguments = settings.arguments as Map<String, dynamic>?;
+
+          final String? patientId = arguments?['patientId'] as String?;
+          final List<String>? protocolDaysString = arguments?['protocolDays']
+              ?.cast<String>();
+
+          if (patientId != null && protocolDaysString != null) {
+            return MaterialPageRoute(
+              builder: (context) {
+                return ProtocolExerciseAdderPage(
+                  patientId: patientId,
+                  protocolDays: protocolDaysString,
+                );
+              },
+              settings: settings,
+            );
+          }
+          return MaterialPageRoute(
+            builder: (_) => Scaffold(
+              appBar: AppBar(title: const Text('Erro de Navegação')),
+              body: const Center(
+                child: Text(
+                  'Não foi possível carregar o adicionador de exercícios. Argumentos ausentes ou inválidos.',
+                ),
+              ),
+            ),
+          );
+        }
+
+        if (settings.name == '/protocol-details') {
+          final arguments = settings.arguments as Map<String, dynamic>?;
+          final String? protocolId = arguments?['protocoloId'] as String?;
+
+          if (protocolId != null) {
+            return MaterialPageRoute(
+              builder: (context) {
+                return ProtocolDetailsPage(protocolId: protocolId);
+              },
+              settings: settings,
+            );
+          }
+          return MaterialPageRoute(
+            builder: (_) => Scaffold(
+              appBar: AppBar(title: Text('Erro')),
+              body: Center(child: Text('ID do protocolo ausente')),
             ),
           );
         }
