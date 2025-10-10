@@ -172,7 +172,7 @@ class ProtocolDetailsPage extends StatelessWidget {
                 ),
                 onTap: () {
                   Navigator.pop(modalContext);
-                  _updateProtocolStatus(context, protocolId, 'finalizado');
+                  _updateProtocolStatus(context, protocolId, 'finalized');
                 },
               ),
               Divider(height: 1),
@@ -198,7 +198,7 @@ class ProtocolDetailsPage extends StatelessWidget {
         SnackBar(
           backgroundColor: Color(0xFF0E382C),
           content: Text(
-            'Status do protocolo alterado para ${newStatus == 'finalizado' ? 'Finalizado' : 'Ativo'} com sucesso!',
+            'Status do protocolo alterado para ${newStatus == 'finalized' ? 'Finalizado' : 'Ativo'} com sucesso!',
           ),
         ),
       );
