@@ -246,10 +246,6 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                                 subtitle: activity['message'],
                                 icon: iconData,
                                 iconColor: iconColor,
-                                onTap: () => Navigator.pushNamed(
-                                  context,
-                                  activity['relatedRoute'],
-                                ),
                               ),
                             );
                           },

@@ -39,10 +39,44 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
   String? _currentUserId;
   final ScrollController _scrollController = ScrollController();
 
+  String? _patientName;
+  String? _specialistName;
+  Map<String, String?> _profileImageUrls = {};
+  Map<String, String> _userNames = {};
+
   @override
   void initState() {
     super.initState();
     _currentUserId = FirebaseAuth.instance.currentUser?.uid;
+  }
+
+  void _loadChatParticipantsDetails() async {
+    if (_patientId == null || _currentUserId == null) return;
+
+    final patientDoc = await FirebaseFirestore.instance
+        .collection('pacientes')
+        .doc(_patientId)
+        .get();
+    final patientData = patientDoc.data();
+    final patientName = patientData?['nome'] ?? 'Paciente';
+    final patientImage = patientData?['profileImage'] as String?;
+
+    final specialistDoc = await FirebaseFirestore.instance
+        .collection('especialistas')
+        .doc(_currentUserId)
+        .get();
+    final specialistData = specialistDoc.data();
+    final specialistName = specialistData?['nome'] ?? 'Especialista';
+    final specialistImage = specialistData?['profileImage'] as String?;
+
+    setState(() {
+      _patientName = patientName;
+      _specialistName = specialistName;
+      _userNames[_patientId!] = patientName;
+      _userNames[_currentUserId!] = specialistName;
+      _profileImageUrls[_patientId!] = patientImage;
+      _profileImageUrls[_currentUserId!] = specialistImage;
+    });
   }
 
   @override
@@ -53,6 +87,10 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       _roomId = args?['roomId'] as String?;
       _patientId = args?['id'] as String?;
+    }
+
+    if (_patientId != null) {
+      _loadChatParticipantsDetails();
     }
   }
 
@@ -88,7 +126,59 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
     });
   }
 
-  Widget _buildMessageBubble(Map<String, dynamic> msg, bool isMe) {
+  Widget _buildAvatar(String userId, bool isMe, String userName) {
+    final String? imageUrl = _profileImageUrls[userId];
+    final String initial = userName.isNotEmpty
+        ? userName[0].toUpperCase()
+        : '?';
+
+    // As cores corretas
+    final Color avatarBgColor = isMe
+        ? const Color(0xFF0E382C) // Cor primária para o Especialista (eu)
+        : Colors.grey.shade200; // Cor secundária para o Paciente (o outro)
+    final Color initialTextColor = isMe
+        ? Colors.white
+        : const Color(0xFF0E382C);
+
+    // 🔑 Otimizando a construção do CircleAvatar
+
+    // 1. Tenta usar a imagem de rede
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return Padding(
+        padding: EdgeInsets.only(right: isMe ? 0 : 8, left: isMe ? 8 : 0),
+        child: CircleAvatar(
+          radius: 14,
+          // 🔑 Usa NetworkImage como backgroundImage
+          backgroundImage: NetworkImage(imageUrl),
+          backgroundColor:
+              avatarBgColor, // O backgroundColor será visível brevemente
+        ),
+      );
+    }
+    // 2. Fallback para a letra inicial
+    else {
+      return Padding(
+        padding: EdgeInsets.only(right: isMe ? 0 : 8, left: isMe ? 8 : 0),
+        child: CircleAvatar(
+          radius: 14,
+          backgroundColor: avatarBgColor,
+          child: Text(
+            initial,
+            style: GoogleFonts.montserrat(
+              color: initialTextColor,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildMessageBubble(Map<String, dynamic> msg) {
+    final String senderId = msg['senderId'] as String;
+    final bool isMe = senderId == _currentUserId;
+    final String senderName = _userNames[senderId] ?? (isMe ? 'Eu' : 'Outro');
     final Color messageColor = isMe
         ? const Color(0xFF0E382C)
         : const Color.fromARGB(255, 199, 213, 203);
@@ -114,19 +204,7 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
                 : MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              if (!isMe)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: CircleAvatar(
-                    radius: 14,
-                    backgroundColor: Colors.grey[200],
-                    child: const Icon(
-                      Icons.person,
-                      color: Color(0xFF2A5C7D),
-                      size: 18,
-                    ),
-                  ),
-                ),
+              if (!isMe) _buildAvatar(senderId, isMe, senderName),
 
               Container(
                 constraints: BoxConstraints(
@@ -155,27 +233,15 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
                 ),
               ),
 
-              if (isMe)
-                Padding(
-                  padding: const EdgeInsets.only(left: 8.0),
-                  child: CircleAvatar(
-                    radius: 14,
-                    backgroundColor: const Color(0xFF8FC1A9),
-                    child: const Icon(
-                      Icons.person,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                  ),
-                ),
+              if (isMe) _buildAvatar(senderId, isMe, senderName),
             ],
           ),
 
           Padding(
             padding: EdgeInsets.only(
               top: 4,
-              right: isMe ? 20 : 0,
-              left: isMe ? 0 : 20,
+              right: isMe ? 45 : 0,
+              left: isMe ? 0 : 45,
             ),
             child: Text(
               timeString,
@@ -190,11 +256,10 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-
-    final args =
+    final patientNameArg =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final patientName = args?['name'] as String? ?? 'Paciente';
-    // O roomId já está no estado, mas o null check é importante
+    final nameToDisplay =
+        _patientName ?? patientNameArg?['name'] as String? ?? 'Paciente';
     final currentRoomId = _roomId;
 
     return Scaffold(
@@ -211,7 +276,7 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
             ),
             const SizedBox(width: 12),
             Text(
-              patientName.isNotEmpty ? patientName : 'Nome do Paciente',
+              nameToDisplay.isNotEmpty ? nameToDisplay : 'Nome do Paciente',
               style: GoogleFonts.montserrat(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -284,12 +349,7 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
                           lastDateLabel = msgDate;
                         }
 
-                        // Adiciona a bolha
-                        final isEspecialista =
-                            msg['senderId'] == _currentUserId;
-                        chatWidgets.add(
-                          _buildMessageBubble(msg, isEspecialista),
-                        );
+                        chatWidgets.add(_buildMessageBubble(msg));
                       }
 
                       return ListView(

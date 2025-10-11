@@ -15,6 +15,7 @@ class DoctorProtocolsPage extends StatefulWidget {
 class _DoctorProtocolsPageState extends State<DoctorProtocolsPage> {
   final int _selectedIndex = 2;
   final String? specialistId = FirebaseAuth.instance.currentUser?.uid;
+  String _currentFilter = 'active';
 
   void _onTabTapped(BuildContext context, int index) {
     if (index == _selectedIndex) return;
@@ -62,6 +63,88 @@ class _DoctorProtocolsPageState extends State<DoctorProtocolsPage> {
     );
   }
 
+  Stream<QuerySnapshot> _protocolStream() {
+    Query query = FirebaseFirestore.instance
+        .collection('protocolos')
+        .where('especialistaId', isEqualTo: specialistId);
+
+    if (_currentFilter != 'all') {
+      query = query.where('status', isEqualTo: _currentFilter);
+    }
+    query = query
+        .orderBy('nome', descending: false)
+        .orderBy('criadoEm', descending: true);
+    return query.snapshots();
+  }
+
+  void _showFilterMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext bc) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Wrap(
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Text(
+                  'Filtrar Protocolos',
+                  style: GoogleFonts.montserrat(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0E382C),
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.auto_awesome_mosaic_outlined,
+                  color: _currentFilter == 'all'
+                      ? const Color(0xFF0E382C)
+                      : Colors.grey,
+                ),
+                title: const Text('Todos'),
+                onTap: () {
+                  setState(() => _currentFilter = 'all');
+                  Navigator.pop(context);
+                },
+                selected: _currentFilter == 'all',
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.check_circle_outline,
+                  color: _currentFilter == 'active'
+                      ? Colors.green.shade700
+                      : Colors.grey,
+                ),
+                title: const Text('Ativos'),
+                onTap: () {
+                  setState(() => _currentFilter = 'active');
+                  Navigator.pop(context);
+                },
+                selected: _currentFilter == 'active',
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.archive_outlined,
+                  color: _currentFilter == 'finalized'
+                      ? Colors.red.shade700
+                      : Colors.grey,
+                ),
+                title: const Text('Finalizados'),
+                onTap: () {
+                  setState(() => _currentFilter = 'finalized');
+                  Navigator.pop(context);
+                },
+                selected: _currentFilter == 'finalized',
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,22 +164,30 @@ class _DoctorProtocolsPageState extends State<DoctorProtocolsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Protocolos',
-                    style: GoogleFonts.montserrat(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Protocolos',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => _showFilterMenu(context),
+                        icon: Icon(
+                          Icons.filter_list_outlined,
+                          color: Color(0xFF0E382C),
+                        ),
+                        tooltip: 'Filtrar Protocolos',
+                      ),
+                    ],
                   ),
                   Expanded(
                     child: StreamBuilder<QuerySnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collection('protocolos')
-                          .where('especialistaId', isEqualTo: specialistId)
-                          .orderBy('nome', descending: false)
-                          .orderBy('criadoEm', descending: true)
-                          .snapshots(),
+                      stream: _protocolStream(),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {

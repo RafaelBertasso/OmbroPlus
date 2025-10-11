@@ -358,7 +358,6 @@ class ProtocolDetailsPage extends StatelessWidget {
                   'patientId': patientId,
                   'startDate': startDate.toIso8601String(),
                   'endDate': endDate?.toIso8601String(),
-                  'currentSchedule': currentSchedule,
                 },
               );
             },
