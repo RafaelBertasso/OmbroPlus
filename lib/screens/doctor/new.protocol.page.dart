@@ -107,6 +107,8 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
       _isSaving = true;
     });
     final specialistId = FirebaseAuth.instance.currentUser?.uid;
+    final protocolName = _protocolNameController.text.trim();
+    final patientName = _selectedPatientName;
     final newProtocolData = {
       'nome': _protocolNameController.text.trim(),
       'pacienteId': _selectedPatientId,
@@ -122,6 +124,15 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
       await FirebaseFirestore.instance
           .collection('protocolos')
           .add(newProtocolData);
+      await FirebaseFirestore.instance.collection('activity_feed').add({
+        'type': 'PROTOCOL_CREATED',
+        'patientName': patientName,
+        'message':
+            'Protocolo $protocolName criado para o paciente $patientName',
+        'timestamp': FieldValue.serverTimestamp(),
+        'patientId': _selectedPatientId,
+      });
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Protocolo criado e agendado com sucesso!')),
       );
@@ -298,7 +309,7 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
                       },
                       icon: Icon(Icons.calendar_month, color: Colors.black),
                       label: Text(
-                        'Editar Cronograma',
+                        'Criar Cronograma',
                         style: GoogleFonts.openSans(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,

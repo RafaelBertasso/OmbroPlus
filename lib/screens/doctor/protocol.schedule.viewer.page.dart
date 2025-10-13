@@ -1,35 +1,30 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+// Constante para o formato da chave (Chave de Mapa no Firestore: YYYY-MM-DD)
 const String FIRESTORE_DATE_KEY = 'yyyy-MM-dd';
 
-class ProtocolScheduleEditorPage extends StatefulWidget {
-  final String patientId;
+class ProtocolScheduleViewerPage extends StatefulWidget {
+  final String protocolId;
   final DateTime startDate;
   final DateTime endDate;
-  final String? protocolId;
 
-  final Map<String, List<Map<String, dynamic>>>? currentSchedule;
-
-  const ProtocolScheduleEditorPage({
+  const ProtocolScheduleViewerPage({
     super.key,
-    required this.patientId,
+    required this.protocolId,
     required this.startDate,
     required this.endDate,
-    this.protocolId,
-    this.currentSchedule,
   });
 
   @override
-  State<ProtocolScheduleEditorPage> createState() =>
-      _ProtocolScheduleEditorPageState();
+  State<ProtocolScheduleViewerPage> createState() =>
+      _ProtocolScheduleViewerPageState();
 }
 
-class _ProtocolScheduleEditorPageState
-    extends State<ProtocolScheduleEditorPage> {
+class _ProtocolScheduleViewerPageState
+    extends State<ProtocolScheduleViewerPage> {
   DateTime _selectedDate = DateTime.now();
   List<DateTime> _protocolDays = [];
   Map<String, List<Map<String, dynamic>>> _schedule = {};
@@ -46,15 +41,11 @@ class _ProtocolScheduleEditorPageState
       orElse: () => _protocolDays.first,
     );
 
-    if (widget.currentSchedule != null && widget.protocolId == null) {
-      _schedule = Map.from(widget.currentSchedule!);
-      _isLoadingSchedule = false;
-    } else if (widget.protocolId != null) {
-      _loadScheduleData();
-    } else {
-      _isLoadingSchedule = false;
-    }
+    // Carrega os dados do Firestore para visualização
+    _loadScheduleData();
   }
+
+  // --- Lógica de Dados e Cast (Otimizada) ---
 
   List<DateTime> _generateDays(DateTime start, DateTime end) {
     final days = <DateTime>[];
@@ -65,64 +56,26 @@ class _ProtocolScheduleEditorPageState
     return days;
   }
 
-  void _addScheduleExercises(Map<String, dynamic> scheduleEntry) {
-    final List<String> daysIso = scheduleEntry['diasIso'] as List<String>;
-
-    final exerciseDetails = {
-      'exercicioId': scheduleEntry['exercicioId'] as String,
-      'title': scheduleEntry['exercicioNome'] as String,
-      'subtitle':
-          '${scheduleEntry['series']} séries x ${scheduleEntry['repeticoes']} reps',
-      'series': scheduleEntry['series'],
-      'repeticoes': scheduleEntry['repeticoes'],
-    };
-    setState(() {
-      for (var dayIso in daysIso) {
-        final day = DateTime.parse(dayIso);
-        final dateKey = DateFormat(FIRESTORE_DATE_KEY).format(day);
-        _schedule.putIfAbsent(dateKey, () => []).add(exerciseDetails);
-      }
-    });
-  }
-
-  void _removeExercise(String dateKey, int index) {
-    setState(() {
-      if (_schedule.containsKey(dateKey) &&
-          _schedule[dateKey]!.length > index) {
-        _schedule[dateKey]!.removeAt(index);
-        if (_schedule[dateKey]!.isEmpty) {
-          _schedule.remove(dateKey);
-        }
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Exercício removido do cronograma.'),
-              backgroundColor: Color(0xFF0E382C),
-            ),
-          );
-        }
-      }
-    });
-  }
-
+  // Método auxiliar para realizar o cast robusto do schedule
   Map<String, List<Map<String, dynamic>>> _castSchedule(
     Map<String, dynamic> scheduleData,
   ) {
     final Map<String, List<Map<String, dynamic>>> loadedSchedule = {};
 
-    scheduleData.forEach((dateKey, exercisesList) {
-      if (exercisesList is List) {
+    scheduleData.forEach((key, value) {
+      if (key is String && value is List) {
         try {
-          final List<Map<String, dynamic>> exercises = exercisesList
+          // Conversão robusta usando .cast() para segurança de tipos
+          final List<Map<String, dynamic>> exercises = value
               .cast<Map>()
               .map((e) => e.cast<String, dynamic>())
               .toList();
 
           if (exercises.isNotEmpty) {
-            loadedSchedule[dateKey] = exercises;
+            loadedSchedule[key] = exercises;
           }
         } catch (e) {
-          debugPrint('Erro de cast no dia $dateKey: $e');
+          debugPrint('Erro de cast interno no dia $key: $e');
         }
       }
     });
@@ -140,8 +93,7 @@ class _ProtocolScheduleEditorPageState
         final data = doc.data() as Map<String, dynamic>;
         final scheduleData = data['schedule'] as Map<String, dynamic>? ?? {};
 
-        final Map<String, List<Map<String, dynamic>>> loadedSchedule =
-            _castSchedule(scheduleData);
+        final loadedSchedule = _castSchedule(scheduleData);
 
         if (mounted) {
           setState(() {
@@ -167,28 +119,7 @@ class _ProtocolScheduleEditorPageState
     }
   }
 
-  Future<void> _finishEditingSchedule() async {
-    final specialistId = FirebaseAuth.instance.currentUser?.uid;
-    if (specialistId == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erro: Usuário não autenticado.')),
-        );
-      }
-      return;
-    }
-    if (_schedule.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('O cronograma está vazio. Adicione exercícios'),
-          ),
-        );
-      }
-      return;
-    }
-    Navigator.pop(context, _schedule);
-  }
+  // --- Widgets de Layout ---
 
   Widget _buildDateSelectorItem(DateTime date) {
     final isSelected = DateUtils.isSameDay(date, _selectedDate);
@@ -266,6 +197,7 @@ class _ProtocolScheduleEditorPageState
         child: CircularProgressIndicator(color: Color(0xFF0E382C)),
       );
     }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -277,50 +209,6 @@ class _ProtocolScheduleEditorPageState
               fontWeight: FontWeight.bold,
               fontSize: 18,
               color: const Color(0xFF0E382C),
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                final List<String> serializedDays = _protocolDays
-                    .map((d) => d.toIso8601String())
-                    .toList();
-                final result = await Navigator.pushNamed(
-                  context,
-                  '/add-exercise-to-protocol',
-                  arguments: {
-                    'patientId': widget.patientId,
-                    'protocolDays': serializedDays,
-                  },
-                );
-                if (result != null && result is Map<String, dynamic>) {
-                  _addScheduleExercises(result);
-                }
-              },
-              icon: const Icon(
-                Icons.add_circle_outline,
-                color: Color(0xFF0E382C),
-              ),
-              label: Text(
-                'Adicionar Exercício',
-                style: GoogleFonts.openSans(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: const Color(0xFF0E382C),
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE0E0E0),
-                minimumSize: const Size(double.infinity, 48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                elevation: 0,
-              ),
             ),
           ),
         ),
@@ -357,11 +245,6 @@ class _ProtocolScheduleEditorPageState
                             color: Colors.black54,
                           ),
                         ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () =>
-                              _removeExercise(selectedDateKey, index),
-                        ),
                       ),
                     );
                   },
@@ -378,7 +261,7 @@ class _ProtocolScheduleEditorPageState
       appBar: AppBar(
         backgroundColor: const Color(0xFF0E382C),
         title: Text(
-          'Cronograma Diário',
+          'Visualizar Cronograma',
           style: GoogleFonts.montserrat(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -388,13 +271,6 @@ class _ProtocolScheduleEditorPageState
         iconTheme: const IconThemeData(color: Colors.white, size: 26),
         elevation: 0.4,
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save_as_outlined, color: Colors.white),
-            onPressed: _finishEditingSchedule,
-            tooltip: 'Salvar Cronograma',
-          ),
-        ],
       ),
       body: Column(
         children: [

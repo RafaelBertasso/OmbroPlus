@@ -325,14 +325,6 @@ class ProtocolDetailsPage extends StatelessWidget {
   ) {
     final int scheduleDays = schedule.keys.length;
     final bool hasSchedule = scheduleDays > 0;
-    Map<String, List<Map<String, dynamic>>> currentSchedule = {};
-    schedule.forEach((key, value) {
-      if (value is List) {
-        currentSchedule[key] = value
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
-      }
-    });
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -352,18 +344,17 @@ class ProtocolDetailsPage extends StatelessWidget {
             onPressed: () {
               Navigator.pushNamed(
                 context,
-                '/protocol-schedule-editor',
+                '/protocol-schedule-viewer',
                 arguments: {
                   'protocolId': protocolId,
-                  'patientId': patientId,
                   'startDate': startDate.toIso8601String(),
                   'endDate': endDate?.toIso8601String(),
                 },
               );
             },
-            icon: Icon(Icons.edit_calendar_outlined, color: Colors.white),
+            icon: Icon(Icons.calendar_today_outlined, color: Colors.white),
             label: Text(
-              'Editar Cronograma',
+              'Ver Cronograma',
               style: GoogleFonts.montserrat(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,

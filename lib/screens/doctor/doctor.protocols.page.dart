@@ -63,6 +63,80 @@ class _DoctorProtocolsPageState extends State<DoctorProtocolsPage> {
     );
   }
 
+  Future<void> _deleteProtocol(String protocolId, String protocolName) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('protocolos')
+          .doc(protocolId)
+          .delete();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Protocolo "$protocolName" excluído com sucesso!'),
+            backgroundColor: Color(0xFF0E382C),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Erro ao excluir protocolo: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao excluir protocolo.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showDeleteConfirmationModal(String protocolId, String protocolName) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Center(
+            child: const Text(
+              'Excluir Protocolo',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          content: Text(
+            'Tem certeza que deseja excluir o protocolo "$protocolName" permanentemente? Esta ação é irreversível.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'Cancelar',
+                style: GoogleFonts.montserrat(
+                  color: const Color(0xFF0E382C),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+            TextButton(
+              child: Text(
+                'Excluir',
+                style: GoogleFonts.montserrat(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _deleteProtocol(protocolId, protocolName);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Stream<QuerySnapshot> _protocolStream() {
     Query query = FirebaseFirestore.instance
         .collection('protocolos')
@@ -222,6 +296,8 @@ class _DoctorProtocolsPageState extends State<DoctorProtocolsPage> {
                                 protocolsDocs[index].data()
                                     as Map<String, dynamic>;
                             final protocolId = protocolsDocs[index].id;
+                            final protocolName =
+                                protocolData['nome'] ?? 'Protocolo sem nome';
                             final protocolStatus =
                                 protocolData['status'] as String? ?? 'active';
                             final isFinalized = protocolStatus == 'finalized';
@@ -258,6 +334,11 @@ class _DoctorProtocolsPageState extends State<DoctorProtocolsPage> {
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: ListTile(
+                                    onLongPress: () =>
+                                        _showDeleteConfirmationModal(
+                                          protocolId,
+                                          protocolName,
+                                        ),
                                     leading: Icon(
                                       Icons.description,
                                       color: titleColor,

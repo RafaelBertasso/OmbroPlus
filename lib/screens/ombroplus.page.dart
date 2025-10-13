@@ -15,6 +15,7 @@ import 'package:Ombro_Plus/screens/doctor/patient.log.page.dart';
 import 'package:Ombro_Plus/screens/doctor/protocol.details.page.dart';
 import 'package:Ombro_Plus/screens/doctor/protocol.exercise.adder.page.dart';
 import 'package:Ombro_Plus/screens/doctor/protocol.schedule.editor.page.dart';
+import 'package:Ombro_Plus/screens/doctor/protocol.schedule.viewer.page.dart';
 import 'package:Ombro_Plus/screens/initial.page.dart';
 import 'package:Ombro_Plus/screens/patient.register.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.chat.page.dart';
@@ -79,6 +80,9 @@ class OmbroPlus extends StatelessWidget {
           final String? patientId = arguments?['patientId'] as String?;
           final String? startDateString = arguments?['startDate'] as String?;
           final String? endDateString = arguments?['endDate'] as String?;
+          final Map<String, List<Map<String, dynamic>>>? currentSchedule =
+              arguments?['currentSchedule']
+                  as Map<String, List<Map<String, dynamic>>>?;
 
           if (patientId != null &&
               startDateString != null &&
@@ -161,6 +165,48 @@ class OmbroPlus extends StatelessWidget {
             builder: (_) => Scaffold(
               appBar: AppBar(title: Text('Erro')),
               body: Center(child: Text('ID do protocolo ausente')),
+            ),
+          );
+        }
+
+        if (settings.name == '/protocol-schedule-viewer') {
+          final arguments = settings.arguments as Map<String, dynamic>?;
+
+          final String? protocolId = arguments?['protocolId'] as String?;
+          final String? startDateString = arguments?['startDate'] as String?;
+          final String? endDateString = arguments?['endDate'] as String?;
+
+          if (protocolId != null &&
+              startDateString != null &&
+              endDateString != null) {
+            try {
+              final startDate = DateTime.parse(startDateString);
+              final endDate = DateTime.parse(endDateString);
+
+              return MaterialPageRoute(
+                builder: (context) {
+                  return ProtocolScheduleViewerPage(
+                    protocolId: protocolId,
+                    startDate: startDate,
+                    endDate: endDate,
+                  );
+                },
+                settings: settings,
+              );
+            } catch (e) {
+              debugPrint(
+                'Erro de parsing de data para ProtocolScheduleViewer: $e',
+              );
+            }
+          }
+          return MaterialPageRoute(
+            builder: (_) => Scaffold(
+              appBar: AppBar(title: const Text('Erro de Navegação')),
+              body: const Center(
+                child: Text(
+                  'Não foi possível carregar o visualizador de cronograma. Argumentos ausentes ou inválidos.',
+                ),
+              ),
             ),
           );
         }

@@ -47,6 +47,8 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
         return Icons.warning_amber_rounded;
       case 'PROTOCOL_FINISHED':
         return Icons.star;
+      case 'PROTOCOL_CREATED':
+        return Icons.insert_invitation_outlined;
       case 'INACTIVITY':
         return Icons.timer_off;
       default:
@@ -62,6 +64,8 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
         return const Color(0xFF0E382C);
       case 'PAIN_ALERT':
         return Colors.red.shade700;
+      case 'PROTOCOL_CREATED':
+        return Colors.blue.shade600;
       case 'PROTOCOL_FINISHED':
         return Colors.amber.shade800;
       case 'INACTIVITY':
@@ -75,6 +79,22 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
   void initState() {
     super.initState();
     _specialistId = user?.uid;
+  }
+
+  Stream<QuerySnapshot> _activityFeedStream() {
+    final DateTime sevenDaysAgo = DateTime.now().subtract(Duration(days: 7));
+    final DateTime cutoffDate = DateTime(
+      sevenDaysAgo.year,
+      sevenDaysAgo.month,
+      sevenDaysAgo.day,
+    );
+    final Timestamp cutoffTimestamp = Timestamp.fromDate(cutoffDate);
+    return FirebaseFirestore.instance
+        .collection('activity_feed')
+        .where('timestamp', isGreaterThanOrEqualTo: cutoffTimestamp)
+        .orderBy('timestamp', descending: true)
+        .limit(6)
+        .snapshots();
   }
 
   Future<String> getUserName() async {
@@ -192,7 +212,6 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                       ],
                     ),
                     SizedBox(height: 60),
-                    //TODO: Trocar essa parte
                     Text(
                       'Atividades Recentes',
                       style: GoogleFonts.montserrat(
@@ -203,11 +222,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                     ),
                     SizedBox(height: 18),
                     StreamBuilder<QuerySnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collection('activity_feed')
-                          .orderBy('timestamp', descending: true)
-                          .limit(6)
-                          .snapshots(),
+                      stream: _activityFeedStream(),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
