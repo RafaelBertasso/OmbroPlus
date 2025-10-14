@@ -266,7 +266,7 @@ class _PatientClinicalFormPageState extends State<PatientClinicalFormPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Ficha clínica salva com sucesso!')),
       );
-      Navigator.pop(context);
+      Navigator.pop(context, true);
     } catch (e) {
       ScaffoldMessenger.of(
         context,

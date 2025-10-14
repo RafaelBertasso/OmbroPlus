@@ -2,92 +2,89 @@ import 'package:Ombro_Plus/components/app.logo.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_multi_formatter/formatters/masked_input_formatter.dart';
 import 'package:flutter_multi_formatter/formatters/phone_input_formatter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class DoctorEditProfilePage extends StatefulWidget {
-  const DoctorEditProfilePage({super.key});
+class PatientEditProfilePage extends StatefulWidget {
+  const PatientEditProfilePage({super.key});
 
   @override
-  State<DoctorEditProfilePage> createState() => _DoctorEditProfilePageState();
+  State<PatientEditProfilePage> createState() => _PatientEditProfilePageState();
 }
 
-class _DoctorEditProfilePageState extends State<DoctorEditProfilePage> {
+class _PatientEditProfilePageState extends State<PatientEditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _crefitoController = TextEditingController();
-  final _crmController = TextEditingController();
-
-  final crefitoMaskFormatter = MaskedInputFormatter('000000-A');
-  final crmMaskFormatter = MaskedInputFormatter('00000000-0/BR');
+  final _birthDateController = TextEditingController();
+  final _sexController = TextEditingController();
 
   bool _isSaving = false;
-  String? _specialistId;
-
-  @override
-  void initState() {
-    super.initState();
-  }
+  String? _patientId;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    if (_specialistId == null) {
+    if (_patientId == null) {
       final args =
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-      final passedId = args?['id'] as String;
+      final passedId =
+          args?['id'] as String? ?? FirebaseAuth.instance.currentUser?.uid;
 
-      _specialistId = passedId;
-      _loadUserData(_specialistId!);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Erro: ID do especialista não encontrado. Certifique-se de estar logado ou de ter navegado a partir da lista.',
-          ),
-        ),
-      );
+      if (passedId != null) {
+        _patientId = passedId;
+        _loadUserData(_patientId!);
+      } else {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.pop(context);
+        });
+      }
     }
   }
 
   Future<void> _loadUserData(String docId) async {
     final doc = await FirebaseFirestore.instance
-        .collection('especialistas')
+        .collection('pacientes')
         .doc(docId)
         .get();
     final data = doc.data();
     if (data != null) {
-      _nameController.text = data['nome'] ?? '';
-      _emailController.text = data['email'] ?? '';
-      _phoneController.text = data['telefone'] ?? '';
-      _crefitoController.text = data['crefito'] ?? '';
-      _crmController.text = data['crm'] ?? '';
+      setState(() {
+        _nameController.text = data['nome'] ?? '';
+        _emailController.text = data['email'] ?? '';
+        _phoneController.text = data['telefone'] ?? '';
+        _birthDateController.text = data['data_nascimento'] ?? 'Não informado';
+        _sexController.text = (data['sexo'] ?? 'Não informado');
+      });
     }
   }
 
   Future<void> _saveProfile() async {
-    if (!_formKey.currentState!.validate()) {
+    if (!_formKey.currentState!.validate() || _patientId == null) {
       return;
     }
 
     setState(() {
       _isSaving = true;
     });
-    final targetDocId = _specialistId!;
+
+    final targetDocId = _patientId!;
     final currentUser = FirebaseAuth.instance.currentUser;
+
     try {
       final isEditingSelf = currentUser?.uid == targetDocId;
-      if (isEditingSelf) {
+      if (isEditingSelf && currentUser != null) {
         final isEmailChanged =
-            currentUser!.email != _emailController.text.trim();
+            currentUser.email != _emailController.text.trim();
+
         if (isEmailChanged) {
           await currentUser.verifyBeforeUpdateEmail(
             _emailController.text.trim(),
           );
+
+          if (!mounted) return;
           showDialog(
             context: context,
             barrierDismissible: false,
@@ -105,14 +102,14 @@ class _DoctorEditProfilePageState extends State<DoctorEditProfilePage> {
                   ),
                 ),
                 content: Text(
-                  'Um link de verificação foi enviado para o novo endereço de e-mail. Por favor, acesse sua caixa de entrada e complete a alteração.',
+                  'Um link de verificação foi enviado para o novo e-mail. Por favor, acesse sua caixa de entrada e complete a alteração.',
                   style: GoogleFonts.openSans(color: Colors.black),
                 ),
                 actions: [
                   TextButton(
                     onPressed: () {
                       Navigator.pop(context);
-                      Navigator.pop(context);
+                      Navigator.pop(context, true);
                     },
                     child: Text(
                       'OK',
@@ -126,41 +123,32 @@ class _DoctorEditProfilePageState extends State<DoctorEditProfilePage> {
               );
             },
           );
+          return;
         }
       }
+
       await FirebaseFirestore.instance
-          .collection('especialistas')
+          .collection('pacientes')
           .doc(targetDocId)
           .update({
+            'nome': _nameController.text.trim(),
             'email': _emailController.text.trim(),
             'telefone': _phoneController.text.trim(),
-            'crefito': _crefitoController.text.trim(),
-            'crm': _crmController.text.trim(),
           });
 
-      final messenger = ScaffoldMessenger.of(context);
-      messenger.showMaterialBanner(
-        MaterialBanner(
-          content: Text(
-            'Perfil atualizado com sucesso!',
-            style: TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Color(0xFF0E382C),
-          leading: Icon(Icons.check_circle_outline, color: Colors.white),
-          actions: [
-            TextButton(
-              onPressed: () => messenger.hideCurrentMaterialBanner(),
-              child: Icon(Icons.close, color: Colors.white),
-            ),
-          ],
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Perfil atualizado com sucesso!'),
+          backgroundColor: const Color(0xFF0E382C),
         ),
       );
-      Future.delayed(Duration(seconds: 3), () {
-        messenger.hideCurrentMaterialBanner();
-      });
-      Navigator.pop(context);
+
+      Navigator.pop(context, true);
     } catch (e) {
-      print(e.toString());
+      print('Erro ao salvar o perfil do paciente: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Erro ao salvar o perfil.'),
@@ -179,15 +167,15 @@ class _DoctorEditProfilePageState extends State<DoctorEditProfilePage> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _crefitoController.dispose();
-    _crmController.dispose();
+    _birthDateController.dispose();
+    _sexController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF4F7F6),
+      backgroundColor: const Color(0xFFF4F7F6),
       body: Column(
         children: [
           Row(
@@ -196,50 +184,52 @@ class _DoctorEditProfilePageState extends State<DoctorEditProfilePage> {
                 alignment: Alignment.centerLeft,
                 child: IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: Icon(Icons.arrow_back, color: Colors.black),
+                  icon: const Icon(Icons.arrow_back, color: Colors.black),
                   tooltip: 'Voltar',
                 ),
               ),
-              Spacer(),
+              const Spacer(),
               AppLogo(),
-              Spacer(),
-              SizedBox(width: 48),
+              const Spacer(),
+              const SizedBox(width: 48),
             ],
           ),
           Center(
             child: Text(
-              'Editar Perfil',
+              'Editar Dados Pessoais',
               style: GoogleFonts.montserrat(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
+                color: const Color(0xFF0E382C),
               ),
             ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
+
           Expanded(
             child: SingleChildScrollView(
               child: Padding(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     children: [
                       TextFormField(
                         controller: _nameController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Nome completo',
                           enabled: false,
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       TextFormField(
                         controller: _phoneController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Telefone/WhatsApp',
                         ),
                         keyboardType: TextInputType.phone,
                         validator: (value) => value!.isEmpty
-                            ? 'O telefonte não pode ser vazio'
+                            ? 'O telefone não pode ser vazio'
                             : null,
                         inputFormatters: [
                           PhoneInputFormatter(
@@ -248,54 +238,57 @@ class _DoctorEditProfilePageState extends State<DoctorEditProfilePage> {
                           ),
                         ],
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       TextFormField(
                         controller: _emailController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Email para contato e login',
-                          helper: Text(
-                            'Para atualizar o e-mail, faça login novamente.',
-                            style: TextStyle(color: Colors.black54),
-                          ),
+                          helperText:
+                              'Alterar o e-mail requer verificação por link.',
+                          helperStyle: TextStyle(color: Colors.black54),
                         ),
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) => value!.isEmpty
                             ? 'O email não pode ser vazio'
                             : null,
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       TextFormField(
-                        controller: _crefitoController,
-                        decoration: InputDecoration(
-                          labelText: 'CREFITO (Opcional)',
+                        controller: _birthDateController,
+                        decoration: const InputDecoration(
+                          labelText: 'Data de Nascimento',
+                          enabled: false,
                         ),
-                        inputFormatters: [crefitoMaskFormatter],
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
+
                       TextFormField(
-                        controller: _crmController,
-                        decoration: InputDecoration(
-                          labelText: 'CRM (Opcional)',
+                        controller: _sexController,
+                        decoration: const InputDecoration(
+                          labelText: 'Sexo',
+                          enabled: false,
                         ),
-                        inputFormatters: [crmMaskFormatter],
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 32),
                       ElevatedButton(
                         onPressed: _isSaving ? null : _saveProfile,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF0E382C),
-                          minimumSize: Size(double.infinity, 50),
+                          backgroundColor: const Color(0xFF0E382C),
+                          minimumSize: const Size(double.infinity, 50),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadiusGeometry.circular(8),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                         ),
                         child: _isSaving
-                            ? CircularProgressIndicator(color: Colors.white)
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
                             : Text(
-                                'Salvar',
-                                style: TextStyle(
+                                'Salvar Alterações',
+                                style: GoogleFonts.openSans(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
+                                  fontSize: 17,
                                 ),
                               ),
                       ),

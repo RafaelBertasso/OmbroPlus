@@ -137,77 +137,6 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
     }
   }
 
-  void _confirmDeleteAccount() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Color(0xFF0E382C),
-        title: Center(
-          child: Text(
-            'Excluir conta',
-            style: GoogleFonts.montserrat(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        content: Text(
-          'Tem certeza que deseja excluir sua conta? Esta ação é irreversível.',
-          style: GoogleFonts.openSans(
-            color: Colors.white,
-            fontWeight: FontWeight.w400,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancelar',
-              style: GoogleFonts.openSans(
-                color: Color(0xFFF4F7F6),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () async {
-              try {
-                await _auth.currentUser?.delete();
-                await FirebaseFirestore.instance
-                    .collection('especialistas')
-                    .doc(user?.uid)
-                    .delete();
-                Navigator.pop(context);
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/login',
-                  (route) => false,
-                );
-              } catch (e) {
-                //TODO: Consertar o botão de excluir conta
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Erro ao excluir a conta.'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-                Navigator.pop(context);
-              }
-            },
-            child: Text(
-              'Excluir',
-              style: GoogleFonts.openSans(
-                color: Color(0xFFF4F7F6),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -404,39 +333,6 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
                       ),
                     ),
                     SizedBox(height: 10),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 200,
-                            child: ElevatedButton.icon(
-                              onPressed: _confirmDeleteAccount,
-                              icon: Icon(
-                                Icons.delete_forever_outlined,
-                                color: Colors.white,
-                              ),
-                              label: Text(
-                                'Excluir Conta',
-                                style: GoogleFonts.openSans(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 17,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                minimumSize: Size(0, 50),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ),

@@ -33,7 +33,6 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
     super.dispose();
   }
 
-  @override
   Future<void> _selectDate(TextEditingController controller) async {
     final picked = await showDatePicker(
       context: context,
