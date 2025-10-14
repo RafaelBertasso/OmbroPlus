@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +22,50 @@ class _PatientSelectionForChatPageState
   void initState() {
     super.initState();
     _specialistId = FirebaseAuth.instance.currentUser?.uid;
+  }
+
+  Future<String?> _fetchPatientProfileImage(String patientId) async {
+    if (patientId.isEmpty) return null;
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('pacientes')
+          .doc(patientId)
+          .get();
+
+      return doc.data()?['profileImage'] as String?;
+    } catch (e) {
+      print('Erro ao buscar foto do paciente $patientId: $e');
+      return null;
+    }
+  }
+
+  String _getInitialLetter(String? name) {
+    if (name == null || name.isEmpty) {
+      return '?';
+    }
+    return name.trim().split(' ').first[0].toUpperCase();
+  }
+
+  Widget _buildChatAvatar(String patientName, String? imageBase64) {
+    if (imageBase64 != null && imageBase64.isNotEmpty) {
+      try {
+        final bytes = base64Decode(imageBase64);
+        return ClipOval(
+          child: Image.memory(bytes, width: 40, height: 40, fit: BoxFit.cover),
+        );
+      } catch (e) {}
+    }
+
+    final initialLetter = _getInitialLetter(patientName);
+    return Text(
+      initialLetter,
+      style: GoogleFonts.montserrat(
+        color: Colors.white,
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+      ),
+    );
   }
 
   Future<void> _startChat(String patientId, String patientName) async {
@@ -135,9 +181,10 @@ class _PatientSelectionForChatPageState
                     final patient = filteredPatients[index];
                     final patientName = patient['nome'] ?? 'Paciente Sem Nome';
                     final patientId = patient.id;
-                    final initialLetter = patientName.isNotEmpty
-                        ? patientName[0].toUpperCase()
-                        : '?';
+                    final profileImageBase64 =
+                        (patient.data() as Map<String, dynamic>)['profileImage']
+                            as String? ??
+                        '';
 
                     return Card(
                       color: Colors.white,
@@ -147,14 +194,11 @@ class _PatientSelectionForChatPageState
                       ),
                       child: ListTile(
                         leading: CircleAvatar(
+                          radius: 20,
                           backgroundColor: Color(0xFF0E382C),
-                          child: Text(
-                            initialLetter,
-                            style: GoogleFonts.montserrat(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          child: _buildChatAvatar(
+                            patientName,
+                            profileImageBase64,
                           ),
                         ),
                         title: Text(

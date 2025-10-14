@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,6 +13,36 @@ class PatientListPage extends StatefulWidget {
 
 class _PatientListPageState extends State<PatientListPage> {
   String _search = '';
+
+  Widget _buildPatientAvatar(String? name, String? imageBase64) {
+    final initials = _getInitials(name);
+    if (imageBase64 != null && imageBase64.isNotEmpty) {
+      try {
+        final bytes = base64Decode(imageBase64);
+        return ClipOval(
+          child: Image.memory(bytes, width: 50, height: 50, fit: BoxFit.cover),
+        );
+      } catch (e) {
+        print('Erro de decodificação: $e');
+      }
+    }
+    return Text(
+      initials,
+      style: GoogleFonts.montserrat(
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+        color: Colors.white,
+      ),
+    );
+  }
+
+  String _getInitials(String? name) {
+    if (name == null || name.isEmpty) {
+      return '?';
+    }
+    return name.trim().split(' ').first[0].toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,14 +113,18 @@ class _PatientListPageState extends State<PatientListPage> {
                   padding: EdgeInsets.only(top: 10),
                   itemBuilder: (context, index) {
                     final patient = filtered[index];
+                    final patientName = patient['nome'] as String?;
+                    final profileImageBase64 =
+                        (patient.data() as Map<String, dynamic>)['profileImage']
+                            as String? ??
+                        '';
                     return ListTile(
                       leading: CircleAvatar(
                         radius: 25,
                         backgroundColor: Color(0xFF0E382C),
-                        child: Icon(
-                          Icons.person,
-                          color: Colors.white,
-                          size: 30,
+                        child: _buildPatientAvatar(
+                          patientName,
+                          profileImageBase64,
                         ),
                       ),
                       title: Text(

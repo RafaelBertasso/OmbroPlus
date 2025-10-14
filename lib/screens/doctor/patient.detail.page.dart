@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 class PatientDetailPage extends StatefulWidget {
   const PatientDetailPage({super.key});
@@ -18,6 +19,10 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
   String? _profileImageBase64;
   String _mainDiagnosis = 'Carregando...';
 
+  String? _activeProtocolName;
+  Timestamp? _protocolStartDate;
+  String? _activeProtocolDocId;
+
   @override
   void initState() {
     super.initState();
@@ -26,9 +31,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
     });
   }
 
-  // Função que busca os dados do paciente (nome, foto e diagnóstico)
   Future<void> _loadPatientData() async {
-    // 1. Obter argumentos da rota
     final args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final id = args?['id'] as String? ?? 'ID_NAO_ENCONTRADO';
@@ -48,6 +51,25 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
           .collection('pacientes')
           .doc(id)
           .get();
+      // final protocolSnapshot = await FirebaseFirestore.instance
+      //     .collection('protocolos')
+      //     .where('pacienteId', isEqualTo: id)
+      //     .where('status', isEqualTo: 'active')
+      //     .limit(1)
+      //     .get();
+
+      // String? activeProtocolName;
+      // Timestamp? startDate;
+      // String? protocolDocId;
+
+      // if (protocolSnapshot.docs.isNotEmpty) {
+      //   final protocolDoc = protocolSnapshot.docs.first;
+      //   final protocolData = protocolDoc.data();
+
+      //   activeProtocolName = protocolData['nome'] as String?;
+      //   startDate = protocolData['dataInicio'] as Timestamp?;
+      //   protocolDocId = protocolDoc.id;
+      // }
 
       if (doc.exists) {
         final data = doc.data();
@@ -59,6 +81,10 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
             _patientId = id;
             _mainDiagnosis =
                 data?['diagnosticoPrincipal'] ?? 'Ficha não preenchida';
+
+            // _activeProtocolName = activeProtocolName;
+            // _protocolStartDate = startDate;
+            // _activeProtocolDocId = protocolDocId;
             _isLoading = false;
           });
         }
@@ -83,7 +109,6 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
     }
   }
 
-  // Helper para obter as iniciais
   String get _getInitials {
     final parts = _patientName.trim().split(' ');
     String initials = '';
@@ -286,20 +311,80 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
             ),
           ),
           const SizedBox(height: 10),
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFFF4F7F6),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 16),
-            child: const Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // O CONTEÚDO AQUI DEVE SER LIGADO À COLEÇÃO DE PROTOCOLOS ATIVOS
-                // ATÉ LÁ, MANTENHA O CONTEÚDO ESTÁTICO OU BUSQUE O PROTOCOLO ATIVO.
-              ],
-            ),
-          ),
+          // Container(
+          //   decoration: BoxDecoration(
+          //     color: const Color(0xFFF4F7F6),
+          //     borderRadius: BorderRadius.circular(12),
+          //   ),
+          //   padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 16),
+          //   child: _activeProtocolName == null
+          //       ? Text(
+          //           'Nenhum protocolo ativo encontrado',
+          //           style: GoogleFonts.openSans(
+          //             fontSize: 15,
+          //             color: Colors.black54,
+          //           ),
+          //         )
+          //       : Row(
+          //           crossAxisAlignment: CrossAxisAlignment.start,
+          //           children: [
+          //             Container(
+          //               decoration: BoxDecoration(
+          //                 color: Color.fromARGB(70, 125, 125, 125),
+          //                 borderRadius: BorderRadius.circular(8),
+          //               ),
+          //               padding: EdgeInsets.all(8),
+          //               child: Icon(Icons.list, color: Colors.black, size: 25),
+          //             ),
+          //             SizedBox(width: 12),
+          //             Expanded(
+          //               child: Column(
+          //                 crossAxisAlignment: CrossAxisAlignment.start,
+          //                 children: [
+          //                   Text(
+          //                     _activeProtocolName!,
+          //                     style: GoogleFonts.montserrat(
+          //                       fontWeight: FontWeight.bold,
+          //                       fontSize: 16,
+          //                       color: Colors.black87,
+          //                     ),
+          //                   ),
+          //                   SizedBox(height: 2),
+          //                   Text(
+          //                     'Ativo desde: ${_protocolStartDate != null ? DateFormat('dd/MM/yyyy').format(_protocolStartDate!.toDate()) : 'Data Desconhecida'}',
+          //                     style: GoogleFonts.openSans(
+          //                       fontSize: 15,
+          //                       color: Colors.black54,
+          //                       fontWeight: FontWeight.w500,
+          //                     ),
+          //                   ),
+          //                   TextButton(
+          //                     onPressed: () {
+          //                       if (_activeProtocolDocId != null) {
+          //                         Navigator.pushNamed(
+          //                           context,
+          //                           '/protocol-details',
+          //                           arguments: {
+          //                             'protocoloId': _activeProtocolDocId,
+          //                           },
+          //                         );
+          //                       }
+          //                     },
+          //                     child: Text(
+          //                       'Ver Cronograma Completo',
+          //                       style: GoogleFonts.openSans(
+          //                         fontSize: 13,
+          //                         color: Color(0xFF0E382C),
+          //                         fontWeight: FontWeight.bold,
+          //                       ),
+          //                     ),
+          //                   ),
+          //                 ],
+          //               ),
+          //             ),
+          //           ],
+          //         ),
+          // ),
 
           // --- ACESSOS ---
           const SizedBox(height: 24),

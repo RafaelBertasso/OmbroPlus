@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -126,53 +128,94 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
     });
   }
 
+  String _getInitialLetter(String? name) {
+    if (name == null || name.isEmpty) {
+      return '?';
+    }
+    return name.trim().split(' ').first[0].toUpperCase();
+  }
+
   Widget _buildAvatar(String userId, bool isMe, String userName) {
-    final String? imageUrl = _profileImageUrls[userId];
+    final String? imageBase64 = _profileImageUrls[userId];
     final String initial = userName.isNotEmpty
         ? userName[0].toUpperCase()
         : '?';
 
-    // As cores corretas
     final Color avatarBgColor = isMe
-        ? const Color(0xFF0E382C) // Cor primária para o Especialista (eu)
-        : Colors.grey.shade200; // Cor secundária para o Paciente (o outro)
+        ? const Color(0xFF0E382C)
+        : Colors.grey.shade200;
     final Color initialTextColor = isMe
         ? Colors.white
         : const Color(0xFF0E382C);
+    const double radius = 14;
 
-    // 🔑 Otimizando a construção do CircleAvatar
+    if (imageBase64 != null && imageBase64.isNotEmpty) {
+      try {
+        final bytes = base64Decode(imageBase64);
 
-    // 1. Tenta usar a imagem de rede
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      return Padding(
-        padding: EdgeInsets.only(right: isMe ? 0 : 8, left: isMe ? 8 : 0),
-        child: CircleAvatar(
-          radius: 14,
-          // 🔑 Usa NetworkImage como backgroundImage
-          backgroundImage: NetworkImage(imageUrl),
-          backgroundColor:
-              avatarBgColor, // O backgroundColor será visível brevemente
-        ),
-      );
-    }
-    // 2. Fallback para a letra inicial
-    else {
-      return Padding(
-        padding: EdgeInsets.only(right: isMe ? 0 : 8, left: isMe ? 8 : 0),
-        child: CircleAvatar(
-          radius: 14,
-          backgroundColor: avatarBgColor,
-          child: Text(
-            initial,
-            style: GoogleFonts.montserrat(
-              color: initialTextColor,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+        return Padding(
+          padding: EdgeInsets.only(right: isMe ? 0 : 8, left: isMe ? 8 : 0),
+          child: CircleAvatar(
+            radius: radius,
+            backgroundColor: avatarBgColor,
+            child: ClipOval(
+              child: Image.memory(
+                bytes,
+                width: radius * 2,
+                height: radius * 2,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
-        ),
-      );
+        );
+      } catch (e) {
+        print('Falha ao decodificar: $e');
+      }
     }
+    return Padding(
+      padding: EdgeInsets.only(right: isMe ? 0 : 8, left: isMe ? 8 : 0),
+      child: CircleAvatar(
+        radius: radius,
+        backgroundColor: avatarBgColor,
+        child: Text(
+          initial,
+          style: GoogleFonts.montserrat(
+            color: initialTextColor,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppBarAvatar(String? imageBase64, String? name) {
+    const double radius = 18;
+    final initial = _getInitialLetter(name);
+
+    if (imageBase64 != null && imageBase64.isNotEmpty) {
+      try {
+        final bytes = base64Decode(imageBase64);
+        return ClipOval(
+          child: Image.memory(
+            bytes,
+            width: radius * 2,
+            height: radius * 2,
+            fit: BoxFit.cover,
+          ),
+        );
+      } catch (_) {}
+    }
+
+    // Fallback
+    return Text(
+      initial,
+      style: GoogleFonts.montserrat(
+        color: Colors.white,
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+      ),
+    );
   }
 
   Widget _buildMessageBubble(Map<String, dynamic> msg) {
@@ -256,6 +299,11 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
+    final patientId = _patientId;
+    final isPatientDataReady = _patientName != null && patientId != null;
+    final patientImageBase64 = isPatientDataReady
+        ? _profileImageUrls[patientId]
+        : null;
     final patientNameArg =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final nameToDisplay =
@@ -268,11 +316,12 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
         centerTitle: true,
         backgroundColor: Color(0xFFF4F7F6),
         elevation: 0.4,
+        iconTheme: IconThemeData(color: Colors.black),
         title: Row(
           children: [
             CircleAvatar(
               backgroundColor: const Color(0xFF0E382C),
-              child: const Icon(Icons.person, color: Colors.white),
+              child: _buildAppBarAvatar(patientImageBase64, nameToDisplay),
             ),
             const SizedBox(width: 12),
             Text(

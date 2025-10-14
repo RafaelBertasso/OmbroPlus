@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:Ombro_Plus/components/app.logo.dart';
 import 'package:Ombro_Plus/components/doctor.navbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -42,6 +44,50 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
   void initState() {
     super.initState();
     _specialistId = FirebaseAuth.instance.currentUser?.uid;
+  }
+
+  Future<String?> _fetchPatientProfileImage(String patientId) async {
+    if (patientId.isEmpty) return null;
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('pacientes')
+          .doc(patientId)
+          .get();
+
+      return doc.data()?['profileImage'] as String?;
+    } catch (e) {
+      print('Erro ao buscar foto do paciente $patientId: $e');
+      return null;
+    }
+  }
+
+  String _getInitialLetter(String? name) {
+    if (name == null || name.isEmpty) {
+      return '?';
+    }
+    return name.trim().split(' ').first[0].toUpperCase();
+  }
+
+  Widget _buildChatAvatar(String patientName, String? imageBase64) {
+    if (imageBase64 != null && imageBase64.isNotEmpty) {
+      try {
+        final bytes = base64Decode(imageBase64);
+        return ClipOval(
+          child: Image.memory(bytes, width: 40, height: 40, fit: BoxFit.cover),
+        );
+      } catch (e) {}
+    }
+
+    final initialLetter = _getInitialLetter(patientName);
+    return Text(
+      initialLetter,
+      style: GoogleFonts.montserrat(
+        color: Colors.white,
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+      ),
+    );
   }
 
   @override
@@ -149,6 +195,9 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
                                 chatRoom.data() as Map<String, dynamic>;
                             final patientName =
                                 chatData['patientName'] ?? 'Paciente';
+                            final patientId = chatRoom.id
+                                .replaceAll('_', '')
+                                .replaceAll(currentSpecialistId!, '');
                             final lastMessage =
                                 chatData['lastMessage'] ?? 'Inicie a conversa';
 
@@ -168,16 +217,17 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor: Color(0xFF0E382C),
-                                  child: Text(
-                                    initialLetter,
-                                    style: GoogleFonts.montserrat(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                                leading: FutureBuilder<String?>(
+                                  future: _fetchPatientProfileImage(patientId),
+                                  builder: (context, imageSnapshot) {
+                                    return CircleAvatar(
+                                      backgroundColor: Color(0xFF0E382C),
+                                      child: _buildChatAvatar(
+                                        patientName,
+                                        imageSnapshot.data,
+                                      ),
+                                    );
+                                  },
                                 ),
                                 title: Text(
                                   patientName,
@@ -209,9 +259,7 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
                                     arguments: {
                                       'roomId': chatRoom.id,
                                       'name': patientName,
-                                      'patientId': chatRoom.id
-                                          .replaceAll('_', '')
-                                          .replaceAll(currentSpecialistId!, ''),
+                                      'id': patientId,
                                     },
                                   );
                                 },
