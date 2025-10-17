@@ -56,7 +56,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
 
     if (uid == null) return [];
 
-    final todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final todayKey = _getTodayKey();
 
     final protocolSnapshot = await FirebaseFirestore.instance
         .collection('protocolos')
