@@ -206,9 +206,12 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
                             final timeString = timestamp != null
                                 ? DateFormat('HH:mm').format(timestamp.toDate())
                                 : '';
-                            final initialLetter = patientName.isNotEmpty
-                                ? patientName[0].toUpperCase()
-                                : '?';
+                            final unreadCounts =
+                                chatData['unreadCount']
+                                    as Map<String, dynamic>?;
+                            final unreadCount =
+                                unreadCounts?[currentSpecialistId] as int? ?? 0;
+                            final showBadge = unreadCount > 0;
 
                             return Card(
                               color: Color(0xFFF4F7F6),
@@ -220,12 +223,47 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
                                 leading: FutureBuilder<String?>(
                                   future: _fetchPatientProfileImage(patientId),
                                   builder: (context, imageSnapshot) {
-                                    return CircleAvatar(
-                                      backgroundColor: Color(0xFF0E382C),
-                                      child: _buildChatAvatar(
-                                        patientName,
-                                        imageSnapshot.data,
-                                      ),
+                                    return Stack(
+                                      children: [
+                                        CircleAvatar(
+                                          backgroundColor: Color(0xFF0E382C),
+                                          child: _buildChatAvatar(
+                                            patientName,
+                                            imageSnapshot.data,
+                                          ),
+                                        ),
+                                        if (showBadge)
+                                          Positioned(
+                                            right: 0,
+                                            bottom: 0,
+                                            child: Container(
+                                              padding: EdgeInsets.all(4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.red,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                border: Border.all(
+                                                  color: Colors.white,
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                              constraints: BoxConstraints(
+                                                minWidth: 18,
+                                                minHeight: 18,
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  unreadCount.toString(),
+                                                  style: GoogleFonts.openSans(
+                                                    color: Colors.white,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
                                     );
                                   },
                                 ),

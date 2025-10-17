@@ -72,6 +72,12 @@ class _PatientSelectionForChatPageState
     final currentSpecialistId = _specialistId;
     if (currentSpecialistId == null) return;
 
+    final specialistDoc = await FirebaseFirestore.instance
+        .collection('especialistas')
+        .doc(currentSpecialistId)
+        .get();
+    final specialistName = specialistDoc.data()?['nome'] ?? 'Especialista';
+
     List<String> ids = [currentSpecialistId, patientId];
     ids.sort();
     final String roomId = ids.join('_');
@@ -81,6 +87,7 @@ class _PatientSelectionForChatPageState
       'roomId': roomId,
       'patientName': patientName,
       'specialistId': currentSpecialistId,
+      'specialistName': specialistName,
       'participants': FieldValue.arrayUnion([currentSpecialistId, patientId]),
       'lastMessageTimestamp': FieldValue.serverTimestamp(),
       'lastMessage': '',

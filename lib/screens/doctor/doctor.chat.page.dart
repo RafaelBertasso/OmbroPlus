@@ -50,15 +50,49 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
   void initState() {
     super.initState();
     _currentUserId = FirebaseAuth.instance.currentUser?.uid;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _markMessagesAsRead();
+    });
+  }
+
+  void _markMessagesAsRead() async {
+    if (_roomId == null || _currentUserId == null || !mounted) return;
+
+    final chatRef = FirebaseFirestore.instance.collection('chats').doc(_roomId);
+    try {
+      await chatRef.update({'unreadCount.$_currentUserId': 0});
+    } catch (e) {
+      print('Erro ao zerar o contador de mensagens: $e');
+    }
+  }
+
+  Future<void> _incrementUnreadCount(String receiverId) async {
+    if (_roomId == null || !mounted) return;
+
+    final chatRef = FirebaseFirestore.instance.collection('chats').doc(_roomId);
+
+    try {
+      await chatRef.update({
+        'unreadCount.$receiverId': FieldValue.increment(1),
+      });
+    } catch (e) {
+      print('Erro ao incrementar contador: $e');
+    }
   }
 
   void _loadChatParticipantsDetails() async {
     if (_patientId == null || _currentUserId == null) return;
 
+    if (!mounted) return;
+
     final patientDoc = await FirebaseFirestore.instance
         .collection('pacientes')
         .doc(_patientId)
         .get();
+
+    if (!mounted) return;
+
     final patientData = patientDoc.data();
     final patientName = patientData?['nome'] ?? 'Paciente';
     final patientImage = patientData?['profileImage'] as String?;
@@ -67,18 +101,23 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
         .collection('especialistas')
         .doc(_currentUserId)
         .get();
+
+    if (!mounted) return;
+
     final specialistData = specialistDoc.data();
     final specialistName = specialistData?['nome'] ?? 'Especialista';
     final specialistImage = specialistData?['profileImage'] as String?;
 
-    setState(() {
-      _patientName = patientName;
-      _specialistName = specialistName;
-      _userNames[_patientId!] = patientName;
-      _userNames[_currentUserId!] = specialistName;
-      _profileImageUrls[_patientId!] = patientImage;
-      _profileImageUrls[_currentUserId!] = specialistImage;
-    });
+    if (mounted) {
+      setState(() {
+        _patientName = patientName;
+        _specialistName = specialistName;
+        _userNames[_patientId!] = patientName;
+        _userNames[_currentUserId!] = specialistName;
+        _profileImageUrls[_patientId!] = patientImage;
+        _profileImageUrls[_currentUserId!] = specialistImage;
+      });
+    }
   }
 
   @override
@@ -126,6 +165,7 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
       'lastMessage': text,
       'lastMessageTimestamp': now,
     });
+    await _incrementUnreadCount(_patientId!);
   }
 
   String _getInitialLetter(String? name) {
@@ -221,7 +261,8 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
   Widget _buildMessageBubble(Map<String, dynamic> msg) {
     final String senderId = msg['senderId'] as String;
     final bool isMe = senderId == _currentUserId;
-    final String senderName = _userNames[senderId] ?? (isMe ? 'Eu' : 'Outro');
+    final String senderName =
+        _userNames[senderId] ?? (isMe ? 'Eu' : 'Paciente');
     final Color messageColor = isMe
         ? const Color(0xFF0E382C)
         : const Color.fromARGB(255, 199, 213, 203);
@@ -299,16 +340,11 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final patientId = _patientId;
-    final isPatientDataReady = _patientName != null && patientId != null;
-    final patientImageBase64 = isPatientDataReady
-        ? _profileImageUrls[patientId]
-        : null;
-    final patientNameArg =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final nameToDisplay =
-        _patientName ?? patientNameArg?['name'] as String? ?? 'Paciente';
     final currentRoomId = _roomId;
+    final patientImageBase64 = _profileImageUrls[_patientId];
+    final patientNameForAppBar = _patientName ?? 'Paciente';
+
+    final nameToDisplay = _patientName ?? 'Paciente';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F6),
@@ -325,7 +361,9 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
             ),
             const SizedBox(width: 12),
             Text(
-              nameToDisplay.isNotEmpty ? nameToDisplay : 'Nome do Paciente',
+              patientNameForAppBar.isNotEmpty
+                  ? patientNameForAppBar
+                  : 'Nome do Paciente',
               style: GoogleFonts.montserrat(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,

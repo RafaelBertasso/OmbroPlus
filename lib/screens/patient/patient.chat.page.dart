@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-// [getDatLabel] e [DateUtils] são mantidos no topo do arquivo.
 String getDayLabel(DateTime date, DateTime now) {
   final diff = now.difference(DateTime(date.year, date.month, date.day)).inDays;
   if (diff == 0) return 'Hoje';
@@ -36,54 +35,85 @@ class PatientChatPage extends StatefulWidget {
 
 class _PatientChatPageState extends State<PatientChatPage> {
   final TextEditingController _controller = TextEditingController();
-  String? _specialistId; // ID do outro usuário (Especialista)
+  String? _specialistId;
   String? _roomId;
-  String? _currentUserId; // ID do Paciente logado (EU)
+  String? _currentUserId;
   final ScrollController _scrollController = ScrollController();
 
   String? _specialistName;
-  String? _patientName; // Nome do paciente logado
+  String? _patientName;
   Map<String, String?> _profileImageUrls = {};
-  Map<String, String> _userNames = {}; // Armazena nomes de ambos
+  Map<String, String> _userNames = {};
 
   @override
   void initState() {
     super.initState();
-    _currentUserId = FirebaseAuth.instance.currentUser?.uid; // ID do Paciente
+    _currentUserId = FirebaseAuth.instance.currentUser?.uid;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _markMessagesAsRead();
+    });
+  }
+
+  void _markMessagesAsRead() async {
+    if (_roomId == null || _currentUserId == null || !mounted) return;
+
+    final chatRef = FirebaseFirestore.instance.collection('chats').doc(_roomId);
+    try {
+      await chatRef.update({'unreadCount.$_currentUserId': 0});
+    } catch (e) {
+      print('Erro ao zerar o contador de mensagens: $e');
+    }
+  }
+
+  Future<void> _incrementUnreadCount(String receiverId) async {
+    if (_roomId == null || !mounted) return;
+
+    final chatRef = FirebaseFirestore.instance.collection('chats').doc(_roomId);
+
+    try {
+      await chatRef.update({
+        'unreadCount.$receiverId': FieldValue.increment(1),
+      });
+    } catch (e) {
+      print('Erro ao incrementar contador: $e');
+    }
   }
 
   void _loadChatParticipantsDetails() async {
     if (_specialistId == null || _currentUserId == null) return;
 
-    // 1. Busca detalhes do PACIENTE (EU)
     final patientDoc = await FirebaseFirestore.instance
         .collection('pacientes')
         .doc(_currentUserId)
         .get();
+    if (!mounted) return;
+
     final patientData = patientDoc.data();
     final patientName = patientData?['nome'] ?? 'Paciente';
     final patientImage = patientData?['profileImage'] as String?;
 
-    // 2. Busca detalhes do ESPECIALISTA (O OUTRO)
     final specialistDoc = await FirebaseFirestore.instance
         .collection('especialistas')
         .doc(_specialistId)
         .get();
+    if (!mounted) return;
+
     final specialistData = specialistDoc.data();
     final specialistName = specialistData?['nome'] ?? 'Especialista';
     final specialistImage = specialistData?['profileImage'] as String?;
 
-    setState(() {
-      _patientName = patientName; // O nome do paciente logado
-      _specialistName =
-          specialistName; // O nome do especialista (para a AppBar)
+    if (mounted) {
+      setState(() {
+        _patientName = patientName;
+        _specialistName = specialistName;
 
-      // Mapeia IDs para nomes e fotos
-      _userNames[_currentUserId!] = patientName;
-      _userNames[_specialistId!] = specialistName;
-      _profileImageUrls[_currentUserId!] = patientImage;
-      _profileImageUrls[_specialistId!] = specialistImage;
-    });
+        _userNames[_currentUserId!] = patientName;
+        _userNames[_specialistId!] = specialistName;
+        _profileImageUrls[_currentUserId!] = patientImage;
+        _profileImageUrls[_specialistId!] = specialistImage;
+      });
+    }
   }
 
   @override
@@ -93,7 +123,6 @@ class _PatientChatPageState extends State<PatientChatPage> {
       final args =
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       _roomId = args?['roomId'] as String?;
-      // O ID passado pela rota é o ID do ESPECIALISTA ('id' na DoctorMainChatPage)
       _specialistId = args?['id'] as String?;
     }
 
@@ -132,9 +161,8 @@ class _PatientChatPageState extends State<PatientChatPage> {
       'lastMessage': text,
       'lastMessageTimestamp': now,
     });
+    await _incrementUnreadCount(_specialistId!);
   }
-
-  // --- FUNÇÕES DE AVATAR (ADAPTADAS PARA PERSPECTIVA DO PACIENTE) ---
 
   String _getInitialLetter(String? name) {
     if (name == null || name.isEmpty) {
@@ -143,15 +171,12 @@ class _PatientChatPageState extends State<PatientChatPage> {
     return name.trim().split(' ').first[0].toUpperCase();
   }
 
-  // Helper para o Avatar nas Bolhas de Mensagem
   Widget _buildAvatar(String userId, bool isMe, String userName) {
     final String? imageBase64 = _profileImageUrls[userId];
     final String initial = _getInitialLetter(userName);
 
-    // INVERSÃO DA LÓGICA DE COR PARA O PACIENTE
-    final Color patientColor = const Color(0xFF0E382C); // Paciente (EU)
-    final Color specialistColor =
-        Colors.grey.shade200; // Especialista (O OUTRO)
+    final Color patientColor = const Color(0xFF0E382C);
+    final Color specialistColor = Colors.grey.shade200;
 
     final Color avatarBgColor = isMe ? patientColor : specialistColor;
     final Color initialTextColor = isMe ? Colors.white : patientColor;
@@ -181,7 +206,6 @@ class _PatientChatPageState extends State<PatientChatPage> {
       }
     }
 
-    // Fallback: Letra inicial
     return Padding(
       padding: EdgeInsets.only(right: isMe ? 0 : 8, left: isMe ? 8 : 0),
       child: CircleAvatar(
@@ -199,7 +223,6 @@ class _PatientChatPageState extends State<PatientChatPage> {
     );
   }
 
-  // Helper para o Avatar da App Bar (Especialista - O OUTRO)
   Widget _buildAppBarAvatar(String? imageBase64, String? name) {
     const double radius = 18;
     final initial = _getInitialLetter(name);
@@ -218,7 +241,6 @@ class _PatientChatPageState extends State<PatientChatPage> {
       } catch (_) {}
     }
 
-    // Fallback: Usa a cor principal do app (verde)
     return Text(
       initial,
       style: GoogleFonts.montserrat(
@@ -228,23 +250,16 @@ class _PatientChatPageState extends State<PatientChatPage> {
       ),
     );
   }
-  // -------------------------------------------------------------
 
   Widget _buildMessageBubble(Map<String, dynamic> msg) {
     final String senderId = msg['senderId'] as String;
-    final bool isMe = senderId == _currentUserId; // EU SOU O PACIENTE
+    final bool isMe = senderId == _currentUserId;
     final String senderName =
         _userNames[senderId] ?? (isMe ? 'Eu' : 'Especialista');
 
-    // INVERSÃO DE CORES: Paciente (EU) envia em Verde Escuro
     final Color messageColor = isMe
         ? const Color(0xFF0E382C)
-        : const Color.fromARGB(
-            255,
-            199,
-            213,
-            203,
-          ); // Cor clara para o Especialista
+        : const Color.fromARGB(255, 199, 213, 203);
 
     final Color textColor = isMe ? Colors.white : Colors.black87;
     final CrossAxisAlignment rowAlignment = isMe
@@ -283,7 +298,6 @@ class _PatientChatPageState extends State<PatientChatPage> {
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),
-                    // Paciente (Eu) alinha à direita
                     bottomLeft: isMe
                         ? const Radius.circular(16)
                         : const Radius.circular(4),
@@ -305,7 +319,6 @@ class _PatientChatPageState extends State<PatientChatPage> {
           Padding(
             padding: EdgeInsets.only(
               top: 4,
-              // Ajusta o padding para o lado oposto da bolha
               right: isMe ? 45 : 0,
               left: isMe ? 0 : 45,
             ),
@@ -324,7 +337,6 @@ class _PatientChatPageState extends State<PatientChatPage> {
     final now = DateTime.now();
     final currentRoomId = _roomId;
 
-    // Dados para a App Bar
     final specialistNameForAppBar = _specialistName ?? 'Especialista';
     final specialistImageBase64 = _profileImageUrls[_specialistId];
 
@@ -337,7 +349,6 @@ class _PatientChatPageState extends State<PatientChatPage> {
         iconTheme: const IconThemeData(color: Colors.black),
         title: Row(
           children: [
-            // Avatar do ESPECIALISTA (O OUTRO)
             CircleAvatar(
               backgroundColor: const Color(0xFF0E382C),
               child: _buildAppBarAvatar(
@@ -346,7 +357,6 @@ class _PatientChatPageState extends State<PatientChatPage> {
               ),
             ),
             const SizedBox(width: 12),
-            // Nome do Especialista
             Text(
               specialistNameForAppBar.isNotEmpty
                   ? specialistNameForAppBar
@@ -373,10 +383,7 @@ class _PatientChatPageState extends State<PatientChatPage> {
                         .collection('chats')
                         .doc(currentRoomId)
                         .collection('messages')
-                        .orderBy(
-                          'timestamp',
-                          descending: false,
-                        ) // Inverte a ordem para facilitar a rolagem
+                        .orderBy('timestamp', descending: false)
                         .snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -397,7 +404,6 @@ class _PatientChatPageState extends State<PatientChatPage> {
                       List<Widget> chatWidgets = [];
                       DateTime? lastDateLabel;
 
-                      // Constrói a lista de mensagens (do mais novo para o mais antigo)
                       for (var doc in documents) {
                         final msg = doc.data() as Map<String, dynamic>;
                         final timestamp = msg['timestamp'] as Timestamp?;
@@ -428,20 +434,15 @@ class _PatientChatPageState extends State<PatientChatPage> {
 
                         chatWidgets.add(_buildMessageBubble(msg));
                       }
-
-                      // Renderiza a lista do mais antigo para o mais novo (bottom-up)
                       return ListView(
                         controller: _scrollController,
-                        reverse:
-                            true, // Começa de baixo (mensagens mais recentes)
+                        reverse: true,
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         children: chatWidgets.reversed.toList(),
                       );
                     },
                   ),
           ),
-
-          // CAMPO DE INPUT
           Container(
             color: Colors.grey[100],
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),

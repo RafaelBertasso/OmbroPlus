@@ -52,22 +52,6 @@ class _PatientMainChatPageState extends State<PatientMainChatPage> {
     }
   }
 
-  Future<String?> _fetchPatientProfileImage(String specialistId) async {
-    if (specialistId.isEmpty) return null;
-
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection('especialistas')
-          .doc(specialistId)
-          .get();
-
-      return doc.data()?['profileImage'] as String?;
-    } catch (e) {
-      print('Erro ao buscar foto do paciente $specialistId: $e');
-      return null;
-    }
-  }
-
   Future<SpecialistDetails> _fetchSpecialistDetails(String specialistId) async {
     if (specialistId.isEmpty) {
       return SpecialistDetails('Especialista Desconhecido', null);
@@ -78,7 +62,7 @@ class _PatientMainChatPageState extends State<PatientMainChatPage> {
           .doc(specialistId)
           .get();
       final name = doc.data()?['nome'] ?? 'Especialista';
-      final image = doc.data()?['profileImage'] as String;
+      final image = doc.data()?['profileImage'] as String?;
 
       return SpecialistDetails(name, image);
     } catch (e) {
@@ -146,7 +130,7 @@ class _PatientMainChatPageState extends State<PatientMainChatPage> {
                       fillColor: Colors.white,
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 16,
-                        vertical: 0,
+                        vertical: 10,
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -194,11 +178,11 @@ class _PatientMainChatPageState extends State<PatientMainChatPage> {
                         }
                         final activeChats = snapshot.data?.docs ?? [];
                         final filteredChats = activeChats.where((doc) {
-                          final name = (doc['patientName'] ?? '')
+                          final specialistName = (doc['specialistName'] ?? '')
                               .toString()
                               .toLowerCase();
                           final query = searchText.toLowerCase();
-                          return name.contains(query);
+                          return specialistName.contains(query);
                         }).toList();
                         if (filteredChats.isEmpty) {
                           return Center(
@@ -233,6 +217,14 @@ class _PatientMainChatPageState extends State<PatientMainChatPage> {
                             final timeString = timestamp != null
                                 ? DateFormat('HH:mm').format(timestamp.toDate())
                                 : '';
+
+                            final unreadCounts =
+                                chatData['unreadCount']
+                                    as Map<String, dynamic>?;
+                            final unreadCount =
+                                unreadCounts?[currentPatientId] as int? ?? 0;
+                            final showBadge = unreadCount > 0;
+
                             final Future<SpecialistDetails> detailsFuture =
                                 specialistId == null || specialistId.isEmpty
                                 ? Future.value(
@@ -277,12 +269,47 @@ class _PatientMainChatPageState extends State<PatientMainChatPage> {
                                     );
                                   }
                                   return ListTile(
-                                    leading: CircleAvatar(
-                                      backgroundColor: Color(0xFF0E382C),
-                                      child: _buildChatAvatar(
-                                        displaySpecialistName,
-                                        specialistDetails?.profileImageBase64,
-                                      ),
+                                    leading: Stack(
+                                      children: [
+                                        CircleAvatar(
+                                          backgroundColor: Color(0xFF0E382C),
+                                          child: _buildChatAvatar(
+                                            displaySpecialistName,
+                                            displayImageBase64,
+                                          ),
+                                        ),
+                                        if (showBadge)
+                                          Positioned(
+                                            right: 0,
+                                            bottom: 0,
+                                            child: Container(
+                                              padding: EdgeInsets.all(4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.red,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                border: Border.all(
+                                                  color: Colors.white,
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                              constraints: BoxConstraints(
+                                                minWidth: 18,
+                                                minHeight: 18,
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  unreadCount.toString(),
+                                                  style: GoogleFonts.openSans(
+                                                    color: Colors.white,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                     title: Text(
                                       displaySpecialistName,
