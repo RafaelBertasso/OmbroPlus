@@ -204,17 +204,6 @@ class _PatientHomePageState extends State<PatientHomePage> {
                       ],
                     ),
                     SizedBox(height: 30),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Mensagens',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 10),
                     UnreadMessagesSummary(),
                   ],
                 ),
