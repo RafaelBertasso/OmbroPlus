@@ -34,7 +34,6 @@ class ExerciseCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Imagem fixa ocupa toda a largura do card
             ClipRRect(
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(16),
@@ -42,17 +41,19 @@ class ExerciseCard extends StatelessWidget {
               ),
               child: Image.asset(
                 'assets/images/exercicio.jpg',
-                height: 70, // pode aumentar a altura se desejar
+                height: 70,
                 width: double.infinity,
                 fit: BoxFit.cover,
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(14.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14.0,
+                vertical: 12.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 8),
                   Text(
                     title,
                     style: GoogleFonts.openSans(

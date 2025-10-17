@@ -1,12 +1,24 @@
 import 'package:Ombro_Plus/components/app.logo.dart';
 import 'package:Ombro_Plus/components/exercise.card.dart';
+import 'package:Ombro_Plus/components/unread.messages.summary.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:Ombro_Plus/components/patient.navbar.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
-class PatientHomePage extends StatelessWidget {
+class PatientHomePage extends StatefulWidget {
   const PatientHomePage({super.key});
+
+  @override
+  State<PatientHomePage> createState() => _PatientHomePageState();
+}
+
+class _PatientHomePageState extends State<PatientHomePage> {
   final int _selectedIndex = 0;
+  String? _currentUserId;
+  Future<List<Map<String, dynamic>>>? _exercisesOfTheDay;
 
   void _onTabTapped(BuildContext context, int index) {
     if (index == _selectedIndex) return;
@@ -26,6 +38,57 @@ class PatientHomePage extends StatelessWidget {
       default:
         break;
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    _exercisesOfTheDay = _fetchDailyExercises();
+  }
+
+  String _getTodayKey() {
+    return DateFormat('yyyy-MM-dd').format(DateTime.now());
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchDailyExercises() async {
+    final uid = _currentUserId;
+
+    if (uid == null) return [];
+
+    final todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    final protocolSnapshot = await FirebaseFirestore.instance
+        .collection('protocolos')
+        .where('pacienteId', isEqualTo: uid)
+        .where('status', isEqualTo: 'active')
+        .limit(1)
+        .get();
+
+    if (protocolSnapshot.docs.isEmpty) {
+      return [];
+    }
+
+    final protocolData = protocolSnapshot.docs.first.data();
+    final rawSchedule = protocolData['schedule'];
+
+    if (rawSchedule == null || rawSchedule is! Map) {
+      return [];
+    }
+
+    final schedule = (rawSchedule).map((k, v) => MapEntry(k.toString(), v));
+
+    if (!schedule.containsKey(todayKey)) {
+      return [];
+    }
+
+    final dailyExercises = schedule[todayKey];
+
+    if (dailyExercises is! List) {
+      return [];
+    }
+
+    return dailyExercises.map((e) => e as Map<String, dynamic>).toList();
   }
 
   @override
@@ -60,27 +123,49 @@ class PatientHomePage extends StatelessWidget {
                     SizedBox(height: 10),
                     SizedBox(
                       height: 180,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          ExerciseCard(
-                            title: 'Exercício 1',
-                            subtitle: 'Descrição do exercício 1',
-                            onTap: () {},
-                          ),
-                          ExerciseCard(
-                            title: 'Exercício 2',
-                            subtitle: 'Descrição do exercício 2',
-                          ),
-                          ExerciseCard(
-                            title: 'Exercício 3',
-                            subtitle: 'Descrição do exercício 3',
-                          ),
-                          ExerciseCard(
-                            title: 'Exercício 4',
-                            subtitle: 'Descrição do exercício 4',
-                          ),
-                        ],
+                      child: FutureBuilder<List<Map<String, dynamic>>>(
+                        future: _exercisesOfTheDay,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return Center(
+                              child: CircularProgressIndicator(
+                                color: Color(0xFF0E382C),
+                              ),
+                            );
+                          }
+                          if (snapshot.hasError ||
+                              snapshot.data == null ||
+                              snapshot.data!.isEmpty) {
+                            return Center(
+                              child: Text(
+                                'Nenhum exercício agendado para hoje.',
+                                style: GoogleFonts.openSans(
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            );
+                          }
+
+                          final exercises = snapshot.data!;
+
+                          return ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: exercises.length,
+                            itemBuilder: (context, index) {
+                              final exercise = exercises[index];
+                              return Padding(
+                                padding: EdgeInsetsGeometry.only(right: 10),
+                                child: ExerciseCard(
+                                  title: exercise['title'].toString(),
+                                  subtitle:
+                                      '${exercise['series']} séries x ${exercise['repeticoes']} repetições',
+                                  onTap: () {},
+                                ),
+                              );
+                            },
+                          );
+                        },
                       ),
                     ),
                     SizedBox(height: 30),
@@ -130,95 +215,7 @@ class PatientHomePage extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 10),
-                    InkWell(
-                      onTap: () {},
-                      child: Container(
-                        color: Color(0xFFF4F7F6),
-                        padding: EdgeInsets.all(12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircleAvatar(
-                              radius: 20,
-                              backgroundColor: Color(0xFF0E382C),
-                              child: Icon(
-                                Icons.person,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Nome',
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    'Mensagem muito longa que precisa ser truncada aqui para que não quebre a linha e fique limpa',
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(width: 40),
-                            Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                Icon(
-                                  Icons.notifications_active,
-                                  color: Colors.redAccent,
-                                  size: 28,
-                                ),
-                                Positioned(
-                                  right: -2,
-                                  top: -2,
-                                  child: Container(
-                                    padding: EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: Colors.white,
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    constraints: BoxConstraints(
-                                      minWidth: 18,
-                                      minHeight: 18,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        '3', // número fixo temporário
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    UnreadMessagesSummary(),
                   ],
                 ),
               ),
