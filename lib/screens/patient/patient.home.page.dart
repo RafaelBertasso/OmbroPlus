@@ -1,6 +1,8 @@
 import 'package:Ombro_Plus/components/app.logo.dart';
 import 'package:Ombro_Plus/components/exercise.card.dart';
 import 'package:Ombro_Plus/components/unread.messages.summary.dart';
+import 'package:Ombro_Plus/models/daily.exercise.data.dart';
+import 'package:Ombro_Plus/models/protocol.services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +20,7 @@ class PatientHomePage extends StatefulWidget {
 class _PatientHomePageState extends State<PatientHomePage> {
   final int _selectedIndex = 0;
   String? _currentUserId;
-  Future<List<Map<String, dynamic>>>? _exercisesOfTheDay;
+  Future<DailyExerciseData?>? _exercisesOfTheDay;
 
   void _onTabTapped(BuildContext context, int index) {
     if (index == _selectedIndex) return;
@@ -51,44 +53,114 @@ class _PatientHomePageState extends State<PatientHomePage> {
     return DateFormat('yyyy-MM-dd').format(DateTime.now());
   }
 
-  Future<List<Map<String, dynamic>>> _fetchDailyExercises() async {
+  Future<Set<String>> _fetchCompletedExercisesToday(
+    String protocolId,
+    String userId,
+  ) async {
+    final todayKey = _getTodayKey();
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('logs_exercicios')
+          .where('protocoloId', isEqualTo: protocolId)
+          .where('pacienteId', isEqualTo: userId)
+          .where('data', isEqualTo: todayKey)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => doc.data()['exercicioId'] as String)
+          .toSet();
+    } catch (e) {
+      print('Erro ao buscar logs do exercício: $e');
+      return {};
+    }
+  }
+
+  Future<void> _toggleExerciseCompletion(
+    String protocolId,
+    String exerciseId,
+    List<Map<String, dynamic>> allDailyExercises,
+  ) async {
+    final userId = _currentUserId;
+    if (userId == null) return;
+
+    final todayKey = _getTodayKey();
+    final logCollection = FirebaseFirestore.instance.collection(
+      'logs_exercicios',
+    );
+
+    final docRef = logCollection.doc();
+    await docRef.set({
+      'protocoloId': protocolId,
+      'pacienteId': userId,
+      'exercicioId': exerciseId,
+      'data': todayKey,
+      'concluido': true,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    final currentLogs = await _fetchCompletedExercisesToday(protocolId, userId);
+
+    if (currentLogs.length == allDailyExercises.length) {
+      final success = await ProtocolServices().markSessionCompleted(
+        protocolId,
+        userId,
+      );
+      if (success) {
+        SnackBar(
+          content: Text('Sessão diária COMPLETA! Progresso atualizado'),
+          backgroundColor: Colors.green,
+        );
+      }
+    }
+    setState(() {
+      _exercisesOfTheDay = _fetchDailyExercises();
+    });
+  }
+
+  Future<DailyExerciseData?> _fetchDailyExercises() async {
     final uid = _currentUserId;
 
-    if (uid == null) return [];
+    if (uid == null) return null;
 
     final todayKey = _getTodayKey();
 
-    final protocolSnapshot = await FirebaseFirestore.instance
-        .collection('protocolos')
-        .where('pacienteId', isEqualTo: uid)
-        .where('status', isEqualTo: 'active')
-        .limit(1)
-        .get();
+    try {
+      final protocolSnapshot = await FirebaseFirestore.instance
+          .collection('protocolos')
+          .where('pacienteId', isEqualTo: uid)
+          .where('status', isEqualTo: 'active')
+          .limit(1)
+          .get();
 
-    if (protocolSnapshot.docs.isEmpty) {
-      return [];
+      if (protocolSnapshot.docs.isEmpty) return null;
+
+      final protocolDoc = protocolSnapshot.docs.first;
+      final protocolId = protocolDoc.id;
+      final protocolData = protocolSnapshot.docs.first.data();
+      final rawSchedule = protocolData['schedule'];
+
+      if (rawSchedule == null ||
+          rawSchedule is! Map ||
+          !rawSchedule.containsKey(todayKey)) {
+        return null;
+      }
+
+      final dailyExercises = (rawSchedule[todayKey] as List<dynamic>)
+          .map((e) => e as Map<String, dynamic>)
+          .toList();
+
+      final completedIds = await _fetchCompletedExercisesToday(protocolId, uid);
+
+      return DailyExerciseData(
+        protocolId: protocolId,
+        exercises: dailyExercises,
+        completedExerciseIds: completedIds,
+      );
+    } catch (e) {
+      print('Erro ao buscar dados diários: $e');
+      return null;
     }
-
-    final protocolData = protocolSnapshot.docs.first.data();
-    final rawSchedule = protocolData['schedule'];
-
-    if (rawSchedule == null || rawSchedule is! Map) {
-      return [];
-    }
-
-    final schedule = (rawSchedule).map((k, v) => MapEntry(k.toString(), v));
-
-    if (!schedule.containsKey(todayKey)) {
-      return [];
-    }
-
-    final dailyExercises = schedule[todayKey];
-
-    if (dailyExercises is! List) {
-      return [];
-    }
-
-    return dailyExercises.map((e) => e as Map<String, dynamic>).toList();
   }
 
   @override
@@ -123,7 +195,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
                     SizedBox(height: 10),
                     SizedBox(
                       height: 180,
-                      child: FutureBuilder<List<Map<String, dynamic>>>(
+                      child: FutureBuilder<DailyExerciseData?>(
                         future: _exercisesOfTheDay,
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
@@ -134,9 +206,10 @@ class _PatientHomePageState extends State<PatientHomePage> {
                               ),
                             );
                           }
+                          final dailyData = snapshot.data;
                           if (snapshot.hasError ||
-                              snapshot.data == null ||
-                              snapshot.data!.isEmpty) {
+                              dailyData == null ||
+                              dailyData.exercises.isEmpty) {
                             return Center(
                               child: Text(
                                 'Nenhum exercício agendado para hoje.',
@@ -147,20 +220,42 @@ class _PatientHomePageState extends State<PatientHomePage> {
                             );
                           }
 
-                          final exercises = snapshot.data!;
+                          final exercises = snapshot.data!.exercises;
 
                           return ListView.builder(
                             scrollDirection: Axis.horizontal,
                             itemCount: exercises.length,
                             itemBuilder: (context, index) {
                               final exercise = exercises[index];
+                              final exerciseId =
+                                  exercise['exercicioId'] as String;
+
+                              final isCompleted = dailyData.completedExerciseIds
+                                  .contains(exerciseId);
                               return Padding(
-                                padding: EdgeInsetsGeometry.only(right: 10),
+                                padding: EdgeInsets.only(right: 10),
                                 child: ExerciseCard(
                                   title: exercise['title'].toString(),
                                   subtitle:
                                       '${exercise['series']} séries x ${exercise['repeticoes']} repetições',
-                                  onTap: () {},
+                                  isCompleted: isCompleted,
+                                  onTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/exercise-details',
+                                      arguments: {
+                                        'protocoloId': dailyData.protocolId,
+                                        'exercicioId': exerciseId,
+                                        'allDailyExercises':
+                                            dailyData.exercises,
+                                      },
+                                    ).then((_) {
+                                      setState(() {
+                                        _exercisesOfTheDay =
+                                            _fetchDailyExercises();
+                                      });
+                                    });
+                                  },
                                 ),
                               );
                             },

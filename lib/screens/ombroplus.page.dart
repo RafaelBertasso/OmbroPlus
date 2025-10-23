@@ -18,6 +18,7 @@ import 'package:Ombro_Plus/screens/doctor/protocol.schedule.editor.page.dart';
 import 'package:Ombro_Plus/screens/doctor/protocol.schedule.viewer.page.dart';
 import 'package:Ombro_Plus/screens/initial.page.dart';
 import 'package:Ombro_Plus/screens/patient.register.page.dart';
+import 'package:Ombro_Plus/screens/patient/details.exercise.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.chat.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.clinical.form.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.dashboard.page.dart';
@@ -25,6 +26,7 @@ import 'package:Ombro_Plus/screens/patient/patient.edit.profile.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.home.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.main.chat.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.profile.page.dart';
+import 'package:Ombro_Plus/screens/patient/patient.protocol.details.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.protocol.page.dart';
 import 'package:Ombro_Plus/screens/user.list.page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -68,6 +70,7 @@ class OmbroPlus extends StatelessWidget {
     '/patient-clinical-form': (context) => PatientClinicalFormPage(),
     '/doctor-new-chat': (context) => PatientSelectionForChatPage(),
     '/patient-edit-profile': (context) => PatientEditProfilePage(),
+    '/exercise-details': (context) => DetailsExercisePage(),
   };
 
   @override
@@ -159,6 +162,25 @@ class OmbroPlus extends StatelessWidget {
             return MaterialPageRoute(
               builder: (context) {
                 return ProtocolDetailsPage(protocolId: protocolId);
+              },
+              settings: settings,
+            );
+          }
+          return MaterialPageRoute(
+            builder: (_) => Scaffold(
+              appBar: AppBar(title: Text('Erro')),
+              body: Center(child: Text('ID do protocolo ausente')),
+            ),
+          );
+        }
+        if (settings.name == '/patient-protocol-details') {
+          final arguments = settings.arguments as Map<String, dynamic>?;
+          final String? protocolId = arguments?['protocoloId'] as String?;
+
+          if (protocolId != null) {
+            return MaterialPageRoute(
+              builder: (context) {
+                return PatientProtocolDetailsPage();
               },
               settings: settings,
             );

@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+//TODO: Implementar logica para um unico protocolo ativo para um paciente 
+
 class NewProtocolPage extends StatefulWidget {
   const NewProtocolPage({super.key});
 
@@ -89,7 +91,7 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
     );
   }
 
-  void _saveProtocol() async {
+  Future<void> _saveProtocol() async {
     if (_selectedPatientId == null || _protocolNameController.text.isEmpty) {
       return;
     }
@@ -108,6 +110,8 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
     final specialistId = FirebaseAuth.instance.currentUser?.uid;
     final protocolName = _protocolNameController.text.trim();
     final patientName = _selectedPatientName;
+
+    final totalEstimatedSessions = _protocolSchedule.keys.length;
     final newProtocolData = {
       'nome': _protocolNameController.text.trim(),
       'pacienteId': _selectedPatientId,
@@ -117,12 +121,20 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
       'notas': _notesController.text.trim(),
       'schedule': _protocolSchedule,
       'status': 'active',
+      'totalSessoesEstimadas': totalEstimatedSessions,
+      'sessoesConcluidas': 0,
       'criadoEm': FieldValue.serverTimestamp(),
     };
     try {
-      await FirebaseFirestore.instance
+      final newDocRef = await FirebaseFirestore.instance
           .collection('protocolos')
           .add(newProtocolData);
+      final newProtocolId = newDocRef.id;
+
+      await FirebaseFirestore.instance
+          .collection('pacientes')
+          .doc(_selectedPatientId)
+          .update({'protocoloAtivoId': newProtocolId});
       await FirebaseFirestore.instance.collection('activity_feed').add({
         'type': 'PROTOCOL_CREATED',
         'patientName': patientName,
