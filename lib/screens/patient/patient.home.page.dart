@@ -1,9 +1,13 @@
 import 'package:Ombro_Plus/components/app.logo.dart';
 import 'package:Ombro_Plus/components/exercise.card.dart';
+import 'package:Ombro_Plus/components/mini.metric.card.dart';
 import 'package:Ombro_Plus/components/unread.messages.summary.dart';
 import 'package:Ombro_Plus/models/daily.exercise.data.dart';
+import 'package:Ombro_Plus/models/dashboard.data.dart';
+import 'package:Ombro_Plus/services/dashboard.service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:Ombro_Plus/components/patient.navbar.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -18,8 +22,11 @@ class PatientHomePage extends StatefulWidget {
 
 class _PatientHomePageState extends State<PatientHomePage> {
   final int _selectedIndex = 0;
-  String? _currentUserId;
+  String? _currentUserId = FirebaseAuth.instance.currentUser?.uid;
   Future<DailyExerciseData?>? _exercisesOfTheDay;
+  Future<DashboardData?>? _dashboardFuture;
+
+  final DashboardService _dashboardService = DashboardService();
 
   void _onTabTapped(BuildContext context, int index) {
     if (index == _selectedIndex) return;
@@ -44,8 +51,13 @@ class _PatientHomePageState extends State<PatientHomePage> {
   @override
   void initState() {
     super.initState();
-    _currentUserId = FirebaseAuth.instance.currentUser?.uid;
     _exercisesOfTheDay = _fetchDailyExercises();
+
+    if (_currentUserId != null) {
+      _dashboardFuture = _dashboardService.fetchDashboardData(_currentUserId!);
+    } else {
+      _dashboardFuture = Future.value(null);
+    }
   }
 
   String _getTodayKey() {
@@ -214,6 +226,10 @@ class _PatientHomePageState extends State<PatientHomePage> {
                                       setState(() {
                                         _exercisesOfTheDay =
                                             _fetchDailyExercises();
+                                        _dashboardFuture = _dashboardService
+                                            .fetchDashboardData(
+                                              _currentUserId!,
+                                            );
                                       });
                                     });
                                   },
@@ -236,28 +252,61 @@ class _PatientHomePageState extends State<PatientHomePage> {
                       ),
                     ),
                     SizedBox(height: 15),
-                    Row(
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Colors.grey,
-                          ),
-                          width: 150,
-                          height: 100,
-                          child: Center(child: Text('Card 1')),
-                        ),
-                        SizedBox(width: 10),
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Colors.grey,
-                          ),
-                          width: 150,
-                          height: 100,
-                          child: Center(child: Text('Card 2')),
-                        ),
-                      ],
+                    FutureBuilder<DashboardData?>(
+                      future: _dashboardFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const SizedBox(
+                            height: 100,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFF0E382C),
+                              ),
+                            ),
+                          );
+                        }
+
+                        final dashboardData = snapshot.data;
+                        final completed = dashboardData?.sessoesConcluidas ?? 0;
+                        final total = dashboardData?.totalSessions ?? 0;
+                        final adherence =
+                            dashboardData?.weeklyAdherence ??
+                            {for (var i = 0; i <= 6; i++) i: 0.0};
+
+                        final progressPercent = total == 0
+                            ? 0
+                            : (completed / total * 100).round();
+                        final progressColor = progressPercent == 100
+                            ? Colors.green.shade500
+                            : Color(0xFF0E382C);
+                        final daysAdhered = adherence.values
+                            .where((v) => v > 0.0)
+                            .length;
+                        const totalDays = 7;
+
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            MiniMetricCard(
+                              title: 'Progresso Total',
+                              value: '$progressPercent',
+                              subValue: '%',
+                              color: progressColor,
+                            ),
+                            SizedBox(width: 10),
+                            MiniMetricCard(
+                              title: 'Adesão Semanal',
+                              value: '$daysAdhered/$totalDays',
+                              subValue: 'dias',
+                              color: daysAdhered >= 5
+                                  ? Colors.green.shade500
+                                  : Color(0xFF0E382C),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     SizedBox(height: 30),
                     UnreadMessagesSummary(),
