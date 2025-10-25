@@ -10,11 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-// Esta página deve ser acessada via rota, passando o protocolId como argumento.
 class PatientProtocolDetailsPage extends StatelessWidget {
   const PatientProtocolDetailsPage({super.key});
 
-  // WIDGET HELPER: Exibição da Agenda Diária (Recriado aqui para ser independente)
   Widget _buildDailySchedule(Map<String, dynamic> schedule, String dateKey) {
     final dailyExercises = schedule[dateKey];
     if (dailyExercises == null || dailyExercises.isEmpty) {
@@ -166,7 +164,6 @@ class PatientProtocolDetailsPage extends StatelessWidget {
         final String protocolName = data['nome'] ?? 'Sem nome';
         final String notes = data['notas'] ?? 'Nenhuma anotação fornecida';
 
-        // Status apenas para informação visual, não editável.
         final String status = data['status'] == 'active'
             ? 'Ativo'
             : 'Finalizado';
@@ -191,26 +188,18 @@ class PatientProtocolDetailsPage extends StatelessWidget {
             iconTheme: const IconThemeData(color: Colors.white, size: 24),
             elevation: 0.4,
             centerTitle: true,
-            // REMOVIDO: O array de 'actions' que continha o botão de edição.
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. CABEÇALHO (Nome e Status)
                 ProtocolHeader(name: protocolName, status: status),
                 const SizedBox(height: 16),
 
-                // 2. INFORMAÇÕES DO PACIENTE (Removido, pois o paciente está vendo o próprio protocolo)
-                // Se o componente ProtocolPatientIfo existir, não é necessário para o paciente.
-                // Mas a remoção não afeta o layout.
-
-                // 3. DATAS DE INÍCIO/FIM
                 ProtocolDatesSection(endDate: endDate, startDate: startDate),
                 const SizedBox(height: 24),
 
-                // 4. ANOTAÇÕES
                 ProtocolNotesSection(notes: notes),
                 const SizedBox(height: 24),
 

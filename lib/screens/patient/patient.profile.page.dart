@@ -473,7 +473,8 @@ class _PatientProfilePageState extends State<PatientProfilePage> {
                     ),
                     ConfigTile(
                       icon: Icons.description_outlined,
-                      onTap: () {},
+                      onTap: () =>
+                          Navigator.pushNamed(context, '/terms-of-use'),
                       title: 'Termos de Uso',
                     ),
                     SizedBox(height: 10),
