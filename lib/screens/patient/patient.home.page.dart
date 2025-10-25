@@ -2,7 +2,6 @@ import 'package:Ombro_Plus/components/app.logo.dart';
 import 'package:Ombro_Plus/components/exercise.card.dart';
 import 'package:Ombro_Plus/components/unread.messages.summary.dart';
 import 'package:Ombro_Plus/models/daily.exercise.data.dart';
-import 'package:Ombro_Plus/models/protocol.services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -68,54 +67,16 @@ class _PatientHomePageState extends State<PatientHomePage> {
           .get();
 
       return snapshot.docs
-          .map((doc) => doc.data()['exercicioId'] as String)
+          .map((doc) {
+            return doc.data()['exercicioId'] as String?;
+          })
+          .where((id) => id != null && id.isNotEmpty)
+          .map((id) => id!)
           .toSet();
     } catch (e) {
       print('Erro ao buscar logs do exercício: $e');
       return {};
     }
-  }
-
-  Future<void> _toggleExerciseCompletion(
-    String protocolId,
-    String exerciseId,
-    List<Map<String, dynamic>> allDailyExercises,
-  ) async {
-    final userId = _currentUserId;
-    if (userId == null) return;
-
-    final todayKey = _getTodayKey();
-    final logCollection = FirebaseFirestore.instance.collection(
-      'logs_exercicios',
-    );
-
-    final docRef = logCollection.doc();
-    await docRef.set({
-      'protocoloId': protocolId,
-      'pacienteId': userId,
-      'exercicioId': exerciseId,
-      'data': todayKey,
-      'concluido': true,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-
-    final currentLogs = await _fetchCompletedExercisesToday(protocolId, userId);
-
-    if (currentLogs.length == allDailyExercises.length) {
-      final success = await ProtocolServices().markSessionCompleted(
-        protocolId,
-        userId,
-      );
-      if (success) {
-        SnackBar(
-          content: Text('Sessão diária COMPLETA! Progresso atualizado'),
-          backgroundColor: Colors.green,
-        );
-      }
-    }
-    setState(() {
-      _exercisesOfTheDay = _fetchDailyExercises();
-    });
   }
 
   Future<DailyExerciseData?> _fetchDailyExercises() async {

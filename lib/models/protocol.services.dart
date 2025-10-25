@@ -64,10 +64,11 @@ class ProtocolServices {
           .where('protocoloId', isEqualTo: protocolId)
           .where('pacienteId', isEqualTo: userId)
           .where('data', isEqualTo: todayKey)
+          .where('concluido', isEqualTo: true)
           .get();
 
       return snapshot.docs
-          .map((doc) => doc.data()['exercicioId'] as String)
+          .map((doc) => doc.data()['exercicioId'] as String ?? '?')
           .toSet();
     } catch (e) {
       print('Erro ao buscar logs do exercício: $e');
