@@ -7,7 +7,6 @@ import 'package:Ombro_Plus/models/dashboard.data.dart';
 import 'package:Ombro_Plus/services/dashboard.service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:Ombro_Plus/components/patient.navbar.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -278,9 +277,6 @@ class _PatientHomePageState extends State<PatientHomePage> {
                         final progressPercent = total == 0
                             ? 0
                             : (completed / total * 100).round();
-                        final progressColor = progressPercent == 100
-                            ? Colors.green.shade500
-                            : Color(0xFF0E382C);
                         final daysAdhered = adherence.values
                             .where((v) => v > 0.0)
                             .length;
@@ -293,16 +289,14 @@ class _PatientHomePageState extends State<PatientHomePage> {
                               title: 'Progresso Total',
                               value: '$progressPercent',
                               subValue: '%',
-                              color: progressColor,
+                              color: Colors.black,
                             ),
                             SizedBox(width: 10),
                             MiniMetricCard(
                               title: 'Adesão Semanal',
                               value: '$daysAdhered/$totalDays',
                               subValue: 'dias',
-                              color: daysAdhered >= 5
-                                  ? Colors.green.shade500
-                                  : Color(0xFF0E382C),
+                              color: Colors.black,
                             ),
                           ],
                         );
