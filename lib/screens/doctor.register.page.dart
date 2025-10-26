@@ -234,59 +234,6 @@ class _DoctorRegisterPageState extends State<DoctorRegisterPage> {
                         inputFormatters: [crmMaskFormatter],
                       ),
                       SizedBox(height: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'Tipo de Usuário',
-                              style: GoogleFonts.openSans(fontSize: 16),
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Radio(
-                                value: 'especialista',
-                                groupValue: _role,
-                                fillColor: radioFillColor(),
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    setState(() {
-                                      _role = value;
-                                    });
-                                  }
-                                },
-                              ),
-                              Text(
-                                'Especialista',
-                                style: GoogleFonts.montserrat(fontSize: 16),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Radio(
-                                value: 'administrador',
-                                groupValue: _role,
-                                fillColor: radioFillColor(),
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    setState(() {
-                                      _role = value;
-                                    });
-                                  }
-                                },
-                              ),
-                              Text(
-                                'Administrador',
-                                style: GoogleFonts.montserrat(fontSize: 16),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
                       ValueListenableBuilder<bool>(
                         valueListenable: _obscurePassword,
                         builder: (context, value, child) {

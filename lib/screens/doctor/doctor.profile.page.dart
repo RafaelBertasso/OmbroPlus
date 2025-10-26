@@ -295,14 +295,6 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
                       ),
                     ],
                     SizedBox(height: 20),
-                    Text(
-                      'Configurações',
-                      style: GoogleFonts.openSans(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF0E382C),
-                      ),
-                    ),
                     Divider(color: Color(0xFF0E382C)),
                     SizedBox(height: 10),
                     ElevatedButton.icon(
