@@ -53,7 +53,9 @@ class _PatientHomePageState extends State<PatientHomePage> {
     _exercisesOfTheDay = _fetchDailyExercises();
 
     if (_currentUserId != null) {
-      _dashboardFuture = _dashboardService.fetchDashboardData(_currentUserId!);
+      _dashboardFuture = _dashboardService.fetchPatientDataForPatient(
+        _currentUserId!,
+      );
     } else {
       _dashboardFuture = Future.value(null);
     }
@@ -226,7 +228,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
                                         _exercisesOfTheDay =
                                             _fetchDailyExercises();
                                         _dashboardFuture = _dashboardService
-                                            .fetchDashboardData(
+                                            .fetchPatientDataForPatient(
                                               _currentUserId!,
                                             );
                                       });

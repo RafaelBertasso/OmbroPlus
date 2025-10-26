@@ -157,6 +157,7 @@ class _DetailsExercisePageState extends State<DetailsExercisePage> {
     setState(() => _isMarkingComplete = true);
 
     final service = ProtocolServices();
+    bool sessionCompleted = false;
 
     try {
       await service.logExerciseCompletion(

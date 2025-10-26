@@ -25,7 +25,9 @@ class _PatientDashboardPageState extends State<PatientDashboardPage> {
   @override
   void initState() {
     super.initState();
-    _dashboardFuture = _dashboardService.fetchDashboardData(_currentUserId!);
+    _dashboardFuture = _dashboardService.fetchPatientDataForPatient(
+      _currentUserId!,
+    );
   }
 
   void _onTabTapped(int index) {

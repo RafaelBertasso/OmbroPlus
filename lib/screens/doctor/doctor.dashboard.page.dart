@@ -61,7 +61,7 @@ class _DoctorDashboardPageState extends State<DoctorDashboardPage> {
   void _fetchSelectedPatientData(String patientId) {
     setState(() {
       selectedPatientId = patientId;
-      _selectedPatientDataFuture = _dashboardService.fetchDashboardData(
+      _selectedPatientDataFuture = _dashboardService.fetchPatientDataForDoctor(
         patientId,
       );
     });

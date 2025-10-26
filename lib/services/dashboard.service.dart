@@ -59,20 +59,19 @@ class DashboardService {
     }
   }
 
-  Future<DashboardData?> fetchDashboardData(String uid) async {
-    if (uid == null) return null;
+  Future<DashboardData?> fetchPatientDataForDoctor(String patientUid) async {
+    if (patientUid == null) return null;
 
     final specialistUid = FirebaseAuth.instance.currentUser?.uid;
     if (specialistUid == null) {
-      print('Erro: Especialista não logado.');
       return DashboardData();
     }
 
     try {
-      final snapshot = await FirebaseFirestore.instance
+      final snapshot = await _firestore
           .collection('protocolos')
           .where('especialistaId', isEqualTo: specialistUid)
-          .where('pacienteId', isEqualTo: uid)
+          .where('pacienteId', isEqualTo: patientUid)
           .where('status', isEqualTo: 'active')
           .limit(1)
           .get();
@@ -84,7 +83,8 @@ class DashboardService {
 
       final totalSessions = data['totalSessoesEstimadas'] as int? ?? 0;
       final sessoesConcluidas = data['sessoesConcluidas'] as int? ?? 0;
-      final weeklyAdherence = await fetchWeeklyAdherence(uid);
+      final weeklyAdherence = await fetchWeeklyAdherence(patientUid);
+
       return DashboardData(
         protocolData: data,
         totalSessions: totalSessions,
@@ -92,7 +92,43 @@ class DashboardService {
         weeklyAdherence: weeklyAdherence,
       );
     } catch (e) {
-      print('DashboardService: Erro ao carregar dados do dashboard: $e');
+      print(
+        'DashboardService (Doctor): Erro ao carregar dados do dashboard: $e',
+      );
+      return DashboardData();
+    }
+  }
+
+  Future<DashboardData?> fetchPatientDataForPatient(String patientUid) async {
+    if (patientUid == null) return null;
+
+    try {
+      final snapshot = await _firestore
+          .collection('protocolos')
+          .where('pacienteId', isEqualTo: patientUid)
+          .where('status', isEqualTo: 'active')
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) {
+        return DashboardData();
+      }
+      final data = snapshot.docs.first.data();
+
+      final totalSessions = data['totalSessoesEstimadas'] as int? ?? 0;
+      final sessoesConcluidas = data['sessoesConcluidas'] as int? ?? 0;
+      final weeklyAdherence = await fetchWeeklyAdherence(patientUid);
+
+      return DashboardData(
+        protocolData: data,
+        totalSessions: totalSessions,
+        sessoesConcluidas: sessoesConcluidas,
+        weeklyAdherence: weeklyAdherence,
+      );
+    } catch (e) {
+      print(
+        'DashboardService (Patient): Erro ao carregar dados do dashboard: $e',
+      );
       return DashboardData();
     }
   }

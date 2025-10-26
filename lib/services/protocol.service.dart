@@ -49,12 +49,26 @@ class ProtocolServices {
         .get();
 
     if (existingLog.docs.isNotEmpty) {
-      print('Sessão para $todayKey já foi marcada como concluída.');
+      print('LOG SESSÃO: Sessão para $todayKey já marcada. Abortando.');
       return false;
     }
 
+    bool protocolWasCompleted = false;
     try {
-      await _firestore.runTransaction((transaction) async {
+      final bool transactionResult = await _firestore.runTransaction((
+        transaction,
+      ) async {
+        final protocolDoc = await transaction.get(protocolRef);
+        if (!protocolDoc.exists) throw Exception('Protocolo não encontrado');
+
+        final data = protocolDoc.data()!;
+        final completed = (data['sessoesConcluidas'] as int? ?? 0) + 1;
+        final total = data['totalSessoesEstimadas'] as int? ?? 0;
+
+        print(
+          'LOG SESSÃO TRANSAÇÃO: Leitura do protocolo concluída. Nova contagem: $completed / $total',
+        );
+
         transaction.set(logCollection.doc(), {
           'protocoloId': protocolId,
           'pacienteId': patientId,
@@ -62,40 +76,46 @@ class ProtocolServices {
           'timestamp': FieldValue.serverTimestamp(),
           'sessaoFinalizada': true,
         });
-
-        final protocolDoc = await transaction.get(protocolRef);
-        if (!protocolDoc.exists) throw Exception('Protocolo não encontrado');
-
-        final data = protocolDoc.data()!;
-        final completed = (data['sessoesConcluidas'] as int? ?? 0) + 1;
-        final total = data['totalSessoesEstimadas'] as int? ?? 0;
-        final specialistId = data['especialistaId'] as String?;
-        final protocolName = data['nome'] as String? ?? 'Protocolo';
+        print(
+          'LOG SESSÃO TRANSAÇÃO: Documento de sessão finalizada marcado para gravação.',
+        );
 
         if (data['status'] == 'active') {
           transaction.update(protocolRef, {'sessoesConcluidas': completed});
+          print(
+            'LOG SESSÃO TRANSAÇÃO: Contador do protocolo marcado para atualização.',
+          );
         }
 
         if (completed >= total && total > 0 && data['status'] == 'active') {
           transaction.update(protocolRef, {'status': 'finished'});
+          print(
+            'LOG SESSÃO TRANSAÇÃO: Status do protocolo marcado para FINALIZADO.',
+          );
+          return true;
         }
-        return completed >= total;
+        return false;
       });
+
+      protocolWasCompleted = transactionResult;
+      print(
+        'LOG SESSÃO: Transação concluída com SUCESSO. Protocolo finalizado? $protocolWasCompleted',
+      );
     } catch (e) {
-      print('ProtocolService: Erro na transação de conclusão da sessão: $e');
+      print('ProtocolService: ERRO CRÍTICO NA TRANSAÇÃO: $e');
       return false;
     }
 
-    final finalProtocolDoc = await _firestore
-        .collection('protocolos')
-        .doc(protocolId)
-        .get();
-    final finalData = finalProtocolDoc.data();
+    if (protocolWasCompleted) {
+      final finalProtocolDoc = await _firestore
+          .collection('protocolos')
+          .doc(protocolId)
+          .get();
+      final finalData = finalProtocolDoc.data();
 
-    if (finalData != null &&
-        finalData['status'] == 'finished' &&
-        finalData['sessoesConcluidas'] == finalData['totalSessoesEstimadas']) {
-      final protocolName = finalData['nome'] as String? ?? 'Protocolo';
+      final protocolName = finalData?['nome'] as String? ?? 'Protocolo';
+      final specialistId = finalData?['especialistaId'] as String?;
+
       final patientDoc = await _firestore
           .collection('pacientes')
           .doc(patientId)
@@ -103,14 +123,20 @@ class ProtocolServices {
       final patientName =
           patientDoc.data()?['nome'] as String? ?? 'Paciente Desconhecido';
 
-      await _logActivity(
-        type: 'PROTOCOL_FINISHED',
-        protocolName: protocolName,
-        patientId: patientId,
-        patientName: patientName,
-      );
+      if (specialistId != null) {
+        await _logActivity(
+          type: 'PROTOCOL_FINISHED',
+          protocolName: protocolName,
+          patientId: patientId,
+          patientName: patientName,
+        );
+      }
     }
-    print('Sessão concluída e contador incrementado!');
+
+    print(
+      'LOG SESSÃO: Processo markSessionCompleted concluído (Retornando TRUE).',
+    );
+    // Retorna TRUE para a DetailsExercisePage, indicando que o processo da sessão foi registrado.
     return true;
   }
 
