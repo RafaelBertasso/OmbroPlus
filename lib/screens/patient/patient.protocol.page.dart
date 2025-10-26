@@ -181,7 +181,6 @@ class _PatientProtocolPageState extends State<PatientProtocolPage> {
             child: FutureBuilder<Map<String, dynamic>?>(
               future: _protocolFuture,
               builder: (context, snapshot) {
-                // Trata Loading e Erro/Vazio
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
                     child: CircularProgressIndicator(color: Color(0xFF0E382C)),
@@ -193,7 +192,7 @@ class _PatientProtocolPageState extends State<PatientProtocolPage> {
                 if (!snapshot.hasData || fullData == null) {
                   return Center(
                     child: Text(
-                      'Nenhum protocolo ativo no momento.',
+                      'Nenhum protocolo ativo no momento. Aguarde as orientações do seu especialista.',
                       style: GoogleFonts.montserrat(
                         fontSize: 18,
                         color: Colors.black54,
@@ -202,7 +201,6 @@ class _PatientProtocolPageState extends State<PatientProtocolPage> {
                   );
                 }
 
-                // Extração dos dados
                 final protocolId = fullData['protocoloId'] as String;
                 final protocolData = fullData['data'] as Map<String, dynamic>;
 
@@ -260,7 +258,6 @@ class _PatientProtocolPageState extends State<PatientProtocolPage> {
                         ),
                         const SizedBox(height: 30),
 
-                        // --- 1. CARD DO PROTOCOLO ATIVO ---
                         Container(
                           padding: const EdgeInsets.all(16),
                           margin: const EdgeInsets.only(bottom: 16, left: 8),
@@ -406,7 +403,7 @@ class _PatientProtocolPageState extends State<PatientProtocolPage> {
                               const SizedBox(height: 8),
                               _buildScheduleDisplay(
                                 schedule,
-                              ), // Widget da Agenda
+                              ),
                             ],
                           ),
                         ),

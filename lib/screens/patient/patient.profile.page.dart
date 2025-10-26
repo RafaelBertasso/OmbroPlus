@@ -461,11 +461,6 @@ class _PatientProfilePageState extends State<PatientProfilePage> {
                     ),
                     Divider(color: Color(0xFF0E382C)),
                     ConfigTile(
-                      icon: Icons.notifications_active_outlined,
-                      onTap: () {},
-                      title: 'Notificações',
-                    ),
-                    ConfigTile(
                       icon: Icons.lock_outline,
                       onTap: () =>
                           Navigator.pushNamed(context, '/forgot-password'),

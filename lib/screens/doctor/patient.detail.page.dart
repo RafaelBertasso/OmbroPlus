@@ -23,6 +23,9 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
   Timestamp? _protocolStartDate;
   String? _activeProtocolDocId;
 
+  List<DateTime> _completedSessionDays = [];
+  bool _isAccessLogsLoading = true;
+
   @override
   void initState() {
     super.initState();
@@ -46,64 +49,113 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
       return;
     }
 
+    String? activeProtocolName;
+    Timestamp? startDate;
+    String? protocolDocId;
+    Map<String, dynamic>? patientData;
+    String? profileImageBase64;
+    String mainDiagnosis = 'Ficha não preenchida';
+
     try {
       final doc = await FirebaseFirestore.instance
           .collection('pacientes')
           .doc(id)
           .get();
-      // final protocolSnapshot = await FirebaseFirestore.instance
-      //     .collection('protocolos')
-      //     .where('pacienteId', isEqualTo: id)
-      //     .where('status', isEqualTo: 'active')
-      //     .limit(1)
-      //     .get();
-
-      // String? activeProtocolName;
-      // Timestamp? startDate;
-      // String? protocolDocId;
-
-      // if (protocolSnapshot.docs.isNotEmpty) {
-      //   final protocolDoc = protocolSnapshot.docs.first;
-      //   final protocolData = protocolDoc.data();
-
-      //   activeProtocolName = protocolData['nome'] as String?;
-      //   startDate = protocolData['dataInicio'] as Timestamp?;
-      //   protocolDocId = protocolDoc.id;
-      // }
 
       if (doc.exists) {
-        final data = doc.data();
-        if (mounted) {
-          setState(() {
-            _patientData = data;
-            _patientName = data?['nome'] ?? name;
-            _profileImageBase64 = data?['profileImage'];
-            _patientId = id;
-            _mainDiagnosis =
-                data?['diagnosticoPrincipal'] ?? 'Ficha não preenchida';
+        patientData = doc.data();
+        profileImageBase64 = patientData?['profileImage'];
+        mainDiagnosis =
+            patientData?['diagnosticoPrincipal'] ?? 'Ficha não preenchida';
+      }
 
-            // _activeProtocolName = activeProtocolName;
-            // _protocolStartDate = startDate;
-            // _activeProtocolDocId = protocolDocId;
-            _isLoading = false;
-          });
+      try {
+        final protocolSnapshot = await FirebaseFirestore.instance
+            .collection('protocolos')
+            .where('pacienteId', isEqualTo: id)
+            .where('status', isEqualTo: 'active')
+            .limit(1)
+            .get();
+
+        if (protocolSnapshot.docs.isNotEmpty) {
+          final protocolDoc = protocolSnapshot.docs.first;
+          final protocolData = protocolDoc.data();
+
+          activeProtocolName = protocolData['nome'] as String?;
+          startDate = protocolData['dataInicio'] as Timestamp?;
+          protocolDocId = protocolDoc.id;
         }
-      } else {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-            _patientName = name;
-            _patientId = id;
-          });
-        }
+      } catch (e) {
+        print("Erro (SECUNDÁRIO) ao carregar protocolo ativo: $e");
+        activeProtocolName = 'Erro de permissão ou consulta';
+      }
+
+      if (mounted) {
+        setState(() {
+          _patientData = patientData;
+          _patientName = patientData?['nome'] ?? name;
+          _profileImageBase64 = profileImageBase64;
+          _patientId = id;
+          _mainDiagnosis = mainDiagnosis;
+
+          _activeProtocolName = activeProtocolName;
+          _protocolStartDate = startDate;
+          _activeProtocolDocId = protocolDocId;
+          _isLoading = false;
+        });
+      }
+
+      if (id != 'ID_NAO_ENCONTRADO') {
+        _loadAccessLogs(id);
       }
     } catch (e) {
-      print("Erro ao carregar dados do paciente: $e");
+      print("Erro (PRINCIPAL) ao carregar dados do paciente: $e");
       if (mounted) {
         setState(() {
           _isLoading = false;
           _patientName = name;
           _patientId = id;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadAccessLogs(String patientId) async {
+    if (!mounted) return;
+
+    try {
+      final logsSnapshot = await FirebaseFirestore.instance
+          .collection('logs_exercicios')
+          .where('pacienteId', isEqualTo: patientId)
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      final Set<DateTime> uniqueDays = {};
+
+      for (var doc in logsSnapshot.docs) {
+        final data = doc.data();
+        final timestamp = data['timestamp'] as Timestamp?;
+
+        if (timestamp != null) {
+          final date = DateTime(
+            timestamp.toDate().year,
+            timestamp.toDate().month,
+            timestamp.toDate().day,
+          );
+          uniqueDays.add(date);
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _completedSessionDays = uniqueDays.toList();
+          _isAccessLogsLoading = false;
+        });
+      }
+    } catch (e) {
+      print('PatientDetails: Erro ao carregar logs de acesso: $e');
+      if (mounted) {
+        setState(() {
+          _isAccessLogsLoading = false;
         });
       }
     }
@@ -121,7 +173,6 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
     return initials.toUpperCase();
   }
 
-  // Helper para construir o avatar dinâmico
   Widget _buildAvatar() {
     if (_profileImageBase64 != null) {
       try {
@@ -129,9 +180,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
         return ClipOval(
           child: Image.memory(bytes, width: 76, height: 76, fit: BoxFit.cover),
         );
-      } catch (_) {
-        // Fallback: Se o Base64 falhar, usa as iniciais
-      }
+      } catch (_) {}
     }
 
     return Text(
@@ -140,6 +189,75 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
         fontSize: 32,
         fontWeight: FontWeight.bold,
         color: Colors.white,
+      ),
+    );
+  }
+
+  Widget _buildAccessLogSection() {
+    return Card(
+      color: Color(0xFFF4F7F6),
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Sessões Concluídas',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 10),
+            _isAccessLogsLoading
+                ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(12.0),
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF0E382C),
+                      ),
+                    ),
+                  )
+                : _completedSessionDays.isEmpty
+                ? const Text(
+                    'Nenhuma sessão registrada ainda.',
+                    style: TextStyle(fontStyle: FontStyle.italic),
+                  )
+                : SizedBox(
+                    height: 200,
+                    child: ListView.builder(
+                      itemCount: _completedSessionDays.length,
+                      itemBuilder: (context, index) {
+                        final date = _completedSessionDays[index];
+                        final formatter = DateFormat(
+                          'dd \'de\' MMMM \'de\' yyyy',
+                          'pt_BR',
+                        );
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.check_circle,
+                                color: Color(0xFF0E382C),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                formatter.format(date),
+                                style: GoogleFonts.openSans(fontSize: 16),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+          ],
+        ),
       ),
     );
   }
@@ -301,7 +419,6 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
             ),
           ),
 
-          // --- ESTÁGIO ATUAL ---
           const SizedBox(height: 28),
           Text(
             'Estágio Atual',
@@ -311,82 +428,89 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
             ),
           ),
           const SizedBox(height: 10),
-          // Container(
-          //   decoration: BoxDecoration(
-          //     color: const Color(0xFFF4F7F6),
-          //     borderRadius: BorderRadius.circular(12),
-          //   ),
-          //   padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 16),
-          //   child: _activeProtocolName == null
-          //       ? Text(
-          //           'Nenhum protocolo ativo encontrado',
-          //           style: GoogleFonts.openSans(
-          //             fontSize: 15,
-          //             color: Colors.black54,
-          //           ),
-          //         )
-          //       : Row(
-          //           crossAxisAlignment: CrossAxisAlignment.start,
-          //           children: [
-          //             Container(
-          //               decoration: BoxDecoration(
-          //                 color: Color.fromARGB(70, 125, 125, 125),
-          //                 borderRadius: BorderRadius.circular(8),
-          //               ),
-          //               padding: EdgeInsets.all(8),
-          //               child: Icon(Icons.list, color: Colors.black, size: 25),
-          //             ),
-          //             SizedBox(width: 12),
-          //             Expanded(
-          //               child: Column(
-          //                 crossAxisAlignment: CrossAxisAlignment.start,
-          //                 children: [
-          //                   Text(
-          //                     _activeProtocolName!,
-          //                     style: GoogleFonts.montserrat(
-          //                       fontWeight: FontWeight.bold,
-          //                       fontSize: 16,
-          //                       color: Colors.black87,
-          //                     ),
-          //                   ),
-          //                   SizedBox(height: 2),
-          //                   Text(
-          //                     'Ativo desde: ${_protocolStartDate != null ? DateFormat('dd/MM/yyyy').format(_protocolStartDate!.toDate()) : 'Data Desconhecida'}',
-          //                     style: GoogleFonts.openSans(
-          //                       fontSize: 15,
-          //                       color: Colors.black54,
-          //                       fontWeight: FontWeight.w500,
-          //                     ),
-          //                   ),
-          //                   TextButton(
-          //                     onPressed: () {
-          //                       if (_activeProtocolDocId != null) {
-          //                         Navigator.pushNamed(
-          //                           context,
-          //                           '/protocol-details',
-          //                           arguments: {
-          //                             'protocoloId': _activeProtocolDocId,
-          //                           },
-          //                         );
-          //                       }
-          //                     },
-          //                     child: Text(
-          //                       'Ver Cronograma Completo',
-          //                       style: GoogleFonts.openSans(
-          //                         fontSize: 13,
-          //                         color: Color(0xFF0E382C),
-          //                         fontWeight: FontWeight.bold,
-          //                       ),
-          //                     ),
-          //                   ),
-          //                 ],
-          //               ),
-          //             ),
-          //           ],
-          //         ),
-          // ),
-
-          // --- ACESSOS ---
+          Container(
+            decoration: BoxDecoration(
+              color: Color(0xFFF4F7F6),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 6,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 17, vertical: 16),
+            child: _activeProtocolName == null
+                ? Text(
+                    'Nenhum protocolo ativo encontrado',
+                    style: GoogleFonts.openSans(
+                      fontSize: 15,
+                      color: Colors.black54,
+                    ),
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Color(0xFFF4F7F6),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: EdgeInsets.all(8),
+                        child: Icon(Icons.list, color: Colors.black, size: 25),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _activeProtocolName!,
+                              style: GoogleFonts.montserrat(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.black87,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Ativo desde: ${_protocolStartDate != null ? DateFormat('dd/MM/yyyy').format(_protocolStartDate!.toDate()) : 'Data Desconhecida'}',
+                              style: GoogleFonts.openSans(
+                                fontSize: 15,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                if (_activeProtocolDocId != null) {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/protocol-details',
+                                    arguments: {
+                                      'protocoloId': _activeProtocolDocId,
+                                    },
+                                  );
+                                }
+                              },
+                              child: Text(
+                                'Ver Cronograma',
+                                style: GoogleFonts.openSans(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0E382C),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
           const SizedBox(height: 24),
           Text(
             'Acessos',
@@ -396,28 +520,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
             ),
           ),
           const SizedBox(height: 9),
-          // Conteúdo Acessos
-          Container(
-            // ...
-          ),
-          const SizedBox(height: 10),
-          // Botão Ver todos os acessos
-          // ...
-
-          // --- EXERCÍCIOS FEITOS ---
-          const SizedBox(height: 26),
-          Text(
-            'Exercícios Feitos',
-            style: GoogleFonts.montserrat(
-              fontWeight: FontWeight.bold,
-              fontSize: 17,
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          // Conteúdo Exercícios Feitos
-          // ...
-          const SizedBox(height: 32),
+          _buildAccessLogSection(),
         ],
       ),
     );
