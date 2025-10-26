@@ -1,5 +1,6 @@
 import 'package:Ombro_Plus/models/dashboard.data.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
 class DashboardService {
@@ -61,9 +62,16 @@ class DashboardService {
   Future<DashboardData?> fetchDashboardData(String uid) async {
     if (uid == null) return null;
 
+    final specialistUid = FirebaseAuth.instance.currentUser?.uid;
+    if (specialistUid == null) {
+      print('Erro: Especialista não logado.');
+      return DashboardData();
+    }
+
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('protocolos')
+          .where('especialistaId', isEqualTo: specialistUid)
           .where('pacienteId', isEqualTo: uid)
           .where('status', isEqualTo: 'active')
           .limit(1)
@@ -86,6 +94,41 @@ class DashboardService {
     } catch (e) {
       print('DashboardService: Erro ao carregar dados do dashboard: $e');
       return DashboardData();
+    }
+  }
+
+  Future<List<Map<String, String>>> fetchSpecialistPatients(
+    String specialistUid,
+  ) async {
+    try {
+      final snapshot = await _firestore
+          .collection('protocolos')
+          .where('especialistaId', isEqualTo: specialistUid)
+          .where('status', isEqualTo: 'active')
+          .get();
+
+      if (snapshot.docs.isEmpty) return [];
+
+      final List<String> patientIds = snapshot.docs
+          .map((doc) => doc.data()['pacienteId'] as String)
+          .toList();
+      final List<Map<String, String>> patientList = [];
+
+      for (String id in patientIds.toSet().toList()) {
+        final userDoc = await _firestore.collection('pacientes').doc(id).get();
+
+        if (userDoc.exists) {
+          final userData = userDoc.data()!;
+          patientList.add({
+            'id': id,
+            'nome': userData['nome'] as String? ?? 'Paciente Desconhecido',
+          });
+        }
+      }
+      return patientList;
+    } catch (e) {
+      print('DashboardService: Erro ao buscar pacientes do especialista: $e');
+      return [];
     }
   }
 }
