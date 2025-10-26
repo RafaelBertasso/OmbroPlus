@@ -259,7 +259,6 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
                                 ),
                               ),
                               style: GoogleFonts.openSans(fontSize: 16),
-                              //TODO: Corrigir a validação da data
                               validator: validateDate,
                             ),
                           ),

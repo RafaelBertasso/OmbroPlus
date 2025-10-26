@@ -55,49 +55,68 @@ class _PatientInvitePageState extends State<PatientInvitePage> {
   Future<void> _loadInviteCode() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
-      setState(() {
-        _loadMessage = 'Erro: Especialist não logado';
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _loadMessage = 'Erro: Especialista não logado';
+          _isLoading = false;
+          _inviteCode = 'ERRO';
+        });
+      }
       return;
     }
+
     final specialistRef = FirebaseFirestore.instance
         .collection('especialistas')
         .doc(currentUser.uid);
+    final publicCodeRef = FirebaseFirestore.instance.collection(
+      'invite_codes_public',
+    );
+
     try {
-      final doc = await specialistRef.get();
-      String? code;
+      String? currentCode;
 
-      if (doc.exists && doc.data() != null) {
-        final data = doc.data() as Map<String, dynamic>;
-        code = data['invite_code'] as String?;
+      final specialistDoc = await specialistRef.get();
+      if (specialistDoc.exists) {
+        currentCode = specialistDoc.data()?['invite_code'] as String?;
       }
 
-      if (code == null || code.isEmpty) {
-        final newCode = _generateInviteCode();
+      String finalCode = currentCode ?? _generateInviteCode();
 
-        await specialistRef.set({
-          'invite_code': newCode,
-        }, SetOptions(merge: true));
+      try {
+        final publicDoc = await publicCodeRef.doc(finalCode).get();
 
-        code = newCode;
-        print('Novo código de convite gerado e salvo: $newCode');
+        if (!publicDoc.exists) {
+          await specialistRef.set({
+            'invite_code': finalCode,
+          }, SetOptions(merge: true));
+
+          await publicCodeRef.doc(finalCode).set({
+            'specialistId': currentUser.uid,
+            'criadoEm': FieldValue.serverTimestamp(),
+          });
+          print('Código $finalCode sincronizado com sucesso.');
+        }
+      } catch (syncError) {
+        print('Aviso: Falha na sincronização do código público: $syncError');
       }
 
-      setState(() {
-        _inviteCode = code;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _inviteCode = finalCode;
+          _isLoading = false;
+          _loadMessage = 'Código pronto.';
+        });
+      }
     } catch (e) {
-      setState(() {
-        _loadMessage = 'Erro ao buscar o código de convite: $e';
-        _isLoading = false;
-      });
+      print('Erro Crítico ao carregar/sincronizar o código: $e');
+      if (mounted) {
+        setState(() {
+          _loadMessage = 'Erro ao carregar o código. Verifique a conexão.';
+          _inviteCode = 'ERRO';
+          _isLoading = false;
+        });
+      }
     }
-
-    setState(() {
-      _isLoading = false;
-    });
   }
 
   Future<void> _launchWhatsApp() async {

@@ -202,7 +202,7 @@ class _LoginPageState extends State<LoginPage>
           if (showRegister)
             TextButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/patient-register');
+                _showInviteCodeModal(context);
               },
               child: Text(
                 'Criar Conta',
@@ -226,6 +226,110 @@ class _LoginPageState extends State<LoginPage>
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _showInviteCodeModal(BuildContext context) async {
+    final TextEditingController codeController = TextEditingController();
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: Color(0xFFF4F7F6),
+          title: Text(
+            'Código de Convite',
+            style: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
+          ),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text(
+                  'Insira o código fornecido pelo seu especialista para criar sua conta.',
+                  style: GoogleFonts.openSans(),
+                ),
+                SizedBox(height: 16),
+                TextField(
+                  textCapitalization: TextCapitalization.characters,
+                  controller: codeController,
+                  decoration: InputDecoration(
+                    labelText: 'Código',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: Text(
+                'Cancelar',
+                style: GoogleFonts.openSans(color: Colors.grey.shade600),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final code = codeController.text.trim();
+                if (code.isEmpty) {
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    SnackBar(content: Text('O código não pode ser vazio.')),
+                  );
+                  return;
+                }
+                try {
+                  final docSnapshot = await firestore
+                      .collection('invite_codes_public')
+                      .doc(code)
+                      .get();
+
+                  if (docSnapshot.exists) {
+                    Navigator.of(dialogContext).pop();
+                    final specialistId =
+                        docSnapshot.data()?['specialistId'] as String? ??
+                        'ERRO_ID';
+                    Navigator.pushNamed(
+                      context,
+                      '/patient-register',
+                      arguments: {
+                        'inviteCode': code,
+                        'specialistId': specialistId,
+                      },
+                    );
+                  } else {
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Código de convite inválido ou expirado.',
+                        ),
+                        backgroundColor: Colors.redAccent,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  print('Login: Erro ao verificar código de convite: $e');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Erro de comunicação. Tente novamente.'),
+                    ),
+                  );
+                }
+              },
+              style: TextButton.styleFrom(backgroundColor: Color(0xFF0E382C)),
+              child: Text(
+                'Verificar',
+                style: GoogleFonts.openSans(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

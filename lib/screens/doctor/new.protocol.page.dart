@@ -6,8 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-//TODO: Implementar logica para um unico protocolo ativo para um paciente
-
 class NewProtocolPage extends StatefulWidget {
   const NewProtocolPage({super.key});
 
