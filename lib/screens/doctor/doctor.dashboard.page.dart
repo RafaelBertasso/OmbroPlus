@@ -1,11 +1,9 @@
 import 'package:Ombro_Plus/components/app.logo.dart';
 import 'package:Ombro_Plus/components/doctor.navbar.dart';
 import 'package:Ombro_Plus/components/metric.card.dart';
-import 'package:Ombro_Plus/components/metric.large.card.dart';
 import 'package:Ombro_Plus/components/patient.dropdown.dart';
 import 'package:Ombro_Plus/models/dashboard.data.dart';
 import 'package:Ombro_Plus/services/dashboard.service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';

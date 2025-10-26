@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-//TODO: Implementar logica para um unico protocolo ativo para um paciente 
+//TODO: Implementar logica para um unico protocolo ativo para um paciente
 
 class NewProtocolPage extends StatefulWidget {
   const NewProtocolPage({super.key});
@@ -91,6 +91,22 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
     );
   }
 
+  Future<bool> _hasActiveProtocol(String patientId) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('protocolos')
+          .where('pacienteId', isEqualTo: patientId)
+          .where('status', isEqualTo: 'active')
+          .limit(1)
+          .get();
+
+      return snapshot.docs.isNotEmpty;
+    } catch (e) {
+      print('NewProtocol: Erro ao verificar protocolo ativo $e');
+      return true;
+    }
+  }
+
   Future<void> _saveProtocol() async {
     if (_selectedPatientId == null || _protocolNameController.text.isEmpty) {
       return;
@@ -107,6 +123,25 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
     setState(() {
       _isSaving = true;
     });
+
+    final patientId = _selectedPatientId!;
+    final hasActive = await _hasActiveProtocol(patientId);
+    if (hasActive) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'O paciente já possui um protocolo ativo. Por favor, finalize o protocolo anterior antes de criar um novo.',
+          ),
+          backgroundColor: Colors.orange.shade800,
+        ),
+      );
+      setState(() {
+        _isSaving = false;
+      });
+      return;
+    }
+
     final specialistId = FirebaseAuth.instance.currentUser?.uid;
     final protocolName = _protocolNameController.text.trim();
     final patientName = _selectedPatientName;

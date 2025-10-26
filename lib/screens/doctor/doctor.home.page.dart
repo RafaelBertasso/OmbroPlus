@@ -39,18 +39,12 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
 
   IconData _getIconForActivityType(String type) {
     switch (type) {
-      case 'EXERCISE_COMPLETED':
-        return Icons.check_circle_outline;
       case 'NEW_PATIENT':
         return Icons.person_add;
-      case 'PAIN_ALERT':
-        return Icons.warning_amber_rounded;
       case 'PROTOCOL_FINISHED':
         return Icons.star;
       case 'PROTOCOL_CREATED':
         return Icons.insert_invitation_outlined;
-      case 'INACTIVITY':
-        return Icons.timer_off;
       default:
         return Icons.info_outline;
     }
@@ -58,18 +52,12 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
 
   Color _getColorForActivityType(String type) {
     switch (type) {
-      case 'EXERCISE_COMPLETED':
-        return Colors.green.shade700;
       case 'NEW_PATIENT':
         return const Color(0xFF0E382C);
-      case 'PAIN_ALERT':
-        return Colors.red.shade700;
       case 'PROTOCOL_CREATED':
         return Colors.blue.shade600;
       case 'PROTOCOL_FINISHED':
         return Colors.amber.shade800;
-      case 'INACTIVITY':
-        return Colors.orange.shade700;
       default:
         return Colors.grey;
     }

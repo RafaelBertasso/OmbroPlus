@@ -3,7 +3,6 @@ import 'package:Ombro_Plus/components/graphic.card.dart';
 import 'package:Ombro_Plus/components/patient.navbar.dart';
 import 'package:Ombro_Plus/models/dashboard.data.dart';
 import 'package:Ombro_Plus/services/dashboard.service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';

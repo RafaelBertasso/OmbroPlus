@@ -8,6 +8,33 @@ class ProtocolServices {
     return DateFormat('yyyy-MM-dd').format(DateTime.now());
   }
 
+  Future<void> _logActivity({
+    required String type,
+    required String protocolName,
+    required String patientId,
+    required String patientName,
+  }) async {
+    String message;
+
+    switch (type) {
+      case 'PROTOCOL_FINISHED':
+        message = '$patientName concluiu o protocolo: $protocolName.';
+        break;
+      case 'PROTOCOL_CREATED':
+        message = 'Novo protocolo "$protocolName" iniciado para $patientName.';
+        break;
+      default:
+        message = 'Atividade registrada para $patientName.';
+    }
+    await _firestore.collection('activity_feed').add({
+      'type': type,
+      'patientId': patientId,
+      'patientName': patientName,
+      'message': message,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<bool> markSessionCompleted(String protocolId, String patientId) async {
     final todayKey = _getTodayKey();
     final logCollection = _firestore.collection('logs_exercicios');
@@ -26,30 +53,65 @@ class ProtocolServices {
       return false;
     }
 
-    return await _firestore
-        .runTransaction((transaction) async {
-          transaction.set(logCollection.doc(), {
-            'protocoloId': protocolId,
-            'pacienteId': patientId,
-            'data': todayKey,
-            'timestamp': FieldValue.serverTimestamp(),
-            'sessaoFinalizada': true,
-          });
-
-          transaction.update(protocolRef, {
-            'sessoesConcluidas': FieldValue.increment(1),
-          });
-
-          return true;
-        })
-        .then((_) {
-          print('Sessão concluída e contador incrementado com sucesso.');
-          return true;
-        })
-        .catchError((error) {
-          print('Erro na transação de conclusão da sessão: $error');
-          return false;
+    try {
+      await _firestore.runTransaction((transaction) async {
+        transaction.set(logCollection.doc(), {
+          'protocoloId': protocolId,
+          'pacienteId': patientId,
+          'data': todayKey,
+          'timestamp': FieldValue.serverTimestamp(),
+          'sessaoFinalizada': true,
         });
+
+        final protocolDoc = await transaction.get(protocolRef);
+        if (!protocolDoc.exists) throw Exception('Protocolo não encontrado');
+
+        final data = protocolDoc.data()!;
+        final completed = (data['sessoesConcluidas'] as int? ?? 0) + 1;
+        final total = data['totalSessoesEstimadas'] as int? ?? 0;
+        final specialistId = data['especialistaId'] as String?;
+        final protocolName = data['nome'] as String? ?? 'Protocolo';
+
+        if (data['status'] == 'active') {
+          transaction.update(protocolRef, {'sessoesConcluidas': completed});
+        }
+
+        if (completed >= total && total > 0 && data['status'] == 'active') {
+          transaction.update(protocolRef, {'status': 'finished'});
+        }
+        return completed >= total;
+      });
+    } catch (e) {
+      print('ProtocolService: Erro na transação de conclusão da sessão: $e');
+      return false;
+    }
+
+    final finalProtocolDoc = await _firestore
+        .collection('protocolos')
+        .doc(protocolId)
+        .get();
+    final finalData = finalProtocolDoc.data();
+
+    if (finalData != null &&
+        finalData['status'] == 'finished' &&
+        finalData['sessoesConcluidas'] == finalData['totalSessoesEstimadas']) {
+      final protocolName = finalData['nome'] as String? ?? 'Protocolo';
+      final patientDoc = await _firestore
+          .collection('pacientes')
+          .doc(patientId)
+          .get();
+      final patientName =
+          patientDoc.data()?['nome'] as String? ?? 'Paciente Desconhecido';
+
+      await _logActivity(
+        type: 'PROTOCOL_FINISHED',
+        protocolName: protocolName,
+        patientId: patientId,
+        patientName: patientName,
+      );
+    }
+    print('Sessão concluída e contador incrementado!');
+    return true;
   }
 
   Future<Set<String>> fetchCompletedExercisesToday(
