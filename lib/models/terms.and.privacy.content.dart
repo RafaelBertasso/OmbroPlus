@@ -16,7 +16,6 @@ class TermsAndPrivacyContent {
   // ----------------------------------------------------------------
   // 2. TERMOS DE USO (RESUMO)
   // ----------------------------------------------------------------
-  // (MANTIDOS IGUAIS)
   static const String termsOfUse = '''
     **Aceitação dos Termos:** Ao utilizar o aplicativo OmbroPlus, você concorda integralmente com estes Termos de Uso e com nossa Política de Privacidade.
     

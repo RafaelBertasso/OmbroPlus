@@ -247,7 +247,6 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
       } catch (_) {}
     }
 
-    // Fallback
     return Text(
       initial,
       style: GoogleFonts.montserrat(

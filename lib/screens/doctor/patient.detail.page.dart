@@ -301,7 +301,6 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // AVATAR DO PACIENTE (FOTO OU INICIAIS)
                       CircleAvatar(
                         radius: 38,
                         backgroundColor: const Color(0xFF0E382C),
@@ -322,7 +321,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              _mainDiagnosis, // Diagnóstico principal dinâmico
+                              _mainDiagnosis,
                               style: GoogleFonts.openSans(
                                 fontSize: 16,
                                 color: Colors.black54,
@@ -336,7 +335,6 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // BOTÃO EDITAR DADOS PESSOAIS
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -355,7 +353,6 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      // LÓGICA DE RECARGA: await e _loadPatientData()
                       onPressed: () async {
                         final shouldReload = await Navigator.pushNamed(
                           context,
@@ -378,7 +375,6 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                   ),
                   const SizedBox(height: 12),
 
-                  // BOTÃO FICHA CLÍNICA
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -393,7 +389,6 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                         Icons.description_outlined,
                         color: Colors.white,
                       ),
-                      // LÓGICA DE RECARGA: await e _loadPatientData()
                       onPressed: () async {
                         final shouldReload = await Navigator.pushNamed(
                           context,

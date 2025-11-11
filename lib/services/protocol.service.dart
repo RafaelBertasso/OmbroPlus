@@ -136,7 +136,6 @@ class ProtocolServices {
     print(
       'LOG SESSÃO: Processo markSessionCompleted concluído (Retornando TRUE).',
     );
-    // Retorna TRUE para a DetailsExercisePage, indicando que o processo da sessão foi registrado.
     return true;
   }
 
@@ -156,7 +155,7 @@ class ProtocolServices {
           .get();
 
       return snapshot.docs
-          .map((doc) => doc.data()['exercicioId'] as String ?? '?')
+          .map((doc) => doc.data()['exercicioId'] as String)
           .toSet();
     } catch (e) {
       print('Erro ao buscar logs do exercício: $e');

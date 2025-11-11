@@ -371,7 +371,6 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
                   ),
                   SizedBox(height: 30),
 
-                  // Agendar
                   SectionTitle(title: 'Agendamento e Notas'),
                   SizedBox(height: 16),
                   Row(

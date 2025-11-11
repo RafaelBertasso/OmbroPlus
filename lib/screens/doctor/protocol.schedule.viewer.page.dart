@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-// Constante para o formato da chave (Chave de Mapa no Firestore: YYYY-MM-DD)
 const String FIRESTORE_DATE_KEY = 'yyyy-MM-dd';
 
 class ProtocolScheduleViewerPage extends StatefulWidget {
@@ -41,11 +40,8 @@ class _ProtocolScheduleViewerPageState
       orElse: () => _protocolDays.first,
     );
 
-    // Carrega os dados do Firestore para visualização
     _loadScheduleData();
   }
-
-  // --- Lógica de Dados e Cast (Otimizada) ---
 
   List<DateTime> _generateDays(DateTime start, DateTime end) {
     final days = <DateTime>[];
@@ -56,7 +52,6 @@ class _ProtocolScheduleViewerPageState
     return days;
   }
 
-  // Método auxiliar para realizar o cast robusto do schedule
   Map<String, List<Map<String, dynamic>>> _castSchedule(
     Map<String, dynamic> scheduleData,
   ) {
@@ -65,7 +60,6 @@ class _ProtocolScheduleViewerPageState
     scheduleData.forEach((key, value) {
       if (key is String && value is List) {
         try {
-          // Conversão robusta usando .cast() para segurança de tipos
           final List<Map<String, dynamic>> exercises = value
               .cast<Map>()
               .map((e) => e.cast<String, dynamic>())
@@ -118,8 +112,6 @@ class _ProtocolScheduleViewerPageState
       }
     }
   }
-
-  // --- Widgets de Layout ---
 
   Widget _buildDateSelectorItem(DateTime date) {
     final isSelected = DateUtils.isSameDay(date, _selectedDate);

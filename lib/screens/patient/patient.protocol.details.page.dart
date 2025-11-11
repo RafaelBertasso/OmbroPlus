@@ -1,5 +1,3 @@
-// patient_protocol_details_page.dart
-
 import 'package:Ombro_Plus/components/info.card.dart';
 import 'package:Ombro_Plus/components/protocol.dates.section.dart';
 import 'package:Ombro_Plus/components/protocol.header.dart';
@@ -36,14 +34,12 @@ class PatientProtocolDetailsPage extends StatelessWidget {
               subtitle: Text(
                 '${ex['series']} séries x ${ex['repeticoes']} repetições',
               ),
-              // Nenhuma funcionalidade de log/conclusão está aqui, é pura consulta.
             ),
           )
           .toList(),
     );
   }
 
-  // WIDGET HELPER: Seção de Visualização da Agenda (Substitui o _buildScheduleSummary)
   Widget _buildPatientScheduleViewer(
     BuildContext context,
     Map<String, dynamic> schedule,
@@ -54,7 +50,6 @@ class PatientProtocolDetailsPage extends StatelessWidget {
     final int scheduleDays = schedule.keys.length;
     final bool hasSchedule = scheduleDays > 0;
 
-    // Obtém e ordena as chaves de data
     final sortedDateKeys = schedule.keys.toList()
       ..sort((a, b) => a.compareTo(b));
 
@@ -83,7 +78,6 @@ class PatientProtocolDetailsPage extends StatelessWidget {
         const Divider(color: Color(0xFF0E382C)),
         const SizedBox(height: 12),
 
-        // Lista de Expansion Tiles por Data
         Column(
           children: sortedDateKeys.map((dateKey) {
             DateTime? date;
@@ -128,7 +122,6 @@ class PatientProtocolDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Extrai o ID dos argumentos da rota
     final args =
         ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     final String protocolId = args['protocoloId'];
