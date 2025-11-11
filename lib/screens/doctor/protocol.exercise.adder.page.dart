@@ -322,7 +322,7 @@ class _ProtocolExerciseAdderPageState extends State<ProtocolExerciseAdderPage> {
         final exerciseOptions = snapshot.data!.docs
             .map((doc) {
               final data = doc.data() as Map<String, dynamic>;
-              return data['nome'] as String ?? '';
+              return data['nome'] as String;
             })
             .where((nome) => nome.isNotEmpty)
             .toList();

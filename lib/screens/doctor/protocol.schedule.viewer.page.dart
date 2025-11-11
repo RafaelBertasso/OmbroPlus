@@ -58,7 +58,7 @@ class _ProtocolScheduleViewerPageState
     final Map<String, List<Map<String, dynamic>>> loadedSchedule = {};
 
     scheduleData.forEach((key, value) {
-      if (key is String && value is List) {
+      if (value is List) {
         try {
           final List<Map<String, dynamic>> exercises = value
               .cast<Map>()
