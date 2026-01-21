@@ -1,0 +1,121 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+class AuthRepository {
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+
+  AuthRepository({FirebaseAuth? auth, FirebaseFirestore? firestore})
+    : _auth = auth ?? FirebaseAuth.instance,
+      _firestore = firestore ?? FirebaseFirestore.instance;
+
+  User? get currentUser => _auth.currentUser;
+  Stream<User?> get authStateChanges => _auth.authStateChanges();
+
+  Future<User?> login(String email, String password) async {
+    try {
+      final credential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return credential.user;
+    } catch (e) {
+      throw Exception('Falha no login: ${e.toString()}');
+    }
+  }
+
+  Future<User?> registerPatient({
+    required String email,
+    required String password,
+    required String nome,
+    required String phone,
+    required String birthDate,
+    required int age,
+    required String sex,
+    required String inviteCode,
+    required String specialistId,
+  }) async {
+    try {
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      final user = credential.user;
+
+      if (user != null) {
+        await _firestore.collection('pacientes').doc(user.uid).set({
+          'uid': user.uid,
+          'nome': nome,
+          'email': email,
+          'telefone': phone,
+          'data_nascimento': birthDate,
+          'idade': age,
+          'sexo': sex,
+          'role': 'patient',
+          'codigoConvite': inviteCode,
+          'especialistaId': specialistId,
+          'criadoEm': FieldValue.serverTimestamp(),
+          'protocoloAtivoId': null,
+        });
+      }
+      return user;
+    } catch (e) {
+      throw Exception('Erro ao cadastrar: $e');
+    }
+  }
+
+  Future<void> logout() async {
+    await _auth.signOut();
+  }
+
+  Future<void> resetPassword(String email) async {
+    await _auth.sendPasswordResetEmail(email: email);
+  }
+
+  Future<String?> getUserType(String uid) async {
+    try {
+      final doctorDoc = await _firestore
+          .collection('especialistas')
+          .doc(uid)
+          .get();
+      if (doctorDoc.exists) return 'doctor';
+
+      final patientDoc = await _firestore
+          .collection('pacientes')
+          .doc(uid)
+          .get();
+      if (patientDoc.exists) return 'patient';
+
+      return null;
+    } catch (e) {
+      print('{AUTH_REPOSITORY}: Erro ao verificar tipo de usuário: $e');
+      return null;
+    }
+  }
+
+  Future<String?> verifyInviteCode(String code) async {
+    try {
+      final docSnapshot = await _firestore
+          .collection('invite_codes_public')
+          .doc(code)
+          .get();
+
+      if (docSnapshot.exists) {
+        return docSnapshot.data()?['specialistId'] as String?;
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Erro ao verificar código: $e');
+    }
+  }
+
+  Future<String> getUserName(String uid, String userType) async {
+    try {
+      final collection = userType == 'doctor' ? 'especialistas' : 'pacientes';
+      final doc = await _firestore.collection(collection).doc(uid).get();
+      return doc.data()?['nome'] as String? ?? 'Usuário';
+    } catch (e) {
+      return 'Usuário';
+    }
+  }
+}

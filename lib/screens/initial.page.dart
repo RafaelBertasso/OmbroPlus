@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:Ombro_Plus/screens/doctor/doctor.home.page.dart';
-import 'package:Ombro_Plus/screens/patient/patient.home.page.dart';
+import 'package:Ombro_Plus/ui/doctor/home/doctor.home.page.dart';
+import 'package:Ombro_Plus/ui/patient/home/patient_home.page.dart';
 import 'package:Ombro_Plus/screens/login.page.dart';
 
 class InitialPage extends StatelessWidget {
