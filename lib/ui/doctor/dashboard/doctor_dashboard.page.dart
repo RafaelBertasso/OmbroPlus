@@ -3,7 +3,7 @@ import 'package:Ombro_Plus/components/graphic.card.dart';
 import 'package:Ombro_Plus/components/metric.card.dart';
 import 'package:Ombro_Plus/components/section.title.dart';
 import 'package:Ombro_Plus/models/dashboard.data.dart';
-import 'package:Ombro_Plus/viewmodels/dashboard_doctor.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/dashboard_doctor.viewmodel.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';

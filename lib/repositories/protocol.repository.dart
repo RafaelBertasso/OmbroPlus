@@ -258,4 +258,22 @@ class ProtocolRepository {
       throw Exception('Erro ao atualizar status: $e');
     }
   }
+
+  Future<ProtocolModel?> fetchActiveProtocolByPatient(String patientId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('protocolos')
+          .where('pacienteId', isEqualTo: patientId)
+          .where('status', isEqualTo: 'active')
+          .limit(1)
+          .get();
+      if (snapshot.docs.isEmpty) return null;
+
+      final doc = snapshot.docs.first;
+      return ProtocolModel.fromMap(doc.data(), doc.id);
+    } catch (e) {
+      print("{PROTOCOL_REPOSITORY} Erro ao buscar protocolo ativo: $e");
+      return null;
+    }
+  }
 }

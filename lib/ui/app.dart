@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:Ombro_Plus/viewmodels/auth.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/auth/auth.viewmodel.dart';
 import 'package:Ombro_Plus/ui/auth/login.page.dart';
 
 import 'package:Ombro_Plus/screens/doctor.register.page.dart';
@@ -32,16 +32,16 @@ import 'package:Ombro_Plus/screens/patient/patient.edit.profile.page.dart';
 import 'package:Ombro_Plus/ui/patient/home/patient_home.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.main.chat.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.profile.page.dart';
-import 'package:Ombro_Plus/screens/patient/patient.protocol.details.page.dart';
-import 'package:Ombro_Plus/screens/patient/patient.protocol.page.dart';
+import 'package:Ombro_Plus/ui/patient/protocols/patient_protocol_details.page.dart';
+import 'package:Ombro_Plus/ui/patient/protocols/patient_protocol_list.page.dart';
 import 'package:Ombro_Plus/screens/terms.of.use.page.dart';
 import 'package:Ombro_Plus/screens/user.list.page.dart';
 import 'package:Ombro_Plus/ui/doctor/dashboard/doctor_dashboard.page.dart';
 import 'package:Ombro_Plus/ui/doctor/home/doctor.home.page.dart';
 import 'package:Ombro_Plus/screens/forgot.password.page.dart';
 
-class OmbroPlus extends StatelessWidget {
-  const OmbroPlus({super.key});
+class App extends StatelessWidget {
+  const App({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -163,10 +163,15 @@ class OmbroPlus extends StatelessWidget {
         }
 
         if (settings.name == '/patient-protocol-details') {
-          return MaterialPageRoute(
-            builder: (context) => const PatientProtocolDetailsPage(),
-            settings: settings,
-          );
+          final arguments = settings.arguments as Map<String, dynamic>?;
+          final String? protocolId = arguments?['protocoloId'] as String;
+          if (protocolId != null) {
+            return MaterialPageRoute(
+              builder: (context) =>
+                  PatientProtocolDetailsPage(protocolId: protocolId),
+              settings: settings,
+            );
+          }
         }
 
         if (settings.name == '/protocol-schedule-viewer') {

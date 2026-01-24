@@ -2,16 +2,17 @@ import 'package:Ombro_Plus/firebase_options.dart';
 import 'package:Ombro_Plus/repositories/auth.repository.dart';
 import 'package:Ombro_Plus/repositories/dashboard.repository.dart';
 import 'package:Ombro_Plus/repositories/protocol.repository.dart';
-import 'package:Ombro_Plus/screens/ombroplus.page.dart';
-import 'package:Ombro_Plus/viewmodels/auth.viewmodel.dart';
-import 'package:Ombro_Plus/viewmodels/dashboard_doctor.viewmodel.dart';
-import 'package:Ombro_Plus/viewmodels/dashboard_patient.viewmodel.dart';
-import 'package:Ombro_Plus/viewmodels/doctor_home.viewmodel.dart';
-import 'package:Ombro_Plus/viewmodels/doctor_protocols.viewmodel.dart';
-import 'package:Ombro_Plus/viewmodels/new_protocol.viewmodel.dart';
-import 'package:Ombro_Plus/viewmodels/patient_home.viewmodel.dart';
-import 'package:Ombro_Plus/viewmodels/protocol_details.viewmodel.dart';
-import 'package:Ombro_Plus/viewmodels/protocol_schedule_viewer.viewmodel.dart';
+import 'package:Ombro_Plus/ui/app.dart';
+import 'package:Ombro_Plus/viewmodels/auth/auth.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/dashboard_doctor.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/patient/dashboard_patient.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/doctor_home.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/doctor_protocols.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/new_protocol.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/patient/patient_home.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/patient/patient_protocols.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/shared/protocol_details.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/shared/protocol_schedule_viewer.viewmodel.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -88,8 +89,14 @@ void main() async {
             repository: context.read<ProtocolRepository>(),
           ),
         ),
+
+        ChangeNotifierProvider<PatientProtocolsViewModel>(
+          create: (context) => PatientProtocolsViewModel(
+            repository: context.read<ProtocolRepository>(),
+          ),
+        ),
       ],
-      child: OmbroPlus(),
+      child: App(),
     ),
   );
 }

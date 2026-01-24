@@ -2,7 +2,7 @@ import 'package:Ombro_Plus/components/patient.selection.modal.dart';
 import 'package:Ombro_Plus/components/section.title.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/widgets/patient_selector.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/widgets/schedule_button.dart';
-import 'package:Ombro_Plus/viewmodels/new_protocol.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/new_protocol.viewmodel.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';

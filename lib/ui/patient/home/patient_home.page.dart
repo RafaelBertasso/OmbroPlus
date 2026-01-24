@@ -3,7 +3,7 @@ import 'package:Ombro_Plus/components/exercise.card.dart';
 import 'package:Ombro_Plus/components/mini.metric.card.dart';
 import 'package:Ombro_Plus/components/patient.navbar.dart';
 import 'package:Ombro_Plus/components/unread.messages.summary.dart';
-import 'package:Ombro_Plus/viewmodels/patient_home.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/patient/patient_home.viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
