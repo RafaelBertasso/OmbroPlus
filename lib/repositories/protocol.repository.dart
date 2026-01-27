@@ -276,4 +276,14 @@ class ProtocolRepository {
       return null;
     }
   }
+
+  Future<Map<String, dynamic>?> getExerciseById(String id) async {
+    try {
+      final doc = await _firestore.collection('exercicios').doc(id).get();
+      return doc.data();
+    } catch (e) {
+      print("{PROTOCOL_REPO} Erro ao pegar exercício: $e");
+      return null;
+    }
+  }
 }

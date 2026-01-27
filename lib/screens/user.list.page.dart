@@ -1,5 +1,5 @@
 import 'package:Ombro_Plus/screens/doctor/doctor.list.page.dart';
-import 'package:Ombro_Plus/screens/doctor/patient.list.page.dart';
+import 'package:Ombro_Plus/ui/doctor/doctor_patients/patient_list.page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 

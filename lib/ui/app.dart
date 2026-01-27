@@ -16,15 +16,15 @@ import 'package:Ombro_Plus/screens/doctor/new.exercise.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/new_protocol.page.dart';
 
 import 'package:Ombro_Plus/screens/doctor/patient.detail.page.dart';
-import 'package:Ombro_Plus/screens/doctor/patient.list.page.dart';
-import 'package:Ombro_Plus/screens/doctor/patient.invite.page.dart';
+import 'package:Ombro_Plus/ui/doctor/doctor_patients/patient_list.page.dart';
+import 'package:Ombro_Plus/ui/doctor/doctor_patients/patient_invite.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.log.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/protocol_details.page.dart';
 import 'package:Ombro_Plus/screens/doctor/protocol.exercise.adder.page.dart';
 import 'package:Ombro_Plus/screens/doctor/protocol.schedule.editor.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/protocol_schedule_viewer.page.dart';
 import 'package:Ombro_Plus/screens/patient.register.page.dart';
-import 'package:Ombro_Plus/screens/patient/details.exercise.page.dart';
+import 'package:Ombro_Plus/ui/patient/home/details_exercise.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.chat.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.clinical.form.page.dart';
 import 'package:Ombro_Plus/ui/patient/dashboard/patient_dashboard.page.dart';
