@@ -1,3 +1,4 @@
+import 'package:Ombro_Plus/models/patient.model.dart';
 import 'package:Ombro_Plus/repositories/doctor_patient.repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/widgets.dart';
@@ -7,13 +8,13 @@ class DoctorPatientsViewModel extends ChangeNotifier {
 
   DoctorPatientsViewModel({required this.repository});
 
-  List<Map<String, dynamic>> _patients = [];
-  List<Map<String, dynamic>> _filteredPatients = [];
+  List<PatientModel> _patients = [];
+  List<PatientModel> _filteredPatients = [];
   bool _isLoading = false;
   String? _error;
   String? _inviteCode;
 
-  List<Map<String, dynamic>> get patients => _filteredPatients;
+  List<PatientModel> get patients => _filteredPatients;
   bool get isLoading => _isLoading;
   String? get error => _error;
   String? get inviteCode => _inviteCode;
@@ -58,8 +59,8 @@ class DoctorPatientsViewModel extends ChangeNotifier {
       _filteredPatients = _patients;
     } else {
       _filteredPatients = _patients.where((p) {
-        final name = (p['nome'] ?? '').toString().toLowerCase();
-        final email = (p['email'] ?? '').toString().toLowerCase();
+        final name = p.nome.toLowerCase();
+        final email = p.email.toLowerCase();
         return name.contains(query.toLowerCase()) ||
             email.contains(query.toLowerCase());
       }).toList();

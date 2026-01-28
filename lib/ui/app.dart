@@ -4,10 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:Ombro_Plus/viewmodels/auth/auth.viewmodel.dart';
 import 'package:Ombro_Plus/ui/auth/login.page.dart';
 
-import 'package:Ombro_Plus/screens/doctor.register.page.dart';
+import 'package:Ombro_Plus/ui/auth/doctor_register.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.chat.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.edit.profile.page.dart';
-import 'package:Ombro_Plus/screens/doctor/doctor.list.page.dart';
+import 'package:Ombro_Plus/ui/doctor/doctor_patients/doctor_list.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.main.chat.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.new.chat.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.profile.page.dart';
@@ -15,7 +15,7 @@ import 'package:Ombro_Plus/ui/doctor/protocol/doctor_protocols.page.dart';
 import 'package:Ombro_Plus/screens/doctor/new.exercise.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/new_protocol.page.dart';
 
-import 'package:Ombro_Plus/screens/doctor/patient.detail.page.dart';
+import 'package:Ombro_Plus/ui/doctor/doctor_patients/patient_detail.page.dart';
 import 'package:Ombro_Plus/ui/doctor/doctor_patients/patient_list.page.dart';
 import 'package:Ombro_Plus/ui/doctor/doctor_patients/patient_invite.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.log.page.dart';
@@ -35,9 +35,9 @@ import 'package:Ombro_Plus/screens/patient/patient.profile.page.dart';
 import 'package:Ombro_Plus/ui/patient/protocols/patient_protocol_details.page.dart';
 import 'package:Ombro_Plus/ui/patient/protocols/patient_protocol_list.page.dart';
 import 'package:Ombro_Plus/screens/terms.of.use.page.dart';
-import 'package:Ombro_Plus/screens/user.list.page.dart';
+import 'package:Ombro_Plus/ui/shared/user_list.page.dart';
 import 'package:Ombro_Plus/ui/doctor/dashboard/doctor_dashboard.page.dart';
-import 'package:Ombro_Plus/ui/doctor/home/doctor.home.page.dart';
+import 'package:Ombro_Plus/ui/doctor/home/doctor_home.page.dart';
 import 'package:Ombro_Plus/screens/forgot.password.page.dart';
 
 class App extends StatelessWidget {

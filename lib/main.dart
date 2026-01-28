@@ -1,12 +1,16 @@
 import 'package:Ombro_Plus/firebase_options.dart';
 import 'package:Ombro_Plus/repositories/auth.repository.dart';
 import 'package:Ombro_Plus/repositories/dashboard.repository.dart';
+import 'package:Ombro_Plus/repositories/doctor.repository.dart';
 import 'package:Ombro_Plus/repositories/doctor_patient.repository.dart';
 import 'package:Ombro_Plus/repositories/protocol.repository.dart';
 import 'package:Ombro_Plus/ui/app.dart';
 import 'package:Ombro_Plus/viewmodels/auth/auth.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/auth/doctor_register.viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/dashboard_doctor.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/doctor_list.viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/doctor_patients.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/patient_details.viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/patient/dashboard_patient.viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/doctor_home.viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/doctor_protocols.viewmodel.dart';
@@ -36,6 +40,8 @@ void main() async {
         Provider<ProtocolRepository>(create: (_) => ProtocolRepository()),
 
         Provider<DashboardRepository>(create: (_) => DashboardRepository()),
+
+        Provider<DoctorListRepository>(create: (_) => DoctorListRepository()),
 
         Provider<DoctorPatientRepository>(
           create: (_) => DoctorPatientRepository(),
@@ -112,6 +118,25 @@ void main() async {
         ChangeNotifierProvider<DoctorPatientsViewModel>(
           create: (context) => DoctorPatientsViewModel(
             repository: context.read<DoctorPatientRepository>(),
+          ),
+        ),
+
+        ChangeNotifierProvider<PatientDetailsViewModel>(
+          create: (context) => PatientDetailsViewModel(
+            patientRepository: context.read<DoctorPatientRepository>(),
+            protocolRepository: context.read<ProtocolRepository>(),
+          ),
+        ),
+
+        ChangeNotifierProvider<DoctorRegisterViewModel>(
+          create: (context) => DoctorRegisterViewModel(
+            authRepository: context.read<AuthRepository>(),
+          ),
+        ),
+
+        ChangeNotifierProvider<DoctorListViewModel>(
+          create: (context) => DoctorListViewModel(
+            repository: context.read<DoctorListRepository>(),
           ),
         ),
       ],

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 class AuthRepository {
   final FirebaseAuth _auth;
@@ -116,6 +117,52 @@ class AuthRepository {
       return doc.data()?['nome'] as String? ?? 'Usuário';
     } catch (e) {
       return 'Usuário';
+    }
+  }
+
+  Future<void> registerSpecialist({
+    required String email,
+    required String password,
+    required String name,
+    required String phone,
+    String? crefito,
+    String? crm,
+  }) async {
+    FirebaseApp? tempApp;
+    try {
+      tempApp = await Firebase.initializeApp(
+        name: 'SecondaryAppForRegistration',
+        options: Firebase.app().options,
+      );
+
+      final tempAuth = FirebaseAuth.instanceFor(app: tempApp);
+
+      UserCredential userCredential = await tempAuth
+          .createUserWithEmailAndPassword(email: email, password: password);
+
+      final String newUid = userCredential.user!.uid;
+      await userCredential.user!.updateDisplayName(name);
+
+      final specialistData = {
+        'nome': name,
+        'email': email,
+        'telefone': phone,
+        'data_cadastro': FieldValue.serverTimestamp(),
+        'crefito': crefito,
+        'crm': crm,
+      };
+      await _firestore
+          .collection('especialistas')
+          .doc(newUid)
+          .set(specialistData);
+
+      await tempAuth.signOut();
+    } catch (e) {
+      rethrow;
+    } finally {
+      if (tempApp != null) {
+        await tempApp.delete();
+      }
     }
   }
 }

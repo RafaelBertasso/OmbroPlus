@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:Ombro_Plus/models/patient.model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DoctorPatientRepository {
@@ -8,7 +9,7 @@ class DoctorPatientRepository {
   DoctorPatientRepository({FirebaseFirestore? firestore})
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  Future<List<Map<String, dynamic>>> getPatientsBySpecialist(
+  Future<List<PatientModel>> getPatientsBySpecialist(
     String specialistId,
   ) async {
     try {
@@ -18,23 +19,30 @@ class DoctorPatientRepository {
           .orderBy('nome')
           .get();
 
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return data;
-      }).toList();
+      return snapshot.docs
+          .map((doc) => PatientModel.fromMap(doc.data(), doc.id))
+          .toList();
     } catch (e) {
-      throw Exception("Erro ao buscar pacientes: $e");
+      print("Erro repo listagem: $e");
+      try {
+        final snapshot = await _firestore
+            .collection('pacientes')
+            .where('especialistaId', isEqualTo: specialistId)
+            .get();
+        return snapshot.docs
+            .map((doc) => PatientModel.fromMap(doc.data(), doc.id))
+            .toList();
+      } catch (e2) {
+        throw Exception("Erro ao buscar pacientes: $e2");
+      }
     }
   }
 
-  Future<Map<String, dynamic>?> getPatientDetails(String patientId) async {
+  Future<PatientModel?> getPatientDetails(String patientId) async {
     try {
       final doc = await _firestore.collection('pacientes').doc(patientId).get();
       if (doc.exists) {
-        final data = doc.data()!;
-        data['id'] = doc.id;
-        return data;
+        return PatientModel.fromMap(doc.data()!, doc.id);
       }
       return null;
     } catch (e) {
@@ -107,6 +115,29 @@ class DoctorPatientRepository {
       return finalCode;
     } catch (e) {
       throw Exception("Erro ao gerenciar código de convite: $e");
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getPatientExerciseLogs(
+    String patientId, {
+    String? protocolId,
+  }) async {
+    try {
+      Query query = await _firestore
+          .collection('logs_exercicios')
+          .where('pacienteId', isEqualTo: patientId);
+
+      if (protocolId != null) {
+        query = query.where('protocoloId', isEqualTo: protocolId);
+      }
+      final snapshot = await query.orderBy('timestamp', descending: true).get();
+
+      return snapshot.docs
+          .map((d) => d.data() as Map<String, dynamic>)
+          .toList();
+    } catch (e) {
+      print("Erro ao buscar logs: $e");
+      return [];
     }
   }
 }

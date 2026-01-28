@@ -152,7 +152,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                                   ),
                                 ),
                                 onPressed: () =>
-                                    Navigator.pushNamed(context, '/patient-list'),
+                                    Navigator.pushNamed(context, '/user-list'),
                                 child: const Text(
                                   'Usuários',
                                   style: TextStyle(color: Color(0xFF0E382C)),

@@ -1,8 +1,4 @@
-import 'dart:math';
-
 import 'package:Ombro_Plus/viewmodels/doctor/doctor_patients.viewmodel.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_multi_formatter/formatters/phone_input_formatter.dart';
 import 'package:google_fonts/google_fonts.dart';

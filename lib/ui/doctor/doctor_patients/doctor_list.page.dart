@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/doctor_list.viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 class DoctorListPage extends StatefulWidget {
   const DoctorListPage({super.key});
@@ -13,34 +14,37 @@ class DoctorListPage extends StatefulWidget {
 }
 
 class _DoctorListPageState extends State<DoctorListPage> {
-  String _search = '';
+  final TextEditingController _searchController = TextEditingController();
 
-  Widget _buildLeadingAvatar(DocumentSnapshot specialist) {
-    final name =
-        (specialist.data() as Map<String, dynamic>?)?['nome'] as String? ?? '';
-    final profileImageUrl =
-        (specialist.data() as Map<String, dynamic>?)?['profileImage']
-            as String?;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<DoctorListViewModel>().fetchSpecialists();
+    });
+  }
 
-    if (profileImageUrl != null && profileImageUrl.isNotEmpty) {
+  Widget _buildAvatar(String name, String? imageBase64) {
+    if (imageBase64 != null && imageBase64.isNotEmpty) {
       try {
-        final Uint8List bytes = base64Decode(profileImageUrl);
+        final Uint8List bytes = base64Decode(imageBase64);
         return CircleAvatar(
           radius: 25,
-          backgroundColor: Color(0xFF0E382C),
+          backgroundColor: const Color(0xFF0E382C),
           backgroundImage: MemoryImage(bytes),
         );
       } catch (e) {
-        print('Erro ao decodificar Base64 para $name: $e');
+        // Fallback se falhar decode
       }
     }
+
     final initials = name.length >= 2
         ? name.substring(0, 2).toUpperCase()
-        : name;
+        : name.toUpperCase();
 
     return CircleAvatar(
       radius: 25,
-      backgroundColor: Color(0xFF0E382C),
+      backgroundColor: const Color(0xFF0E382C),
       child: Text(
         initials,
         style: GoogleFonts.montserrat(
@@ -59,100 +63,88 @@ class _DoctorListPageState extends State<DoctorListPage> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: TextField(
+              controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Buscar especialista',
                 prefixIcon: const Icon(Icons.search, color: Colors.black),
                 filled: true,
                 fillColor: const Color(0xFFF4F7F6),
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 0,
-                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 8),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: BorderSide.none,
                 ),
               ),
-              onChanged: (value) => setState(() {
-                _search = value;
-              }),
+              onChanged: (value) =>
+                  context.read<DoctorListViewModel>().search(value),
             ),
           ),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('especialistas')
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF0E382C)),
-                  );
-                }
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Text(
-                      'Erro ao carregar especialistas',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 16,
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                  );
-                }
-                final docs = snapshot.data?.docs ?? [];
-                final filtered = docs.where((doc) {
-                  final nome = (doc['nome'] ?? '').toString().toLowerCase();
-                  return nome.contains(_search.toLowerCase());
-                }).toList();
 
-                if (filtered.isEmpty) {
+          Expanded(
+            child: Consumer<DoctorListViewModel>(
+              builder: (context, viewModel, child) {
+                if (viewModel.isLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator.adaptive(),
+                  );
+                }
+                if (viewModel.error != null) {
+                  return Center(child: Text('Erro: ${viewModel.error}'));
+                }
+
+                if (viewModel.specialists.isEmpty) {
                   return Center(
                     child: Text(
-                      'Nenhum especialista encontrado',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 16,
-                        color: Colors.black54,
-                      ),
+                      _searchController.text.isEmpty
+                          ? 'Nenhum especialista encontrado.'
+                          : 'Nenhum resultado para busca.',
+                      style: GoogleFonts.montserrat(color: Colors.grey),
                     ),
                   );
                 }
 
                 return ListView.separated(
                   padding: const EdgeInsets.only(top: 10),
+                  separatorBuilder: (_, __) => const SizedBox(height: 4),
+                  itemCount: viewModel.specialists.length,
                   itemBuilder: (context, index) {
-                    final specialist = filtered[index];
+                    final specialist = viewModel.specialists[index];
+
                     return ListTile(
-                      leading: _buildLeadingAvatar(specialist),
+                      leading: _buildAvatar(
+                        specialist.nome,
+                        specialist.profileImage,
+                      ),
 
                       title: Text(
-                        specialist['nome'] ?? '',
+                        specialist.nome,
                         style: GoogleFonts.montserrat(
                           fontSize: 16,
                           color: Colors.black,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      subtitle: Text(
+                        specialist.isAdmin ? 'Administrador' : 'Especialista',
+                      ),
                       onTap: () {
                         Navigator.pushNamed(
                           context,
                           '/doctor-edit-profile',
                           arguments: {
-                            'name': specialist['nome'],
+                            'name': specialist.nome,
                             'id': specialist.id,
                           },
                         );
                       },
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 18,
-                        vertical: 2,
+                        vertical: 4,
                       ),
                     );
                   },
-                  separatorBuilder: (_, __) => const SizedBox(height: 4),
-                  itemCount: filtered.length,
                 );
               },
             ),

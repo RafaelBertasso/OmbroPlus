@@ -27,28 +27,6 @@ class _PatientListPageState extends State<PatientListPage> {
     });
   }
 
-  Widget _buildPatientAvatar(String? name, String? imageBase64) {
-    final initials = _getInitials(name);
-    if (imageBase64 != null && imageBase64.isNotEmpty) {
-      try {
-        final bytes = base64Decode(imageBase64);
-        return ClipOval(
-          child: Image.memory(bytes, width: 50, height: 50, fit: BoxFit.cover),
-        );
-      } catch (e) {
-        print('Erro de decodificação: $e');
-      }
-    }
-    return Text(
-      initials,
-      style: GoogleFonts.montserrat(
-        fontSize: 22,
-        fontWeight: FontWeight.bold,
-        color: Colors.white,
-      ),
-    );
-  }
-
   String _getInitials(String? name) {
     if (name == null || name.isEmpty) {
       return '?';
@@ -56,30 +34,40 @@ class _PatientListPageState extends State<PatientListPage> {
     return name.trim().split(' ').first[0].toUpperCase();
   }
 
+  Widget _buildPatientAvatar(String? name, String? imageData) {
+    if (imageData != null && imageData.isNotEmpty) {
+      if (imageData.startsWith('http')) {
+        return CircleAvatar(
+          backgroundColor: const Color(0xFF0E382C),
+          backgroundImage: NetworkImage(imageData),
+        );
+      } else {
+        try {
+          final bytes = base64Decode(imageData);
+          return CircleAvatar(
+            backgroundColor: const Color(0xFF0E382C),
+            backgroundImage: MemoryImage(bytes),
+          );
+        } catch (_) {}
+      }
+    }
+
+    return CircleAvatar(
+      backgroundColor: const Color(0xFF0E382C),
+      child: Text(
+        (name != null && name.isNotEmpty) ? name[0].toUpperCase() : '?',
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFFF4F7F6),
-      appBar: AppBar(
-        title: Text(
-          'Meus Pacientes',
-          style: GoogleFonts.montserrat(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        backgroundColor: const Color(0xFF0E382C),
-        centerTitle: true,
-        iconTheme: IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_add, color: Colors.white),
-            onPressed: () {
-              Navigator.pushNamed(context, '/patient-invite');
-            },
-          ),
-        ],
-      ),
       body: Column(
         children: [
           Padding(
@@ -94,7 +82,7 @@ class _PatientListPageState extends State<PatientListPage> {
                 filled: true,
                 fillColor: Color(0xFFF4F7F6),
                 contentPadding: EdgeInsets.symmetric(
-                  vertical: 0,
+                  vertical: 8,
                   horizontal: 16,
                 ),
                 border: OutlineInputBorder(
@@ -133,9 +121,9 @@ class _PatientListPageState extends State<PatientListPage> {
                   itemCount: viewModel.patients.length,
                   itemBuilder: (context, index) {
                     final patient = viewModel.patients[index];
-                    final String name = patient['nome'] ?? 'Sem nome';
-                    final String email = patient['email'] ?? '';
-                    final String? photoUrl = patient['profileImage'];
+                    final String name = patient.nome;
+                    final String email = patient.email;
+                    final String? photoUrl = patient.profileImage;
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
@@ -148,20 +136,12 @@ class _PatientListPageState extends State<PatientListPage> {
                           horizontal: 16,
                           vertical: 8,
                         ),
-                        leading: CircleAvatar(
-                          backgroundColor: const Color(0xFF0E382C),
-                          backgroundImage: photoUrl != null
-                              ? NetworkImage(photoUrl)
-                              : null,
-                          child: photoUrl == null
-                              ? Text(
-                                  name[0].toUpperCase(),
-                                  style: TextStyle(color: Colors.white),
-                                )
-                              : null,
+                        leading: _buildPatientAvatar(
+                          patient.nome,
+                          patient.profileImage,
                         ),
                         title: Text(
-                          name,
+                          patient.nome,
                           style: GoogleFonts.montserrat(
                             fontWeight: FontWeight.bold,
                           ),
@@ -179,7 +159,7 @@ class _PatientListPageState extends State<PatientListPage> {
                           Navigator.pushNamed(
                             context,
                             '/patient-detail',
-                            arguments: {'patientId': patient['id']},
+                            arguments: {'patientId': patient.id},
                           );
                         },
                       ),
