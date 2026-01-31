@@ -14,6 +14,7 @@ class ProtocolModel {
   final int sessoesConcluidas;
   final DateTime? criadoEm;
 
+  // O cronograma: Data (String) -> Lista de Exercícios (Map)
   final Map<String, List<Map<String, dynamic>>> schedule;
 
   ProtocolModel({
@@ -52,6 +53,37 @@ class ProtocolModel {
   }
 
   factory ProtocolModel.fromMap(Map<String, dynamic> map, String docId) {
+    // --- LÓGICA DE SEGURANÇA PARA O SCHEDULE ---
+    Map<String, List<Map<String, dynamic>>> parsedSchedule = {};
+
+    // 1. Verifica se o campo 'schedule' existe e é um Mapa
+    if (map['schedule'] != null && map['schedule'] is Map) {
+      final rawMap = map['schedule'] as Map<String, dynamic>;
+
+      rawMap.forEach((key, value) {
+        // 2. Verifica se o valor dentro da data é uma Lista (evita o erro 'int is not List')
+        if (value is List) {
+          try {
+            // 3. Converte cada item da lista para Map<String, dynamic> com segurança
+            final List<Map<String, dynamic>> exercisesList = value.map((e) {
+              return Map<String, dynamic>.from(e as Map);
+            }).toList();
+
+            parsedSchedule[key] = exercisesList;
+          } catch (e) {
+            print("Erro ao converter exercícios do dia $key: $e");
+          }
+        }
+      });
+    }
+    // Fallback: Suporte a versões antigas ou dados inconsistentes
+    else {
+      // Se quiser, pode verificar o campo antigo 'exercicios' aqui,
+      // mas por enquanto deixamos vazio para não quebrar.
+      parsedSchedule = {};
+    }
+    // -------------------------------------------
+
     return ProtocolModel(
       id: docId,
       nome: map['nome'] as String? ?? 'Sem nome',
@@ -59,25 +91,27 @@ class ProtocolModel {
       pacienteName: map['pacienteName'] as String? ?? 'Paciente',
       especialistaId: map['especialistaId'] as String? ?? '',
 
-      dataInicio: (map['dataInicio'] as Timestamp).toDate(),
-      dataFim: (map['dataFim'] as Timestamp).toDate(),
+      // Tratamento seguro de datas (caso venha null, usa data atual)
+      dataInicio: map['dataInicio'] is Timestamp
+          ? (map['dataInicio'] as Timestamp).toDate()
+          : DateTime.now(),
+      dataFim: map['dataFim'] is Timestamp
+          ? (map['dataFim'] as Timestamp).toDate()
+          : DateTime.now().add(const Duration(days: 30)),
 
       notas: map['notas'] as String? ?? '',
       status: map['status'] as String? ?? 'active',
+
+      // Tratamento seguro de números (aceita int ou double/num)
       totalSessoesEstimadas:
           (map['totalSessoesEstimadas'] as num?)?.toInt() ?? 0,
       sessoesConcluidas: (map['sessoesConcluidas'] as num?)?.toInt() ?? 0,
-      criadoEm: map['criadoEm'] != null
+
+      criadoEm: map['criadoEm'] is Timestamp
           ? (map['criadoEm'] as Timestamp).toDate()
           : null,
-      schedule:
-          (map['schedule'] as Map<String, dynamic>?)?.map((key, value) {
-            final list = (value as List<dynamic>).map((item) {
-              return Map<String, dynamic>.from(item as Map);
-            }).toList();
-            return MapEntry(key, list);
-          }) ??
-          {},
+
+      schedule: parsedSchedule,
     );
   }
 
@@ -87,6 +121,7 @@ class ProtocolModel {
     String? status,
     String? pacienteName,
     int? sessoesConcluidas,
+    Map<String, List<Map<String, dynamic>>>? schedule,
   }) {
     return ProtocolModel(
       id: id ?? this.id,
@@ -101,7 +136,7 @@ class ProtocolModel {
       totalSessoesEstimadas: this.totalSessoesEstimadas,
       sessoesConcluidas: sessoesConcluidas ?? this.sessoesConcluidas,
       criadoEm: this.criadoEm,
-      schedule: this.schedule,
+      schedule: schedule ?? this.schedule,
     );
   }
 }

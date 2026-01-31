@@ -208,7 +208,11 @@ class _DoctorProtocolsPageState extends State<DoctorProtocolsPage> {
             context,
             '/protocol-details',
             arguments: {'protocoloId': protocol.id},
-          );
+          ).then((_) {
+            if (mounted) {
+              context.read<DoctorProtocolsViewModel>().loadProtocols();
+            }
+          });
         },
         child: Padding(
           padding: const EdgeInsets.all(16),

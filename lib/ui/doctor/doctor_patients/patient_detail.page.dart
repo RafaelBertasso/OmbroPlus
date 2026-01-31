@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:Ombro_Plus/viewmodels/doctor/patient_details.viewmodel.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';

@@ -1,3 +1,7 @@
+import 'package:Ombro_Plus/repositories/protocol.repository.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/add_exercise.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/new_exercise.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/protocol_schedule.viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -20,8 +24,8 @@ import 'package:Ombro_Plus/ui/doctor/doctor_patients/patient_list.page.dart';
 import 'package:Ombro_Plus/ui/doctor/doctor_patients/patient_invite.page.dart';
 import 'package:Ombro_Plus/screens/doctor/patient.log.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/protocol_details.page.dart';
-import 'package:Ombro_Plus/screens/doctor/protocol.exercise.adder.page.dart';
-import 'package:Ombro_Plus/screens/doctor/protocol.schedule.editor.page.dart';
+import 'package:Ombro_Plus/ui/doctor/protocol/protocol_exercise_adder.page.dart';
+import 'package:Ombro_Plus/ui/doctor/protocol/protocol_schedule_editor.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/protocol_schedule_viewer.page.dart';
 import 'package:Ombro_Plus/screens/patient.register.page.dart';
 import 'package:Ombro_Plus/ui/patient/home/details_exercise.page.dart';
@@ -72,6 +76,16 @@ class App extends StatelessWidget {
         '/doctor-list': (context) => const DoctorListPage(),
         '/user-list': (context) => const UserListPage(),
         '/doctor-edit-profile': (context) => const DoctorEditProfilePage(),
+        '/protocol-schedule-editor': (context) => ChangeNotifierProvider(
+          create: (_) => ProtocolScheduleViewModel(),
+          child: const ProtocolScheduleEditorPage(),
+        ),
+        '/add-exercise-to-protocol': (context) => ChangeNotifierProvider(
+          create: (context) => AddExerciseViewModel(
+            repository: context.read<ProtocolRepository>(),
+          ),
+          child: const ProtocolExerciseAdderPage(),
+        ),
         '/patient-invite': (context) => const PatientInvitePage(),
         '/forgot-password': (context) => const ForgotPasswordPage(),
         '/doctor-home': (context) => const DoctorHomePage(),
@@ -89,7 +103,12 @@ class App extends StatelessWidget {
         '/patient-log': (context) => PatientLogPage(),
         '/new-protocol': (context) =>
             const NewProtocolPage(), // Tela refatorada
-        '/new-exercise': (context) => const NewExercisePage(),
+        '/new-exercise': (context) => ChangeNotifierProvider(
+          create: (context) => NewExerciseViewModel(
+            repository: context.read<ProtocolRepository>(),
+          ),
+          child: const NewExercisePage(),
+        ),
         '/patient-home': (context) => const PatientHomePage(),
         '/patient-protocols': (context) => const PatientProtocolPage(),
         '/patient-main-chat': (context) => const PatientMainChatPage(),
@@ -103,53 +122,6 @@ class App extends StatelessWidget {
       },
 
       onGenerateRoute: (settings) {
-        if (settings.name == '/protocol-schedule-editor') {
-          final arguments = settings.arguments as Map<String, dynamic>?;
-          final String? patientId = arguments?['patientId'] as String?;
-          final String? startDateString = arguments?['startDate'] as String?;
-          final String? endDateString = arguments?['endDate'] as String?;
-          final currentSchedule =
-              arguments?['currentSchedule']
-                  as Map<String, List<Map<String, dynamic>>>?;
-
-          if (patientId != null &&
-              startDateString != null &&
-              endDateString != null) {
-            try {
-              final startDate = DateTime.parse(startDateString);
-              final endDate = DateTime.parse(endDateString);
-              return MaterialPageRoute(
-                builder: (context) => ProtocolScheduleEditorPage(
-                  patientId: patientId,
-                  startDate: startDate,
-                  endDate: endDate,
-                  currentSchedule: currentSchedule,
-                ),
-                settings: settings,
-              );
-            } catch (e) {
-              debugPrint('Erro data schedule editor: $e');
-            }
-          }
-        }
-
-        if (settings.name == '/add-exercise-to-protocol') {
-          final arguments = settings.arguments as Map<String, dynamic>?;
-          final String? patientId = arguments?['patientId'] as String?;
-          final List<String>? protocolDays = arguments?['protocolDays']
-              ?.cast<String>();
-
-          if (patientId != null && protocolDays != null) {
-            return MaterialPageRoute(
-              builder: (context) => ProtocolExerciseAdderPage(
-                patientId: patientId,
-                protocolDays: protocolDays,
-              ),
-              settings: settings,
-            );
-          }
-        }
-
         if (settings.name == '/protocol-details') {
           final arguments = settings.arguments as Map<String, dynamic>?;
           final String? protocolId = arguments?['protocoloId'] as String?;

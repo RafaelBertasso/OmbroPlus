@@ -1,3 +1,4 @@
+import 'package:Ombro_Plus/models/exercise.model.dart';
 import 'package:Ombro_Plus/models/protocol.model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -284,6 +285,38 @@ class ProtocolRepository {
     } catch (e) {
       print("{PROTOCOL_REPO} Erro ao pegar exercício: $e");
       return null;
+    }
+  }
+
+  Future<List<ExerciseModel>> getAllExercisses() async {
+    try {
+      final snapshot = await _firestore
+          .collection('exercicios')
+          .orderBy('nome')
+          .get();
+      return snapshot.docs
+          .map((doc) => ExerciseModel.fromMap(doc.data(), doc.id))
+          .toList();
+    } catch (e) {
+      print("Erro ao buscar exercícios: $e");
+      return [];
+    }
+  }
+
+  Future<void> createExercise({
+    required String nome,
+    required String descricao,
+    String? youtubeId,
+  }) async {
+    try {
+      await _firestore.collection('exercicios').add({
+        'nome': nome,
+        'descricao': descricao,
+        'youtubeId': youtubeId,
+        'criadoEm': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Erro ao salvar exercício: $e');
     }
   }
 }
