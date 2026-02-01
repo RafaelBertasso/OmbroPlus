@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:Ombro_Plus/viewmodels/auth/auth.viewmodel.dart';
-import 'package:Ombro_Plus/ui/auth/login.page.dart';
+import 'package:Ombro_Plus/ui/auth/login_page.dart';
 
 import 'package:Ombro_Plus/ui/auth/doctor_register.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.chat.page.dart';
@@ -16,18 +16,17 @@ import 'package:Ombro_Plus/screens/doctor/doctor.main.chat.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.new.chat.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.profile.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/doctor_protocols.page.dart';
-import 'package:Ombro_Plus/screens/doctor/new.exercise.page.dart';
+import 'package:Ombro_Plus/ui/doctor/protocol/new_exercise.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/new_protocol.page.dart';
 
 import 'package:Ombro_Plus/ui/doctor/doctor_patients/patient_detail.page.dart';
 import 'package:Ombro_Plus/ui/doctor/doctor_patients/patient_list.page.dart';
 import 'package:Ombro_Plus/ui/doctor/doctor_patients/patient_invite.page.dart';
-import 'package:Ombro_Plus/screens/doctor/patient.log.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/protocol_details.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/protocol_exercise_adder.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/protocol_schedule_editor.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/protocol_schedule_viewer.page.dart';
-import 'package:Ombro_Plus/screens/patient.register.page.dart';
+import 'package:Ombro_Plus/ui/auth/patient_register.page.dart';
 import 'package:Ombro_Plus/ui/patient/home/details_exercise.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.chat.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.clinical.form.page.dart';
@@ -38,11 +37,11 @@ import 'package:Ombro_Plus/screens/patient/patient.main.chat.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.profile.page.dart';
 import 'package:Ombro_Plus/ui/patient/protocols/patient_protocol_details.page.dart';
 import 'package:Ombro_Plus/ui/patient/protocols/patient_protocol_list.page.dart';
-import 'package:Ombro_Plus/screens/terms.of.use.page.dart';
+import 'package:Ombro_Plus/ui/shared/terms_of_use.page.dart';
 import 'package:Ombro_Plus/ui/shared/user_list.page.dart';
 import 'package:Ombro_Plus/ui/doctor/dashboard/doctor_dashboard.page.dart';
 import 'package:Ombro_Plus/ui/doctor/home/doctor_home.page.dart';
-import 'package:Ombro_Plus/screens/forgot.password.page.dart';
+import 'package:Ombro_Plus/ui/auth/forgot_password.page.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -100,7 +99,6 @@ class App extends StatelessWidget {
         '/chat-detail': (context) => const DoctorChatPage(),
         '/patient-list': (context) => const PatientListPage(),
         '/patient-detail': (context) => const PatientDetailPage(),
-        '/patient-log': (context) => PatientLogPage(),
         '/new-protocol': (context) =>
             const NewProtocolPage(), // Tela refatorada
         '/new-exercise': (context) => ChangeNotifierProvider(
