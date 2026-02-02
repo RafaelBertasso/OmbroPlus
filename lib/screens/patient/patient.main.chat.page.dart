@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:Ombro_Plus/components/app.logo.dart';
-import 'package:Ombro_Plus/components/patient.navbar.dart';
+import 'package:Ombro_Plus/components/navbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -360,7 +360,7 @@ class _PatientMainChatPageState extends State<PatientMainChatPage> {
           ),
         ],
       ),
-      bottomNavigationBar: PatientNavbar(
+      bottomNavigationBar: Navbar(
         currentIndex: _selectedIndex,
         onTap: _onTabTapped,
       ),

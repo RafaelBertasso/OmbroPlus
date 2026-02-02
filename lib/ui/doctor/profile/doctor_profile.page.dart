@@ -1,15 +1,14 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:Ombro_Plus/components/app.logo.dart';
 import 'package:Ombro_Plus/components/build.info.row.dart';
-import 'package:Ombro_Plus/components/doctor.navbar.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:Ombro_Plus/components/navbar.dart';
+import 'package:Ombro_Plus/ui/doctor/profile/widgets/delete_account_dialog.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/doctor_profile.viewmodel.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 class DoctorProfilePage extends StatefulWidget {
   const DoctorProfilePage({super.key});
@@ -20,11 +19,6 @@ class DoctorProfilePage extends StatefulWidget {
 
 class _DoctorProfilePageState extends State<DoctorProfilePage> {
   final int _selectedIndex = 4;
-  final _auth = FirebaseAuth.instance;
-  final user = FirebaseAuth.instance.currentUser;
-  late Future<Map<String, dynamic>?> _userData;
-  String? _profileImage;
-  final ImagePicker _picker = ImagePicker();
 
   void _onTabTapped(BuildContext context, int index) {
     if (index == _selectedIndex) return;
@@ -49,31 +43,17 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
   @override
   void initState() {
     super.initState();
-    _userData = _fetchUserData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<DoctorProfileViewModel>().loadProfile();
+    });
   }
 
-  Future<Map<String, dynamic>?> _fetchUserData() async {
-    final user = _auth.currentUser;
-    if (user == null) {
-      return null;
-    }
-    final doc = await FirebaseFirestore.instance
-        .collection('especialistas')
-        .doc(user.uid)
-        .get();
-
-    final data = doc.data();
-    if (data != null && data['profileImage'] != null) {
-      _profileImage = data['profileImage'];
-    }
-    return data;
-  }
-
-  void _showImageOptions() {
+  void _showImageOptions(BuildContext context) {
+    final viewModel = context.read<DoctorProfileViewModel>();
     showModalBottomSheet(
       backgroundColor: Color(0xFF0E382C),
       context: context,
-      builder: (context) => SafeArea(
+      builder: (ctx) => SafeArea(
         child: Wrap(
           children: [
             ListTile(
@@ -85,7 +65,10 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              onTap: () => _pickImage(ImageSource.gallery),
+              onTap: () {
+                Navigator.pop(ctx);
+                viewModel.pickAndUploadImage(ImageSource.gallery);
+              },
             ),
             ListTile(
               leading: Icon(Icons.camera_alt, color: Color(0xFFF4F7F6)),
@@ -96,7 +79,10 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              onTap: () => _pickImage(ImageSource.camera),
+              onTap: () {
+                Navigator.pop(ctx);
+                viewModel.pickAndUploadImage(ImageSource.camera);
+              },
             ),
           ],
         ),
@@ -104,84 +90,86 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
     );
   }
 
-  Future<void> _pickImage(ImageSource source) async {
-    Navigator.pop(context);
-    final XFile? image = await _picker.pickImage(source: source);
-    if (image != null) {
-      List<int>? compressedBytes;
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => DeleteAccountDialog(
+        isLoading: context.watch<DoctorProfileViewModel>().isLoading,
+        onConfirm: (password) async {
+          FocusScope.of(context).unfocus();
 
-      if (Platform.isAndroid || Platform.isIOS) {
-        compressedBytes = await FlutterImageCompress.compressWithFile(
-          image.path,
-          minHeight: 600,
-          minWidth: 400,
-          quality: 50,
-        );
-      } else {
-        compressedBytes = await image.readAsBytes();
-      }
-      if (compressedBytes != null) {
-        final base64Image = base64Encode(compressedBytes);
-        final user = _auth.currentUser;
-        if (user != null) {
-          await FirebaseFirestore.instance
-              .collection('especialistas')
-              .doc(user.uid)
-              .update({'profileImage': base64Image});
+          final viewModel = context.read<DoctorProfileViewModel>();
+          final success = await viewModel.deleteAccount(password);
 
-          setState(() {
-            _profileImage = base64Image;
-          });
-        }
-      }
-    }
+          if (success) {
+            if (!context.mounted) return;
+            Navigator.pop(context);
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Conta excluída com sucesso.')),
+            );
+          } else {
+            if (!context.mounted) return;
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(viewModel.error ?? 'Erro ao excluir conta.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F6),
-      body: FutureBuilder<Map<String, dynamic>?>(
-        future: _userData,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
+      body: Consumer<DoctorProfileViewModel>(
+        builder: (context, viewModel, child) {
+          if (viewModel.isLoading && viewModel.userData == null) {
+            return const Center(
               child: CircularProgressIndicator(color: Color(0xFF0E382C)),
             );
           }
-          if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
-            return Center(child: Text('Não foi possível carregar o perfil.'));
-          }
-          final userData = snapshot.data!;
+
+          final userData = viewModel.userData ?? {};
           final nome = userData['nome'] ?? 'Especialista';
           final email = userData['email'] ?? '';
           final crefito = userData['crefito'] ?? 'Não informado';
           final crm = userData['crm'] ?? 'Não informado';
+          final profileImage = viewModel.profileImage;
+
           return Column(
             children: [
+              // Cabeçalho com Logo e Foto
               SizedBox(
                 height: 300,
                 child: Stack(
                   alignment: Alignment.topCenter,
                   children: [
-                    AppLogo(),
+                    const AppLogo(), // Seu componente existente
                     Positioned(
                       top: 150,
                       child: GestureDetector(
-                        onTap: _showImageOptions,
+                        onTap: () => _showImageOptions(context),
                         child: Stack(
                           alignment: Alignment.bottomRight,
                           children: [
                             CircleAvatar(
                               radius: 60,
-                              backgroundColor: Color(0xFF0E382C),
-                              child: _profileImage != null
+                              backgroundColor: const Color(0xFF0E382C),
+                              child: profileImage != null
                                   ? ClipOval(
                                       child: Image.memory(
-                                        base64Decode(_profileImage!),
+                                        base64Decode(profileImage),
                                         width: 120,
                                         height: 120,
                                         fit: BoxFit.cover,
+                                        gaplessPlayback: true,
                                       ),
                                     )
                                   : Text(
@@ -196,7 +184,7 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
                                     ),
                             ),
                             Container(
-                              padding: EdgeInsets.all(4),
+                              padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
                                 color: Colors.grey[400],
                                 shape: BoxShape.circle,
@@ -205,7 +193,7 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
                                   width: 2,
                                 ),
                               ),
-                              child: Icon(
+                              child: const Icon(
                                 Icons.photo,
                                 color: Colors.white,
                                 size: 24,
@@ -218,33 +206,44 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
                   ],
                 ),
               ),
-              SizedBox(height: 18),
+
+              const SizedBox(height: 18),
+
               Expanded(
                 child: ListView(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: [
+                    // Seção Dados Pessoais
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'Dados Pessoais',
                           style: GoogleFonts.openSans(
                             fontWeight: FontWeight.w700,
                             fontSize: 18,
+                            color: const Color(0xFF0E382C),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () =>
+                              Navigator.pushNamed(
+                                context,
+                                '/doctor-edit-profile',
+                              ).then((_) {
+                                // Recarrega ao voltar da edição
+                                viewModel.loadProfile();
+                              }),
+                          icon: const Icon(
+                            Icons.edit,
                             color: Color(0xFF0E382C),
                           ),
                         ),
-                        Spacer(),
-                        IconButton(
-                          onPressed: () => Navigator.pushNamed(
-                            context,
-                            '/doctor-edit-profile',
-                          ),
-                          icon: Icon(Icons.edit, color: Color(0xFF0E382C)),
-                        ),
                       ],
                     ),
-                    Divider(color: Color(0xFF0E382C)),
-                    SizedBox(height: 10),
+                    const Divider(color: Color(0xFF0E382C)),
+                    const SizedBox(height: 10),
+
                     BuildInfoRow(
                       label: 'Nome',
                       value: nome,
@@ -260,32 +259,36 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
                       value: email,
                       icon: Icons.email_outlined,
                     ),
-                    SizedBox(height: 20),
+
+                    const SizedBox(height: 20),
+
+                    // Seção Dados Profissionais
                     Text(
                       'Dados Profissionais',
                       style: GoogleFonts.openSans(
                         fontWeight: FontWeight.w700,
                         fontSize: 18,
-                        color: Color(0xFF0E382C),
+                        color: const Color(0xFF0E382C),
                       ),
                     ),
-                    Divider(color: Color(0xFF0E382C)),
-                    SizedBox(height: 10),
-                    if ((crefito != null && crefito != 'Não informado') ||
-                        (crm != null && crm != 'Não informado')) ...[
-                      if (crefito != null && crefito != 'Não informado')
+                    const Divider(color: Color(0xFF0E382C)),
+                    const SizedBox(height: 10),
+
+                    if ((crefito != 'Não informado') ||
+                        (crm != 'Não informado')) ...[
+                      if (crefito != 'Não informado')
                         BuildInfoRow(
                           label: 'CREFITO',
                           value: crefito,
                           icon: Icons.badge_outlined,
                         ),
-                      if (crm != null && crm != 'Não informado')
+                      if (crm != 'Não informado')
                         BuildInfoRow(
                           label: 'CRM',
                           value: crm,
                           icon: Icons.medical_services_outlined,
                         ),
-                    ] else ...[
+                    ] else
                       Text(
                         'Dados profissionais não informados',
                         style: GoogleFonts.openSans(
@@ -293,21 +296,40 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
                           color: Colors.grey,
                         ),
                       ),
-                    ],
-                    SizedBox(height: 20),
-                    Divider(color: Color(0xFF0E382C)),
-                    SizedBox(height: 10),
+
+                    const SizedBox(height: 20),
+
+                    _buildProfileOption(
+                      icon: Icons.settings,
+                      text: 'Configurações',
+                      onTap: () {
+                        Navigator.pushNamed(context, '/doctor-settings');
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    // _buildProfileOption(
+                    //   icon: Icons.description_outlined,
+                    //   text: 'Termos de Uso',
+                    //   onTap: () {
+                    //     Navigator.pushNamed(context, '/terms-of-use');
+                    //   },
+                    // ),
+                    // Botão Sair
                     ElevatedButton.icon(
-                      onPressed: () {
-                        _auth.signOut().then((_) {
+                      onPressed: () async {
+                        await viewModel.logout();
+                        if (context.mounted) {
                           Navigator.pushNamedAndRemoveUntil(
                             context,
                             '/login',
                             (route) => false,
                           );
-                        });
+                        }
                       },
-                      icon: Icon(Icons.logout_outlined, color: Colors.white),
+                      icon: const Icon(
+                        Icons.logout_outlined,
+                        color: Colors.white,
+                      ),
                       label: Text(
                         'Sair',
                         style: GoogleFonts.openSans(
@@ -317,14 +339,15 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF0E382C),
-                        minimumSize: Size(double.infinity, 50),
+                        backgroundColor: const Color(0xFF0E382C),
+                        minimumSize: const Size(double.infinity, 50),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                     ),
-                    SizedBox(height: 10),
+
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
@@ -332,9 +355,43 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
           );
         },
       ),
-      bottomNavigationBar: DoctorNavbar(
+      bottomNavigationBar: Navbar(
         currentIndex: _selectedIndex,
-        onTap: (index) => _onTabTapped(context, index),
+        onTap: (idx) => _onTabTapped(context, idx),
+      ),
+    );
+  }
+
+  Widget _buildProfileOption({
+    required IconData icon,
+    required String text,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Card(
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: ListTile(
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0E382C).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: const Color(0xFF0E382C)),
+          ),
+          title: Text(
+            text,
+            style: GoogleFonts.openSans(fontWeight: FontWeight.w600),
+          ),
+          trailing: const Icon(
+            Icons.arrow_forward_ios,
+            size: 16,
+            color: Colors.grey,
+          ),
+          onTap: onTap,
+        ),
       ),
     );
   }

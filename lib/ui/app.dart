@@ -1,7 +1,14 @@
+import 'package:Ombro_Plus/repositories/auth.repository.dart';
 import 'package:Ombro_Plus/repositories/protocol.repository.dart';
+import 'package:Ombro_Plus/ui/doctor/profile/settings.page.dart';
+import 'package:Ombro_Plus/ui/patient/profile/patient_settings.page.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/add_exercise.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/doctor_edit_profile.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/doctor_profile.viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/new_exercise.viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/protocol_schedule.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/patient/patient_edit_profile.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/patient/patient_profile.viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -10,11 +17,11 @@ import 'package:Ombro_Plus/ui/auth/login_page.dart';
 
 import 'package:Ombro_Plus/ui/auth/doctor_register.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.chat.page.dart';
-import 'package:Ombro_Plus/screens/doctor/doctor.edit.profile.page.dart';
+import 'package:Ombro_Plus/ui/doctor/profile/doctor_edit_profile.page.dart';
 import 'package:Ombro_Plus/ui/doctor/doctor_patients/doctor_list.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.main.chat.page.dart';
 import 'package:Ombro_Plus/screens/doctor/doctor.new.chat.dart';
-import 'package:Ombro_Plus/screens/doctor/doctor.profile.page.dart';
+import 'package:Ombro_Plus/ui/doctor/profile/doctor_profile.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/doctor_protocols.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/new_exercise.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/new_protocol.page.dart';
@@ -31,10 +38,10 @@ import 'package:Ombro_Plus/ui/patient/home/details_exercise.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.chat.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.clinical.form.page.dart';
 import 'package:Ombro_Plus/ui/patient/dashboard/patient_dashboard.page.dart';
-import 'package:Ombro_Plus/screens/patient/patient.edit.profile.page.dart';
+import 'package:Ombro_Plus/ui/patient/profile/patient_edit_profile.page.dart';
 import 'package:Ombro_Plus/ui/patient/home/patient_home.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.main.chat.page.dart';
-import 'package:Ombro_Plus/screens/patient/patient.profile.page.dart';
+import 'package:Ombro_Plus/ui/patient/profile/patient_profile.page.dart';
 import 'package:Ombro_Plus/ui/patient/protocols/patient_protocol_details.page.dart';
 import 'package:Ombro_Plus/ui/patient/protocols/patient_protocol_list.page.dart';
 import 'package:Ombro_Plus/ui/shared/terms_of_use.page.dart';
@@ -74,7 +81,10 @@ class App extends StatelessWidget {
         '/specialist-register': (context) => const DoctorRegisterPage(),
         '/doctor-list': (context) => const DoctorListPage(),
         '/user-list': (context) => const UserListPage(),
-        '/doctor-edit-profile': (context) => const DoctorEditProfilePage(),
+        '/doctor-edit-profile': (context) => ChangeNotifierProvider(
+          create: (context) => DoctorEditProfileViewModel(),
+          child: const DoctorEditProfilePage(),
+        ),
         '/protocol-schedule-editor': (context) => ChangeNotifierProvider(
           create: (_) => ProtocolScheduleViewModel(),
           child: const ProtocolScheduleEditorPage(),
@@ -95,7 +105,12 @@ class App extends StatelessWidget {
 
         '/doctor-protocols': (context) => const DoctorProtocolsPage(),
         '/doctor-main-chat': (context) => const DoctorMainChatPage(),
-        '/doctor-profile': (context) => const DoctorProfilePage(),
+        '/doctor-profile': (context) => ChangeNotifierProvider(
+          create: (context) => DoctorProfileViewModel(
+            authRepository: context.read<AuthRepository>(),
+          ),
+          child: const DoctorProfilePage(),
+        ),
         '/chat-detail': (context) => const DoctorChatPage(),
         '/patient-list': (context) => const PatientListPage(),
         '/patient-detail': (context) => const PatientDetailPage(),
@@ -110,13 +125,33 @@ class App extends StatelessWidget {
         '/patient-home': (context) => const PatientHomePage(),
         '/patient-protocols': (context) => const PatientProtocolPage(),
         '/patient-main-chat': (context) => const PatientMainChatPage(),
-        '/patient-profile': (context) => const PatientProfilePage(),
+        '/patient-profile': (context) => ChangeNotifierProvider(
+          create: (context) => PatientProfileViewModel(
+            authRepository: context.read<AuthRepository>(),
+          ),
+          child: const PatientProfilePage(),
+        ),
         '/patient-chat': (context) => const PatientChatPage(),
         '/patient-clinical-form': (context) => const PatientClinicalFormPage(),
         '/doctor-new-chat': (context) => const PatientSelectionForChatPage(),
-        '/patient-edit-profile': (context) => const PatientEditProfilePage(),
+        '/patient-edit-profile': (context) => ChangeNotifierProvider(
+          create: (context) => PatientEditProfileViewModel(),
+          child: const PatientEditProfilePage(),
+        ),
         '/exercise-details': (context) => const DetailsExercisePage(),
         '/terms-of-use': (context) => const TermsOfUsePage(),
+        '/doctor-settings': (context) => ChangeNotifierProvider(
+          create: (context) => DoctorProfileViewModel(
+            authRepository: context.read<AuthRepository>(),
+          ),
+          child: const SettingsPage(),
+        ),
+        '/patient-settings': (context) => ChangeNotifierProvider(
+          create: (context) => PatientProfileViewModel(
+            authRepository: context.read<AuthRepository>(),
+          ),
+          child: const PatientSettingsPage(),
+        ),
       },
 
       onGenerateRoute: (settings) {

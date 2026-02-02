@@ -1,4 +1,4 @@
-import 'package:Ombro_Plus/components/doctor.navbar.dart';
+import 'package:Ombro_Plus/components/navbar.dart';
 import 'package:Ombro_Plus/models/protocol.model.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/doctor_protocols.viewmodel.dart';
 import 'package:flutter/material.dart';
@@ -148,7 +148,7 @@ class _DoctorProtocolsPageState extends State<DoctorProtocolsPage> {
         backgroundColor: const Color(0xFF0E382C),
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      bottomNavigationBar: DoctorNavbar(
+      bottomNavigationBar: Navbar(
         currentIndex: _selectedIndex,
         onTap: (index) => _onTabTapped(context, index),
       ),

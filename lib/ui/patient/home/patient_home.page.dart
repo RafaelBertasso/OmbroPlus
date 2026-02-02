@@ -1,7 +1,7 @@
 import 'package:Ombro_Plus/components/app.logo.dart';
 import 'package:Ombro_Plus/components/exercise.card.dart';
 import 'package:Ombro_Plus/components/mini.metric.card.dart';
-import 'package:Ombro_Plus/components/patient.navbar.dart';
+import 'package:Ombro_Plus/components/navbar.dart';
 import 'package:Ombro_Plus/components/unread.messages.summary.dart';
 import 'package:Ombro_Plus/viewmodels/patient/patient_home.viewmodel.dart';
 import 'package:flutter/material.dart';
@@ -155,7 +155,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
           ),
         ],
       ),
-      bottomNavigationBar: PatientNavbar(
+      bottomNavigationBar: Navbar(
         currentIndex: _selectedIndex,
         onTap: (index) => _onTabTapped(context, index),
       ),

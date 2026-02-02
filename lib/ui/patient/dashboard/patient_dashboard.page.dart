@@ -1,6 +1,6 @@
 import 'package:Ombro_Plus/components/app.logo.dart';
 import 'package:Ombro_Plus/components/graphic.card.dart';
-import 'package:Ombro_Plus/components/patient.navbar.dart';
+import 'package:Ombro_Plus/components/navbar.dart';
 import 'package:Ombro_Plus/viewmodels/patient/dashboard_patient.viewmodel.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -235,7 +235,7 @@ class _PatientDashboardPageState extends State<PatientDashboardPage> {
           ),
         ],
       ),
-      bottomNavigationBar: PatientNavbar(
+      bottomNavigationBar: Navbar(
         currentIndex: _selectedIndex,
         onTap: _onTabTapped,
       ),

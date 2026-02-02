@@ -1,5 +1,5 @@
 import 'package:Ombro_Plus/components/app.logo.dart';
-import 'package:Ombro_Plus/components/patient.navbar.dart';
+import 'package:Ombro_Plus/components/navbar.dart';
 import 'package:Ombro_Plus/viewmodels/patient/patient_protocols.viewmodel.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -113,7 +113,7 @@ class _PatientProtocolPageState extends State<PatientProtocolPage> {
           );
         },
       ),
-      bottomNavigationBar: PatientNavbar(
+      bottomNavigationBar: Navbar(
         currentIndex: _selectedIndex,
         onTap: _onTabTapped,
       ),

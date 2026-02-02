@@ -1,5 +1,5 @@
 import 'package:Ombro_Plus/components/activity.item.dart';
-import 'package:Ombro_Plus/components/doctor.navbar.dart';
+import 'package:Ombro_Plus/components/navbar.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/doctor_home.viewmodel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -238,7 +238,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
               ),
             ],
           ),
-          bottomNavigationBar: DoctorNavbar(
+          bottomNavigationBar: Navbar(
             currentIndex: _selectedIndex,
             onTap: _onTabTapped,
           ),

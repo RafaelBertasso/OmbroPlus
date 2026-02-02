@@ -165,4 +165,35 @@ class AuthRepository {
       }
     }
   }
+
+  Future<void> deleteAccount(String password) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception('Usuário não encontrado');
+
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: password,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+
+      await _firestore.collection('especialistas').doc(user.uid).delete();
+
+      await _firestore.collection('pacientes').doc(user.uid).delete();
+
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password') {
+        throw Exception('Senha incorreta.');
+      } else if (e.code == 'requires-recent-login') {
+        throw Exception(
+          'Por segurança, faça logout e login novamente antes de excluir.',
+        );
+      }
+      throw Exception('Erro ao excluir a conta: ${e.message}');
+    } catch (e) {
+      throw Exception('Erro inesperado: $e');
+    }
+  }
 }

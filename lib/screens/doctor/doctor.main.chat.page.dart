@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:Ombro_Plus/components/app.logo.dart';
-import 'package:Ombro_Plus/components/doctor.navbar.dart';
+import 'package:Ombro_Plus/components/navbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -321,7 +321,7 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
         backgroundColor: Color(0xFF0E382C),
         child: Icon(Icons.chat, color: Colors.white),
       ),
-      bottomNavigationBar: DoctorNavbar(
+      bottomNavigationBar: Navbar(
         currentIndex: _selectedIndex,
         onTap: _onTabTapped,
       ),

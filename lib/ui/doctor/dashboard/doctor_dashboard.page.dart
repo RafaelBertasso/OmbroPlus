@@ -1,6 +1,6 @@
-import 'package:Ombro_Plus/components/doctor.navbar.dart';
 import 'package:Ombro_Plus/components/graphic.card.dart';
 import 'package:Ombro_Plus/components/metric.card.dart';
+import 'package:Ombro_Plus/components/navbar.dart';
 import 'package:Ombro_Plus/components/section.title.dart';
 import 'package:Ombro_Plus/models/dashboard.data.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/dashboard_doctor.viewmodel.dart';
@@ -153,7 +153,7 @@ class _DoctorDashboardPageState extends State<DoctorDashboardPage> {
               ],
             ),
           ),
-          bottomNavigationBar: DoctorNavbar(
+          bottomNavigationBar: Navbar(
             currentIndex: _selectedIndex,
             onTap: _onTabTapped,
           ),
