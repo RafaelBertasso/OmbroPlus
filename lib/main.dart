@@ -1,5 +1,6 @@
 import 'package:Ombro_Plus/firebase_options.dart';
 import 'package:Ombro_Plus/repositories/auth.repository.dart';
+import 'package:Ombro_Plus/repositories/chat_repository.dart';
 import 'package:Ombro_Plus/repositories/dashboard.repository.dart';
 import 'package:Ombro_Plus/repositories/doctor.repository.dart';
 import 'package:Ombro_Plus/repositories/doctor_patient.repository.dart';
@@ -46,6 +47,7 @@ void main() async {
         Provider<DoctorPatientRepository>(
           create: (_) => DoctorPatientRepository(),
         ),
+        Provider<ChatRepository>(create: (_) => ChatRepository()),
 
         ChangeNotifierProvider<AuthViewModel>(
           create: (context) =>

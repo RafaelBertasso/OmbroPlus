@@ -1,14 +1,19 @@
 import 'package:Ombro_Plus/repositories/auth.repository.dart';
+import 'package:Ombro_Plus/repositories/chat_repository.dart';
 import 'package:Ombro_Plus/repositories/protocol.repository.dart';
 import 'package:Ombro_Plus/ui/doctor/profile/settings.page.dart';
 import 'package:Ombro_Plus/ui/patient/profile/patient_settings.page.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/add_exercise.viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/doctor_edit_profile.viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/doctor_profile.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/new_chat_viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/new_exercise.viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/protocol_schedule.viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/patient/patient_edit_profile.viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/patient/patient_profile.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/shared/chat_list_viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/shared/chat_viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/shared/patient_clinical_form.viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -16,11 +21,11 @@ import 'package:Ombro_Plus/viewmodels/auth/auth.viewmodel.dart';
 import 'package:Ombro_Plus/ui/auth/login_page.dart';
 
 import 'package:Ombro_Plus/ui/auth/doctor_register.page.dart';
-import 'package:Ombro_Plus/screens/doctor/doctor.chat.page.dart';
+import 'package:Ombro_Plus/ui/doctor/chat/doctor_chat_page.dart';
 import 'package:Ombro_Plus/ui/doctor/profile/doctor_edit_profile.page.dart';
 import 'package:Ombro_Plus/ui/doctor/doctor_patients/doctor_list.page.dart';
-import 'package:Ombro_Plus/screens/doctor/doctor.main.chat.page.dart';
-import 'package:Ombro_Plus/screens/doctor/doctor.new.chat.dart';
+import 'package:Ombro_Plus/ui/doctor/chat/doctor_main_chat_page.dart';
+import 'package:Ombro_Plus/ui/doctor/chat/doctor_new_chat.dart';
 import 'package:Ombro_Plus/ui/doctor/profile/doctor_profile.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/doctor_protocols.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/new_exercise.page.dart';
@@ -36,7 +41,7 @@ import 'package:Ombro_Plus/ui/doctor/protocol/protocol_schedule_viewer.page.dart
 import 'package:Ombro_Plus/ui/auth/patient_register.page.dart';
 import 'package:Ombro_Plus/ui/patient/home/details_exercise.page.dart';
 import 'package:Ombro_Plus/screens/patient/patient.chat.page.dart';
-import 'package:Ombro_Plus/screens/patient/patient.clinical.form.page.dart';
+import 'package:Ombro_Plus/ui/shared/patient_clinical_form.page.dart';
 import 'package:Ombro_Plus/ui/patient/dashboard/patient_dashboard.page.dart';
 import 'package:Ombro_Plus/ui/patient/profile/patient_edit_profile.page.dart';
 import 'package:Ombro_Plus/ui/patient/home/patient_home.page.dart';
@@ -104,14 +109,22 @@ class App extends StatelessWidget {
         '/patient-dashboard': (context) => const PatientDashboardPage(),
 
         '/doctor-protocols': (context) => const DoctorProtocolsPage(),
-        '/doctor-main-chat': (context) => const DoctorMainChatPage(),
+        '/doctor-main-chat': (context) => ChangeNotifierProvider(
+          create: (context) =>
+              ChatListViewmodel(chatRepository: context.read<ChatRepository>()),
+          child: const DoctorMainChatPage(),
+        ),
         '/doctor-profile': (context) => ChangeNotifierProvider(
           create: (context) => DoctorProfileViewModel(
             authRepository: context.read<AuthRepository>(),
           ),
           child: const DoctorProfilePage(),
         ),
-        '/chat-detail': (context) => const DoctorChatPage(),
+        '/chat-detail': (context) => ChangeNotifierProvider(
+          create: (context) =>
+              ChatViewModel(chatRepository: context.read<ChatRepository>()),
+          child: const DoctorChatPage(),
+        ),
         '/patient-list': (context) => const PatientListPage(),
         '/patient-detail': (context) => const PatientDetailPage(),
         '/new-protocol': (context) =>
@@ -132,8 +145,15 @@ class App extends StatelessWidget {
           child: const PatientProfilePage(),
         ),
         '/patient-chat': (context) => const PatientChatPage(),
-        '/patient-clinical-form': (context) => const PatientClinicalFormPage(),
-        '/doctor-new-chat': (context) => const PatientSelectionForChatPage(),
+        '/patient-clinical-form': (context) => ChangeNotifierProvider(
+          create: (context) => PatientClinicalFormViewModel(),
+          child: const PatientClinicalFormPage(),
+        ),
+        '/doctor-new-chat': (context) => ChangeNotifierProvider(
+          create: (context) =>
+              NewChatViewModel(chatRepository: context.read<ChatRepository>()),
+          child: const PatientSelectionForChatPage(),
+        ),
         '/patient-edit-profile': (context) => ChangeNotifierProvider(
           create: (context) => PatientEditProfileViewModel(),
           child: const PatientEditProfilePage(),
