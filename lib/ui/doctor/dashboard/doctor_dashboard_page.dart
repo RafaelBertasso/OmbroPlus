@@ -1,3 +1,4 @@
+import 'package:Ombro_Plus/ui/shared/widgets/app_logo.dart';
 import 'package:Ombro_Plus/ui/shared/widgets/graphic_card.dart';
 import 'package:Ombro_Plus/ui/shared/widgets/metric_card.dart';
 import 'package:Ombro_Plus/ui/shared/widgets/navbar.dart';
@@ -80,21 +81,12 @@ class _DoctorDashboardPageState extends State<DoctorDashboardPage> {
 
         return Scaffold(
           backgroundColor: const Color(0xFFF4F7F6),
-          appBar: AppBar(
-            title: Text(
-              'Dashboard',
-              style: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
-            ),
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            iconTheme: IconThemeData(color: Colors.black),
-            centerTitle: true,
-          ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Center(child: AppLogo(padding: const EdgeInsets.all(0))),
                 SectionTitle(title: 'Visão Geral do Paciente'),
                 SizedBox(height: 15),
 

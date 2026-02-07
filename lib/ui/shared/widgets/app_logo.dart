@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 
 class AppLogo extends StatelessWidget {
-  const AppLogo({super.key});
+  final double? size; // ✅ Tamanho configurável
+  final EdgeInsets? padding; // ✅ Padding configurável
+
+  const AppLogo({super.key, this.size, this.padding});
 
   @override
   Widget build(BuildContext context) {
+    final logoSize = size ?? 100; // ✅ Default 100
+
     return Padding(
-      padding: const EdgeInsets.only(top: 18, bottom: 8),
+      padding:
+          padding ??
+          const EdgeInsets.only(top: 18, bottom: 8), // ✅ Default padding
       child: Image.asset(
         'assets/images/logo-app.png',
-        width: 100,
-        height: 100,
-        fit: BoxFit.contain,
+        width: logoSize,
+        height: logoSize,
+        fit: BoxFit.contain, // ✅ Garante que a imagem não distorça
       ),
     );
   }

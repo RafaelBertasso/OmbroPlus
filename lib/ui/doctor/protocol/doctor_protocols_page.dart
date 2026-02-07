@@ -1,3 +1,4 @@
+import 'package:Ombro_Plus/ui/shared/widgets/app_logo.dart';
 import 'package:Ombro_Plus/ui/shared/widgets/navbar.dart';
 import 'package:Ombro_Plus/models/protocol_model.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/doctor_protocols_viewmodel.dart';
@@ -82,18 +83,9 @@ class _DoctorProtocolsPageState extends State<DoctorProtocolsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFFF4F7F6),
-      appBar: AppBar(
-        title: Text(
-          'Meus Protocolos',
-          style: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-      ),
       body: Column(
         children: [
+          AppLogo(),
           _buildFilterBar(context),
           Expanded(
             child: Consumer<DoctorProtocolsViewModel>(
