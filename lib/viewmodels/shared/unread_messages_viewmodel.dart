@@ -1,4 +1,4 @@
-import 'package:Ombro_Plus/models/chat.summary.dart';
+import 'package:Ombro_Plus/models/chat_summary.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';

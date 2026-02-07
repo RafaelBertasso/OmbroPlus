@@ -1,6 +1,6 @@
 import 'package:Ombro_Plus/ui/shared/widgets/app_logo.dart';
 import 'package:Ombro_Plus/ui/auth/widgets/invite_code_sheet.dart';
-import 'package:Ombro_Plus/viewmodels/auth/auth.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/auth/auth_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';

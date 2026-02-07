@@ -1,4 +1,4 @@
-import 'package:Ombro_Plus/viewmodels/auth/doctor_register.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/auth/doctor_register_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_multi_formatter/formatters/phone_input_formatter.dart';
 import 'package:google_fonts/google_fonts.dart';
