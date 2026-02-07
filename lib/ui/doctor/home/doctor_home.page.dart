@@ -1,5 +1,5 @@
 import 'package:Ombro_Plus/components/activity.item.dart';
-import 'package:Ombro_Plus/components/navbar.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/navbar.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/doctor_home.viewmodel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';

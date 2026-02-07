@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:Ombro_Plus/ui/shared/widgets/app_logo.dart';
 import 'package:Ombro_Plus/ui/shared/widgets/build_info_row.dart';
-import 'package:Ombro_Plus/components/navbar.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/navbar.dart';
 import 'package:Ombro_Plus/ui/doctor/profile/widgets/delete_account_dialog.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/doctor_profile.viewmodel.dart';
 import 'package:flutter/material.dart';

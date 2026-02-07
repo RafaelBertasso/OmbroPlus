@@ -1,10 +1,9 @@
-import 'package:Ombro_Plus/components/info.card.dart';
-import 'package:Ombro_Plus/components/protocol.dates.section.dart';
-import 'package:Ombro_Plus/components/protocol.header.dart';
-import 'package:Ombro_Plus/components/protocol.notes.section.dart';
-import 'package:Ombro_Plus/components/section.title.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/info_card.dart';
+import 'package:Ombro_Plus/ui/patient/protocols/widgets/protocol_dates_section.dart';
+import 'package:Ombro_Plus/ui/patient/protocols/widgets/protocol_header.dart';
+import 'package:Ombro_Plus/ui/patient/protocols/widgets/protocol_notes_section.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/section_title.dart';
 import 'package:Ombro_Plus/viewmodels/shared/protocol_details.viewmodel.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';

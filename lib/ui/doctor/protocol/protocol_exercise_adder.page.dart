@@ -1,4 +1,4 @@
-import 'package:Ombro_Plus/components/section.title.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/section_title.dart';
 import 'package:Ombro_Plus/models/exercise.model.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/add_exercise.viewmodel.dart';
 import 'package:flutter/material.dart';

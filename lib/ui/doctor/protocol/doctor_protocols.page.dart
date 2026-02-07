@@ -1,4 +1,4 @@
-import 'package:Ombro_Plus/components/navbar.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/navbar.dart';
 import 'package:Ombro_Plus/models/protocol.model.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/doctor_protocols.viewmodel.dart';
 import 'package:flutter/material.dart';

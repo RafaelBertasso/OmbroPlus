@@ -1,5 +1,5 @@
 import 'package:Ombro_Plus/ui/shared/widgets/app_logo.dart';
-import 'package:Ombro_Plus/components/navbar.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/navbar.dart';
 import 'package:Ombro_Plus/viewmodels/patient/patient_protocols.viewmodel.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';

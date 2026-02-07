@@ -1,8 +1,8 @@
 import 'package:Ombro_Plus/ui/shared/widgets/app_logo.dart';
-import 'package:Ombro_Plus/ui/shared/exercise_card.dart';
-import 'package:Ombro_Plus/components/mini.metric.card.dart';
-import 'package:Ombro_Plus/components/navbar.dart';
-import 'package:Ombro_Plus/components/unread.messages.summary.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/exercise_card.dart';
+import 'package:Ombro_Plus/ui/patient/home/widgets/mini_metric_card.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/navbar.dart';
+import 'package:Ombro_Plus/ui/patient/home/widgets/unread_messages_summary.dart';
 import 'package:Ombro_Plus/viewmodels/patient/patient_home.viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

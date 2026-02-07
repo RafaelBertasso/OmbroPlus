@@ -1,5 +1,5 @@
-import 'package:Ombro_Plus/components/patient.selection.modal.dart';
-import 'package:Ombro_Plus/components/section.title.dart';
+import 'package:Ombro_Plus/ui/doctor/protocol/widgets/patient_selection_modal.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/section_title.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/widgets/patient_selector.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/widgets/schedule_button.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/new_protocol.viewmodel.dart';

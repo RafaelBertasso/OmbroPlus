@@ -1,6 +1,6 @@
-import 'package:Ombro_Plus/components/section.title.dart';
-import 'package:Ombro_Plus/components/radio.group.field.dart';
-import 'package:Ombro_Plus/components/styled.dropdown.field.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/section_title.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/radio_group_field.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/styled_dropdown_field.dart';
 import 'package:Ombro_Plus/viewmodels/shared/patient_clinical_form.viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_masked_text2/flutter_masked_text2.dart';

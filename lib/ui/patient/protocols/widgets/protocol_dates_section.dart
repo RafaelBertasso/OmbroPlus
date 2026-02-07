@@ -1,5 +1,5 @@
-import 'package:Ombro_Plus/components/info.card.dart';
-import 'package:Ombro_Plus/components/section.title.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/info_card.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/section_title.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 

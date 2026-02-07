@@ -20,7 +20,7 @@ import 'package:provider/provider.dart';
 import 'package:Ombro_Plus/viewmodels/auth/auth.viewmodel.dart';
 import 'package:Ombro_Plus/ui/auth/login_page.dart';
 
-import 'package:Ombro_Plus/ui/auth/doctor_register.page.dart';
+import 'package:Ombro_Plus/ui/auth/doctor_register_page.dart';
 import 'package:Ombro_Plus/ui/doctor/chat/doctor_chat_page.dart';
 import 'package:Ombro_Plus/ui/doctor/profile/doctor_edit_profile.page.dart';
 import 'package:Ombro_Plus/ui/doctor/doctor_patients/doctor_list.page.dart';
@@ -38,7 +38,7 @@ import 'package:Ombro_Plus/ui/doctor/protocol/protocol_details.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/protocol_exercise_adder.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/protocol_schedule_editor.page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/protocol_schedule_viewer.page.dart';
-import 'package:Ombro_Plus/ui/auth/patient_register.page.dart';
+import 'package:Ombro_Plus/ui/auth/patient_register_page.dart';
 import 'package:Ombro_Plus/ui/patient/home/details_exercise.page.dart';
 import 'package:Ombro_Plus/ui/patient/chat/patient_chat_page.dart';
 import 'package:Ombro_Plus/ui/shared/patient_clinical_form.page.dart';
@@ -53,7 +53,7 @@ import 'package:Ombro_Plus/ui/shared/terms_of_use.page.dart';
 import 'package:Ombro_Plus/ui/shared/user_list.page.dart';
 import 'package:Ombro_Plus/ui/doctor/dashboard/doctor_dashboard.page.dart';
 import 'package:Ombro_Plus/ui/doctor/home/doctor_home.page.dart';
-import 'package:Ombro_Plus/ui/auth/forgot_password.page.dart';
+import 'package:Ombro_Plus/ui/auth/forgot_password_page.dart';
 
 class App extends StatelessWidget {
   const App({super.key});

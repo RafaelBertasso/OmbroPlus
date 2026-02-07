@@ -1,4 +1,4 @@
-import 'package:Ombro_Plus/components/section.title.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/section_title.dart';
 import 'package:Ombro_Plus/viewmodels/shared/protocol_details.viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -383,62 +383,4 @@ class _ProtocolDetailsPageState extends State<ProtocolDetailsPage> {
       ),
     );
   }
-
-  // Widget _buildScheduleSummary(
-  //   BuildContext context,
-  //   Map<String, dynamic> schedule,
-  //   String patientId,
-  //   DateTime startDate,
-  //   DateTime? endDate,
-  // ) {
-  //   final int scheduleDays = schedule.keys.length;
-  //   final bool hasSchedule = scheduleDays > 0;
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       SectionTitle(title: 'Cronograma de Exercícios'),
-  //       SizedBox(height: 8),
-  //       InfoCard(
-  //         title: 'Dias Agendados',
-  //         content: hasSchedule
-  //             ? '$scheduleDays dias com exercícios'
-  //             : 'Cronograma vazio',
-  //         icon: Icons.calendar_month_outlined,
-  //       ),
-  //       SizedBox(height: 16),
-  //       SizedBox(
-  //         width: double.infinity,
-  //         child: ElevatedButton.icon(
-  //           onPressed: () {
-  //             Navigator.pushNamed(
-  //               context,
-  //               '/protocol-schedule-viewer',
-  //               arguments: {
-  //                 'protocolId': protocolId,
-  //                 'startDate': startDate.toIso8601String(),
-  //                 'endDate': endDate?.toIso8601String(),
-  //               },
-  //             );
-  //           },
-  //           icon: Icon(Icons.calendar_today_outlined, color: Colors.white),
-  //           label: Text(
-  //             'Ver Cronograma',
-  //             style: GoogleFonts.montserrat(
-  //               fontWeight: FontWeight.bold,
-  //               fontSize: 16,
-  //               color: Colors.white,
-  //             ),
-  //           ),
-  //           style: ElevatedButton.styleFrom(
-  //             backgroundColor: Color(0xFF0E382C),
-  //             minimumSize: Size(double.infinity, 50),
-  //             shape: RoundedRectangleBorder(
-  //               borderRadius: BorderRadiusGeometry.circular(10),
-  //             ),
-  //           ),
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
 }

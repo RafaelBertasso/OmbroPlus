@@ -1,7 +1,7 @@
 import 'package:Ombro_Plus/ui/shared/widgets/graphic_card.dart';
-import 'package:Ombro_Plus/components/metric.card.dart';
-import 'package:Ombro_Plus/components/navbar.dart';
-import 'package:Ombro_Plus/components/section.title.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/metric_card.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/navbar.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/section_title.dart';
 import 'package:Ombro_Plus/models/dashboard.data.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/dashboard_doctor.viewmodel.dart';
 import 'package:firebase_auth/firebase_auth.dart';

@@ -19,6 +19,7 @@ import 'package:Ombro_Plus/viewmodels/doctor/new_protocol.viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/patient/exercise_details.viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/patient/patient_home.viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/patient/patient_protocols.viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/shared/patient_selection_viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/shared/protocol_details.viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/shared/protocol_schedule_viewer.viewmodel.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -140,6 +141,10 @@ void main() async {
           create: (context) => DoctorListViewModel(
             repository: context.read<DoctorListRepository>(),
           ),
+        ),
+
+        ChangeNotifierProvider<PatientSelectionViewmodel>(
+          create: (context) => PatientSelectionViewmodel(),
         ),
       ],
       child: App(),
