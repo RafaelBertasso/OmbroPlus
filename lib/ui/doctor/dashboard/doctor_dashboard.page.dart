@@ -1,4 +1,4 @@
-import 'package:Ombro_Plus/components/graphic.card.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/graphic_card.dart';
 import 'package:Ombro_Plus/components/metric.card.dart';
 import 'package:Ombro_Plus/components/navbar.dart';
 import 'package:Ombro_Plus/components/section.title.dart';

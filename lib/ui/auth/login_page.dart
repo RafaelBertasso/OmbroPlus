@@ -1,4 +1,4 @@
-import 'package:Ombro_Plus/components/app.logo.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/app_logo.dart';
 import 'package:Ombro_Plus/ui/auth/widgets/invite_code_sheet.dart';
 import 'package:Ombro_Plus/viewmodels/auth/auth.viewmodel.dart';
 import 'package:flutter/material.dart';

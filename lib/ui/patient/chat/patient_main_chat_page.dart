@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:Ombro_Plus/components/app.logo.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/app_logo.dart';
 import 'package:Ombro_Plus/components/navbar.dart';
 import 'package:Ombro_Plus/viewmodels/shared/chat_list_viewmodel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

@@ -1,4 +1,4 @@
-import 'package:Ombro_Plus/components/config.tile.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/config_tile.dart';
 import 'package:Ombro_Plus/ui/doctor/profile/widgets/delete_account_dialog.dart';
 import 'package:Ombro_Plus/viewmodels/patient/patient_profile.viewmodel.dart';
 import 'package:flutter/material.dart';

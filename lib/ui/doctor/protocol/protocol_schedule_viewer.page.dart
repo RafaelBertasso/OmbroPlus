@@ -1,4 +1,4 @@
-import 'package:Ombro_Plus/components/exercise.card.dart';
+import 'package:Ombro_Plus/ui/shared/exercise_card.dart';
 import 'package:Ombro_Plus/viewmodels/shared/protocol_schedule_viewer.viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';

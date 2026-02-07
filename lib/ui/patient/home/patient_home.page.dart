@@ -1,5 +1,5 @@
-import 'package:Ombro_Plus/components/app.logo.dart';
-import 'package:Ombro_Plus/components/exercise.card.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/app_logo.dart';
+import 'package:Ombro_Plus/ui/shared/exercise_card.dart';
 import 'package:Ombro_Plus/components/mini.metric.card.dart';
 import 'package:Ombro_Plus/components/navbar.dart';
 import 'package:Ombro_Plus/components/unread.messages.summary.dart';

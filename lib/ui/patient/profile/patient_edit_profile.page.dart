@@ -1,4 +1,4 @@
-import 'package:Ombro_Plus/components/app.logo.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/app_logo.dart';
 import 'package:Ombro_Plus/viewmodels/patient/patient_edit_profile.viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_multi_formatter/formatters/phone_input_formatter.dart';
