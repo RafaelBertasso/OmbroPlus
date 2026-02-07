@@ -8,14 +8,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-class DoctorChatPage extends StatefulWidget {
-  const DoctorChatPage({super.key});
+class PatientChatPage extends StatefulWidget {
+  const PatientChatPage({super.key});
 
   @override
-  State<DoctorChatPage> createState() => _DoctorChatPageState();
+  State<PatientChatPage> createState() => _PatientChatPageState();
 }
 
-class _DoctorChatPageState extends State<DoctorChatPage> {
+class _PatientChatPageState extends State<PatientChatPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isInitialized = false;
@@ -23,21 +23,17 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    print(
-      "DoctorChatPage: didChangeDependencies chamado. _isInitialized: $_isInitialized",
-    );
+
     if (!_isInitialized) {
       final args =
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-      print("DoctorChatPage: Argumentos recebidos: $args");
       final roomId = args?['roomId'] as String?;
-      final targetUserId = args?['id'] as String?;
+      final targetUserId = args?['id'] as String?; // ID do especialista
 
       if (roomId != null &&
           targetUserId != null &&
           roomId.isNotEmpty &&
           targetUserId.isNotEmpty) {
-        print("DoctorChatPage: Argumentos válidos. Inicializando ViewModel...");
         WidgetsBinding.instance.addPostFrameCallback((_) {
           context.read<ChatViewModel>().initialize(
             roomId: roomId,
@@ -45,15 +41,11 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
           );
         });
       } else {
-        print(
-          "DoctorChatPage: ERRO - RoomId ou TargetUserId são nulos/vazios!",
-        );
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          // Precisamos avisar o usuário ou voltar a tela
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Erro: Dados do chat inválidos.")),
           );
-          Navigator.pop(context); // Voltar para não ficar tela branca
+          Navigator.pop(context);
         });
       }
       _isInitialized = true;
@@ -81,13 +73,26 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
     }
   }
 
-  // --- Helpers de UI (Nomes e Labels) ---
   String _getDayLabel(DateTime date, DateTime now) {
     final diff = now
         .difference(DateTime(date.year, date.month, date.day))
         .inDays;
     if (diff == 0) return 'Hoje';
     if (diff == 1) return 'Ontem';
+    if (diff < 7 &&
+        diff > 1 &&
+        date.isAfter(now.subtract(Duration(days: now.weekday)))) {
+      final weekDays = [
+        'segunda-feira',
+        'terça-feira',
+        'quarta-feira',
+        'quinta-feira',
+        'sexta-feira',
+        'sábado',
+        'domingo',
+      ];
+      return weekDays[date.weekday - 1];
+    }
     return DateFormat('dd/MM/yyyy').format(date);
   }
 
@@ -102,10 +107,11 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
         ? userName[0].toUpperCase()
         : '?';
 
-    final Color avatarBgColor = isMe
-        ? const Color(0xFF0E382C)
-        : Colors.grey.shade300;
-    final Color textColor = isMe ? Colors.white : const Color(0xFF0E382C);
+    final Color patientColor = const Color(0xFF0E382C);
+    final Color specialistColor = Colors.grey.shade300;
+
+    final Color avatarBgColor = isMe ? patientColor : specialistColor;
+    final Color textColor = isMe ? Colors.white : patientColor;
 
     if (imageBase64 != null && imageBase64.isNotEmpty) {
       return Padding(
@@ -150,7 +156,7 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
     final String senderId = msg['senderId'] as String;
     final bool isMe = senderId == currentUserId;
     final String senderName =
-        viewModel.userNames[senderId] ?? (isMe ? 'Eu' : 'Paciente');
+        viewModel.userNames[senderId] ?? (isMe ? 'Eu' : 'Especialista');
 
     final timestamp = msg['timestamp'] as Timestamp?;
     final timeString = timestamp != null
@@ -182,7 +188,9 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: isMe ? const Color(0xFF0E382C) : Colors.grey.shade200,
+                  color: isMe
+                      ? const Color(0xFF0E382C)
+                      : const Color.fromARGB(255, 199, 213, 203),
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),
@@ -202,9 +210,11 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
                   ),
                 ),
               ),
+
               if (isMe) _buildAvatar(viewModel, senderId, isMe, senderName),
             ],
           ),
+
           Padding(
             padding: EdgeInsets.only(
               top: 4,
@@ -226,7 +236,7 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
     final now = DateTime.now();
     final args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final nameToDisplay = args?['name'] as String? ?? 'Paciente';
+    final nameToDisplay = args?['name'] as String? ?? 'Especialista';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F6),
@@ -247,8 +257,11 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
       body: Consumer<ChatViewModel>(
         builder: (context, viewModel, child) {
           if (viewModel.isLoadingParticipants) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF0E382C)),
+            );
           }
+
           if (viewModel.errorMessage != null) {
             return Center(
               child: Padding(
@@ -265,12 +278,16 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
                   stream: viewModel.getMessagesStream(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF0E382C),
+                        ),
+                      );
                     }
                     if (snapshot.hasError) {
                       return Center(
                         child: Text(
-                          'Erro ao carregar mensagens: ${viewModel.errorMessage}',
+                          'Erro ao carregar mensagens: ${snapshot.error}',
                         ),
                       );
                     }
@@ -333,6 +350,8 @@ class _DoctorChatPageState extends State<DoctorChatPage> {
                       child: TextField(
                         controller: _controller,
                         textCapitalization: TextCapitalization.sentences,
+                        textInputAction: TextInputAction.send,
+                        onSubmitted: (_) => _sendMessage(viewModel),
                         decoration: InputDecoration(
                           hintText: 'Escreva uma mensagem...',
                           fillColor: const Color(0xFFF4F7F6),

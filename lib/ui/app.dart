@@ -40,12 +40,12 @@ import 'package:Ombro_Plus/ui/doctor/protocol/protocol_schedule_editor.page.dart
 import 'package:Ombro_Plus/ui/doctor/protocol/protocol_schedule_viewer.page.dart';
 import 'package:Ombro_Plus/ui/auth/patient_register.page.dart';
 import 'package:Ombro_Plus/ui/patient/home/details_exercise.page.dart';
-import 'package:Ombro_Plus/screens/patient/patient.chat.page.dart';
+import 'package:Ombro_Plus/ui/patient/chat/patient_chat_page.dart';
 import 'package:Ombro_Plus/ui/shared/patient_clinical_form.page.dart';
 import 'package:Ombro_Plus/ui/patient/dashboard/patient_dashboard.page.dart';
 import 'package:Ombro_Plus/ui/patient/profile/patient_edit_profile.page.dart';
 import 'package:Ombro_Plus/ui/patient/home/patient_home.page.dart';
-import 'package:Ombro_Plus/screens/patient/patient.main.chat.page.dart';
+import 'package:Ombro_Plus/ui/patient/chat/patient_main_chat_page.dart';
 import 'package:Ombro_Plus/ui/patient/profile/patient_profile.page.dart';
 import 'package:Ombro_Plus/ui/patient/protocols/patient_protocol_details.page.dart';
 import 'package:Ombro_Plus/ui/patient/protocols/patient_protocol_list.page.dart';
@@ -137,14 +137,22 @@ class App extends StatelessWidget {
         ),
         '/patient-home': (context) => const PatientHomePage(),
         '/patient-protocols': (context) => const PatientProtocolPage(),
-        '/patient-main-chat': (context) => const PatientMainChatPage(),
+        '/patient-main-chat': (context) => ChangeNotifierProvider(
+          create: (context) =>
+              ChatListViewmodel(chatRepository: context.read<ChatRepository>()),
+          child: const PatientMainChatPage(),
+        ),
         '/patient-profile': (context) => ChangeNotifierProvider(
           create: (context) => PatientProfileViewModel(
             authRepository: context.read<AuthRepository>(),
           ),
           child: const PatientProfilePage(),
         ),
-        '/patient-chat': (context) => const PatientChatPage(),
+        '/patient-chat': (context) => ChangeNotifierProvider(
+          create: (context) =>
+              ChatViewModel(chatRepository: context.read<ChatRepository>()),
+          child: const PatientChatPage(),
+        ),
         '/patient-clinical-form': (context) => ChangeNotifierProvider(
           create: (context) => PatientClinicalFormViewModel(),
           child: const PatientClinicalFormPage(),

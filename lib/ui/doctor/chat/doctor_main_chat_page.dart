@@ -88,7 +88,7 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
                       ),
                       const SizedBox(height: 10),
 
-                      // Campo de Busca controlado pelo ViewModel
+                      // Campo de Busca
                       TextField(
                         onChanged: viewModel.setSearchText,
                         decoration: InputDecoration(
@@ -111,12 +111,10 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
                       ),
                       const SizedBox(height: 18),
 
-                      // Lista de Chats em Tempo Real
+                      // Lista de Chats
                       Expanded(
                         child: StreamBuilder<QuerySnapshot>(
-                          stream: viewModel.getChatsStream(
-                            'specialistId',
-                          ), // Filtra chats do médico logado
+                          stream: viewModel.getChatsStream('specialistId'),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
@@ -134,14 +132,21 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
 
                             final activeChats = snapshot.data?.docs ?? [];
 
-                            // Filtragem Local
+                            // Dentro do StreamBuilder, após filteredChats
                             final filteredChats = activeChats.where((doc) {
-                              final name = (doc['patientName'] ?? '')
+                              final chatData =
+                                  doc.data() as Map<String, dynamic>;
+                              final name = (chatData['patientName'] ?? '')
                                   .toString()
                                   .toLowerCase();
-                              return name.contains(
-                                viewModel.searchText.toLowerCase(),
-                              );
+                              final lastMessage =
+                                  chatData['lastMessage'] ?? ''; // ✅ ADICIONAR
+
+                              // ✅ Só mostra chats que já têm mensagem E que correspondem à busca
+                              return lastMessage.isNotEmpty &&
+                                  name.contains(
+                                    viewModel.searchText.toLowerCase(),
+                                  );
                             }).toList();
 
                             if (filteredChats.isEmpty) {
@@ -166,21 +171,41 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
 
                                 final patientName =
                                     chatData['patientName'] ?? 'Paciente';
+
+                                // --- CORREÇÃO HÍBRIDA (IMPORTANTE) ---
+                                String patientId = '';
+
+                                // 1. Tenta pegar via participants (Jeito Novo)
                                 final participants = List<dynamic>.from(
                                   chatData['participants'] ?? [],
                                 );
+                                if (participants.isNotEmpty) {
+                                  try {
+                                    patientId = participants
+                                        .firstWhere(
+                                          (id) => id != currentSpecialistId,
+                                          orElse: () => '',
+                                        )
+                                        .toString();
+                                  } catch (_) {}
+                                }
 
-                                final patientId = participants.firstWhere(
-                                  (id) => id != currentSpecialistId,
-                                  orElse: () => '',
-                                );
+                                // 2. Se falhar, usa o "Jeito Antigo" (Manipulação de String do RoomID)
+                                // Isso garante compatibilidade total com o código legado.
+                                if (patientId.isEmpty &&
+                                    currentSpecialistId != null) {
+                                  patientId = chatRoom.id
+                                      .replaceAll('_', '')
+                                      .replaceAll(currentSpecialistId, '');
+                                }
+                                // ------------------------------------
+
                                 final lastMessage =
                                     chatData['lastMessage'] ??
                                     'Inicie a conversa';
-
                                 final timestamp =
-                                    (chatData['lastMessageTime'] ??
-                                            chatData['lastMessageTimestamp'])
+                                    (chatData['lastMessageTimestamp'] ??
+                                            chatData['lastMessageTime'])
                                         as Timestamp?;
                                 final timeString = timestamp != null
                                     ? DateFormat(
@@ -287,13 +312,13 @@ class _DoctorMainChatPageState extends State<DoctorMainChatPage> {
                                       ),
                                     ),
                                     onTap: () {
-                                      if (patientId.toString().isEmpty) {
+                                      if (patientId.isEmpty) {
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
                                           const SnackBar(
                                             content: Text(
-                                              'Erro: ID do paciente inválido no chat.',
+                                              'Erro: ID do paciente não encontrado.',
                                             ),
                                           ),
                                         );

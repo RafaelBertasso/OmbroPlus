@@ -34,7 +34,6 @@ class PatientSelectionForChatPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Pegamos o ID do especialista logado
     final currentSpecialistId = FirebaseAuth.instance.currentUser?.uid;
 
     return Scaffold(
@@ -57,7 +56,6 @@ class PatientSelectionForChatPage extends StatelessWidget {
           ? const Center(child: Text("Usuário não autenticado."))
           : Consumer<NewChatViewModel>(
               builder: (context, viewModel, child) {
-                // Se estiver carregando (criando a sala), mostra o Loading e bloqueia a tela
                 if (viewModel.isLoading) {
                   return const Center(
                     child: CircularProgressIndicator(color: Color(0xFF0E382C)),
@@ -91,7 +89,6 @@ class PatientSelectionForChatPage extends StatelessWidget {
                     ),
                     Expanded(
                       child: StreamBuilder<QuerySnapshot>(
-                        // Passamos o ID do médico para filtrar
                         stream: viewModel.getPatientsStream(
                           currentSpecialistId,
                         ),

@@ -9,9 +9,8 @@ class ChatViewModel extends ChangeNotifier {
 
   String? _roomId;
   String? _currentUserId;
-  String? _targetUserId; // O ID da outra pessoa na conversa
+  String? _targetUserId;
 
-  // Dados dos participantes para renderizar a UI
   String? patientName;
   String? specialistName;
   Map<String, String?> profileImageUrls = {};
@@ -20,26 +19,41 @@ class ChatViewModel extends ChangeNotifier {
   bool _isLoadingParticipants = true;
   bool get isLoadingParticipants => _isLoadingParticipants;
 
+  String? errorMessage;
+
   ChatViewModel({required this.chatRepository});
 
   Future<void> initialize({
     required String roomId,
     required String targetUserId,
   }) async {
+    print("ChatViewModel: Iniciando initialize para sala $roomId");
     _roomId = roomId;
     _targetUserId = targetUserId;
     _currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    errorMessage = null;
 
-    if (_currentUserId == null) return;
+    if (_currentUserId == null) {
+      print("ChatViewModel: Erro - Usuário não logado");
+      _isLoadingParticipants = false;
+      notifyListeners();
+      return;
+    }
 
     _isLoadingParticipants = true;
     notifyListeners();
 
-    await _loadParticipantsDetails();
-    await _markMessagesAsRead();
-
-    _isLoadingParticipants = false;
-    notifyListeners();
+    try {
+      await _loadParticipantsDetails();
+      await _markMessagesAsRead();
+      print("ChatViewModel: Inicialização concluída com sucesso");
+    } catch (e) {
+      print("ChatViewModel: ERRO CRÍTICO na inicialização: $e");
+      errorMessage = "Erro ao carregar dados: $e";
+    } finally {
+      _isLoadingParticipants = false;
+      notifyListeners();
+    }
   }
 
   Stream<QuerySnapshot> getMessagesStream() {
@@ -49,52 +63,119 @@ class ChatViewModel extends ChangeNotifier {
   Future<void> sendMessage(String text) async {
     if (text.isEmpty || _roomId == null || _currentUserId == null) return;
 
-    await chatRepository.sendMessage(
-      chatId: _roomId!,
-      senderId: _currentUserId!,
-      text: text,
-    );
+    try {
+      await chatRepository.sendMessage(
+        chatId: _roomId!,
+        senderId: _currentUserId!,
+        text: text,
+      );
 
-    await _incrementTargetUnreadCount();
+      await _incrementTargetUnreadCount();
+    } catch (e) {
+      print("Erro ao enviar mensagem: $e");
+    }
   }
 
   Future<void> _markMessagesAsRead() async {
-    // Zera o contador na sala de chat
-    await _firestore.collection('chats').doc(_roomId).update({
-      'unreadCount.$_currentUserId': 0,
-    });
-    // E chama o repositório para marcar as mensagens individuais como lidas (se aplicável)
-    await chatRepository.markMessagesAsRead(_roomId!, _currentUserId!);
+    if (_roomId == null || _currentUserId == null) return;
+    try {
+      await _firestore.collection('chats').doc(_roomId).update({
+        'unreadCount.$_currentUserId': 0,
+      });
+      await chatRepository.markMessagesAsRead(_roomId!, _currentUserId!);
+    } catch (e) {}
   }
 
   Future<void> _incrementTargetUnreadCount() async {
-    await _firestore.collection('chats').doc(_roomId).update({
-      'unreadCount.$_targetUserId': FieldValue.increment(1),
-    });
+    if (_roomId == null || _targetUserId == null) return;
+    try {
+      await _firestore.collection('chats').doc(_roomId).update({
+        'unreadCount.$_targetUserId': FieldValue.increment(1),
+      });
+    } catch (e) {
+      print("Aviso: Falha ao incrementar contador: $e");
+    }
   }
 
   Future<void> _loadParticipantsDetails() async {
-    // Dependendo de quem está logado, o "target" é o médico ou o paciente.
-    // Aqui fazemos uma busca flexível.
-    final patientDoc = await _firestore
-        .collection('pacientes')
-        .doc(_targetUserId)
-        .get();
-    final specialistDoc = await _firestore
-        .collection('especialistas')
-        .doc(_currentUserId)
-        .get();
+    print("ChatViewModel: Buscando dados dos participantes...");
 
-    // Lógica para quando o Médico está usando (target = paciente)
-    if (patientDoc.exists) {
-      patientName = patientDoc.data()?['nome'] ?? 'Paciente';
-      specialistName = specialistDoc.data()?['nome'] ?? 'Eu';
-      profileImageUrls[_targetUserId!] = patientDoc.data()?['profileImage'];
-      profileImageUrls[_currentUserId!] = specialistDoc.data()?['profileImage'];
+    // ✅ DETECTA SE O USUÁRIO LOGADO É PACIENTE OU MÉDICO
+    final bool isCurrentUserPatient = await _isUserPatient(_currentUserId!);
 
-      userNames[_targetUserId!] = patientName!;
-      userNames[_currentUserId!] = specialistName!;
+    print(
+      "ChatViewModel: Usuário atual é ${isCurrentUserPatient ? 'PACIENTE' : 'MÉDICO'}",
+    );
+
+    if (isCurrentUserPatient) {
+      // ✅ USUÁRIO LOGADO = PACIENTE
+      // Busca dados do PACIENTE (usuário atual)
+      await _loadPatientData(_currentUserId!);
+
+      // Busca dados do ESPECIALISTA (target)
+      await _loadSpecialistData(_targetUserId!);
+    } else {
+      // ✅ USUÁRIO LOGADO = MÉDICO
+      // Busca dados do ESPECIALISTA (usuário atual)
+      await _loadSpecialistData(_currentUserId!);
+
+      // Busca dados do PACIENTE (target)
+      await _loadPatientData(_targetUserId!);
     }
-    // (A lógica reversa pode ser ajustada quando for a vez do paciente)
+  }
+
+  Future<bool> _isUserPatient(String userId) async {
+    try {
+      final patientDoc = await _firestore
+          .collection('pacientes')
+          .doc(userId)
+          .get();
+      return patientDoc.exists;
+    } catch (e) {
+      print("Erro ao verificar tipo de usuário: $e");
+      return false;
+    }
+  }
+
+  Future<void> _loadPatientData(String patientId) async {
+    try {
+      final patientDoc = await _firestore
+          .collection('pacientes')
+          .doc(patientId)
+          .get();
+
+      if (patientDoc.exists) {
+        final data = patientDoc.data();
+        patientName = data?['nome'] ?? 'Paciente';
+        profileImageUrls[patientId] = data?['profileImage'];
+        userNames[patientId] = patientName!;
+        print("✅ Dados do paciente carregados: $patientName");
+      } else {
+        print("⚠️ Doc do paciente $patientId não encontrado");
+      }
+    } catch (e) {
+      print("❌ Erro ao buscar paciente: $e");
+    }
+  }
+
+  Future<void> _loadSpecialistData(String specialistId) async {
+    try {
+      final specialistDoc = await _firestore
+          .collection('especialistas')
+          .doc(specialistId)
+          .get();
+
+      if (specialistDoc.exists) {
+        final data = specialistDoc.data();
+        specialistName = data?['nome'] ?? 'Especialista';
+        profileImageUrls[specialistId] = data?['profileImage'];
+        userNames[specialistId] = specialistName!;
+        print("✅ Dados do especialista carregados: $specialistName");
+      } else {
+        print("⚠️ Doc do especialista $specialistId não encontrado");
+      }
+    } catch (e) {
+      print("❌ Erro ao buscar especialista: $e");
+    }
   }
 }

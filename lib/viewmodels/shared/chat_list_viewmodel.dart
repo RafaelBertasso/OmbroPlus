@@ -26,6 +26,14 @@ class ChatListViewmodel extends ChangeNotifier {
     return chatRepository.getUserChatsStream(userId, userTypeKey);
   }
 
+  Stream<QuerySnapshot> getPatientChatsStream(String patientId) {
+    return _firestore
+        .collection('chats')
+        .where('participants', arrayContains: patientId)
+        .orderBy('lastMessageTimestamp', descending: true)
+        .snapshots();
+  }
+
   Future<String?> getPatientProfileImage(String patientId) async {
     if (_profileImageCache.containsKey(patientId)) {
       return _profileImageCache[patientId];
@@ -36,6 +44,26 @@ class ChatListViewmodel extends ChangeNotifier {
       _profileImageCache[patientId] = imageBase64;
       return imageBase64;
     } catch (e) {
+      return null;
+    }
+  }
+
+  Future<String?> getSpecialistProfileImage(String specialistId) async {
+    if (specialistId.isEmpty) return null;
+
+    if (_profileImageCache.containsKey(specialistId)) {
+      return _profileImageCache[specialistId];
+    }
+    try {
+      final doc = await _firestore
+          .collection('especialistas')
+          .doc(specialistId)
+          .get();
+      final imageBase64 = doc.data()?['profileImage'] as String?;
+      _profileImageCache[specialistId] = imageBase64;
+      return imageBase64;
+    } catch (e) {
+      print('Erro ao buscar foto do especialista $specialistId: $e');
       return null;
     }
   }

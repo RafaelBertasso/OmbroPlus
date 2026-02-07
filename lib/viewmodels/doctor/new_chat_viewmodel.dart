@@ -20,11 +20,10 @@ class NewChatViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // AGORA FILTRA APENAS OS PACIENTES DESTE MÉDICO
   Stream<QuerySnapshot> getPatientsStream(String specialistId) {
     return _firestore
         .collection('pacientes')
-        .where('especialistaId', isEqualTo: specialistId) // Filtro crucial
+        .where('especialistaId', isEqualTo: specialistId)
         .snapshots();
   }
 
@@ -33,55 +32,67 @@ class NewChatViewModel extends ChangeNotifier {
     String patientId,
     String patientName,
   ) async {
+    print("🔵 startChat chamado - patientId: $patientId, name: $patientName");
+
     final currentSpecialistId = FirebaseAuth.instance.currentUser?.uid;
-    if (currentSpecialistId == null) return;
+    if (currentSpecialistId == null) {
+      print("🔴 ERRO: currentSpecialistId é NULL!");
+      return;
+    }
+
+    print("🔵 currentSpecialistId: $currentSpecialistId");
+
+    final navigator = Navigator.of(context);
 
     _isLoading = true;
     notifyListeners();
 
     try {
-      // 1. Busca os dados do médico (com fallback para não travar se falhar)
       String specialistName = 'Especialista';
       try {
+        print("🔵 Buscando dados do especialista...");
         final specialistDoc = await _firestore
             .collection('especialistas')
             .doc(currentSpecialistId)
             .get();
         if (specialistDoc.exists && specialistDoc.data() != null) {
           specialistName = specialistDoc.data()!['nome'] ?? 'Especialista';
+          print("🟢 Nome do especialista: $specialistName");
         }
       } catch (e) {
-        print("Aviso: Não foi possível buscar o nome do médico.");
+        print("🟡 Aviso: Não foi possível buscar o nome do médico: $e");
       }
 
-      // 2. Cria ou recupera a sala
+      print("🔵 Criando/buscando roomId...");
       final roomId = await chatRepository.getOrCreateChatId(
         currentSpecialistId,
         patientId,
         patientName,
         specialistName,
       );
+      print("🟢 RoomId criado/recuperado: $roomId");
 
       _isLoading = false;
       notifyListeners();
 
-      // 3. Navegação Imediata
-      if (context.mounted) {
-        Navigator.pushReplacementNamed(
-          context,
-          '/chat-detail',
-          arguments: {'roomId': roomId, 'name': patientName, 'id': patientId},
-        );
-      }
+      print("🔵 Navegando usando navigator capturado...");
+      navigator.pop();
+      navigator.pushNamed(
+        '/chat-detail',
+        arguments: {'roomId': roomId, 'name': patientName, 'id': patientId},
+      );
+      print("🟢 Navegação concluída!");
     } catch (e) {
-      print("Erro Crítico ao criar chat: $e");
+      print("🔴 Erro Crítico ao criar chat: $e");
+      print("🔴 Stack trace: ${StackTrace.current}");
+
       _isLoading = false;
       notifyListeners();
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erro de conexão ao iniciar a conversa.'),
+          SnackBar(
+            content: Text('Erro de conexão: $e'),
             backgroundColor: Colors.red,
           ),
         );
