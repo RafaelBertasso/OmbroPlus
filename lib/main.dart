@@ -12,6 +12,7 @@ import 'package:Ombro_Plus/viewmodels/doctor/dashboard_doctor_viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/doctor_list_viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/doctor_patients_viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/patient_details_viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/specialist_selection_viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/patient/dashboard_patient_viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/doctor_home_viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/doctor_protocols_viewmodel.dart';
@@ -83,7 +84,6 @@ void main() async {
         ChangeNotifierProvider<PatientHomeViewModel>(
           create: (context) => PatientHomeViewModel(
             authRepo: context.read<AuthRepository>(),
-            dashRepo: context.read<DashboardRepository>(),
             protoRepo: context.read<ProtocolRepository>(),
           ),
         ),
@@ -139,6 +139,11 @@ void main() async {
 
         ChangeNotifierProvider<DoctorListViewModel>(
           create: (context) => DoctorListViewModel(
+            repository: context.read<DoctorListRepository>(),
+          ),
+        ),
+        ChangeNotifierProvider<SpecialistSelectionViewmodel>(
+          create: (context) => SpecialistSelectionViewmodel(
             repository: context.read<DoctorListRepository>(),
           ),
         ),

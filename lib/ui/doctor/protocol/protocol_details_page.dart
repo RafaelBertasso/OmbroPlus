@@ -1,9 +1,14 @@
+import 'package:Ombro_Plus/repositories/doctor_repository.dart';
+import 'package:Ombro_Plus/ui/doctor/protocol/widgets/specialist_selection_modal.dart';
 import 'package:Ombro_Plus/ui/shared/widgets/section_title.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/specialist_selection_viewmodel.dart';
 import 'package:Ombro_Plus/viewmodels/shared/protocol_details_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProtocolDetailsPage extends StatefulWidget {
   final String protocolId;
@@ -32,12 +37,7 @@ class _ProtocolDetailsPageState extends State<ProtocolDetailsPage> {
     Navigator.pushNamed(
       context,
       '/protocol-schedule-viewer',
-      arguments: {
-        'protocolId': viewModel.protocol!.id,
-        'startDate': viewModel.protocol!.dataInicio.toIso8601String(),
-        'endDate': viewModel.protocol!.dataFim.toIso8601String(),
-        'schedule': viewModel.protocol!.schedule,
-      },
+      arguments: {'protocolId': viewModel.protocol!.id},
     );
   }
 
@@ -69,6 +69,44 @@ class _ProtocolDetailsPageState extends State<ProtocolDetailsPage> {
     if (confirm == true && mounted) {
       await context.read<ProtocolDetailsViewModel>().finalizeProtocol();
     }
+  }
+
+  void _openSpecialistModal(List<String> currentCollaborators) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) {
+          return ChangeNotifierProvider(
+            create: (_) =>
+                SpecialistSelectionViewmodel(repository: DoctorListRepository())
+                  ..init(currentCollaborators),
+            child: SpecialistSelectionModal(
+              scrollController: scrollController,
+              onSelectionCompleted: (ids, names) async {
+                Navigator.pop(context); // Fecha o modal
+                // Chama a ViewModel para salvar os novos colaboradores
+                await context
+                    .read<ProtocolDetailsViewModel>()
+                    .updateCollaborators(ids);
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Colaboradores atualizados com sucesso!'),
+                    ),
+                  );
+                }
+              },
+            ),
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -209,6 +247,113 @@ class _ProtocolDetailsPageState extends State<ProtocolDetailsPage> {
                         '${protocol.sessoesConcluidas}/${protocol.totalSessoesEstimadas}',
                       ),
                       const Divider(),
+                      InkWell(
+                        onTap: isActive
+                            ? () => _openSpecialistModal(
+                                protocol.especialistasColaboradores,
+                              )
+                            : null,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.group_add,
+                                color: Color(0xFF0E382C),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Colaboradores',
+                                style: GoogleFonts.openSans(
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                '${protocol.especialistasColaboradores.length} no projeto',
+                                style: GoogleFonts.openSans(
+                                  fontWeight: FontWeight.bold,
+                                  color: isActive
+                                      ? Colors.blue[700]
+                                      : Colors.grey,
+                                  decoration: isActive
+                                      ? TextDecoration.underline
+                                      : TextDecoration.none,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const Divider(),
+                      if (protocol.materialUrl != null &&
+                          protocol.materialUrl!.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: InkWell(
+                            onTap: () async {
+                              final String urlString = protocol.materialUrl!;
+                              final Uri? url = Uri.tryParse(urlString);
+
+                              if (url != null) {
+                                try {
+                                  if (await canLaunchUrl(url)) {
+                                    await launchUrl(
+                                      url,
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                  } else {
+                                    throw Exception(
+                                      'Não é possível abrir o link',
+                                    );
+                                  }
+                                } catch (e) {
+                                  Clipboard.setData(
+                                    ClipboardData(text: protocol.materialUrl!),
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Link copiado para a área de transferência! Cole no navegador.',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.link,
+                                  color: Color(0xFF0E382C),
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Material de Apoio',
+                                    style: GoogleFonts.openSans(
+                                      color: Colors.blue[700],
+                                      fontWeight: FontWeight.w600,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.copy,
+                                  color: Colors.grey,
+                                  size: 16,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const Divider(),
+                      ],
+
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Row(
@@ -276,9 +421,9 @@ class _ProtocolDetailsPageState extends State<ProtocolDetailsPage> {
                   height: 55,
                   child: ElevatedButton.icon(
                     onPressed: _openScheduleViewer,
-                    icon: const Icon(Icons.calendar_month, color: Colors.white),
+                    icon: const Icon(Icons.list_alt, color: Colors.white),
                     label: Text(
-                      'Visualizar Cronograma',
+                      'Visualizar Sessões',
                       style: GoogleFonts.montserrat(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,

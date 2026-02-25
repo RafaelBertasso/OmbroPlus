@@ -1,6 +1,5 @@
 import 'package:Ombro_Plus/models/protocol_model.dart';
 import 'package:Ombro_Plus/repositories/protocol_repository.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class PatientProtocolsViewModel extends ChangeNotifier {
@@ -8,52 +7,40 @@ class PatientProtocolsViewModel extends ChangeNotifier {
 
   PatientProtocolsViewModel({required this.repository});
 
-  ProtocolModel? _activeProtocol;
+  List<ProtocolModel> _protocols = [];
   bool _isLoading = false;
   String? _error;
 
-  ProtocolModel? get activeProtocol => _activeProtocol;
+  List<ProtocolModel> get protocols => _protocols;
+  ProtocolModel? get activeProtocol =>
+      _protocols.isNotEmpty ? _protocols.first : null;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  double get progressValue {
-    if (_activeProtocol == null ||
-        _activeProtocol!.totalSessoesEstimadas == 0) {
+  double getProgressValue(ProtocolModel protocol) {
+    if (protocol.totalSessoesEstimadas == 0) {
       return 0.0;
     }
-    return (_activeProtocol!.sessoesConcluidas /
-            _activeProtocol!.totalSessoesEstimadas)
-        .clamp(0.0, 1.0);
+    return (protocol.sessoesConcluidas / protocol.totalSessoesEstimadas).clamp(
+      0.0,
+      1.0,
+    );
   }
 
-  String get progressPercentage {
-    return '${(progressValue * 100).round()}%';
+  String getProgressPercentage(ProtocolModel protocol) {
+    final val = getProgressValue(protocol);
+    return '${(val * 100).round()}%';
   }
 
-  Set<int> get scheduledWeekdays {
-    if (_activeProtocol == null || _activeProtocol!.schedule.isEmpty) return {};
-
-    Set<int> days = {};
-
-    _activeProtocol!.schedule.keys.forEach((dateString) {
-      try {
-        final date = DateTime.parse(dateString);
-        days.add(date.weekday);
-      } catch (e) {
-        try {
-          final parts = dateString.split('/');
-          if (parts.length == 3) {
-            final date = DateTime(
-              int.parse(parts[2]),
-              int.parse(parts[1]),
-              int.parse(parts[0]),
-            );
-            days.add(date.weekday);
-          }
-        } catch (_) {}
-      }
-    });
-    return days;
+  ProtocolSession? getNextSession(ProtocolModel protocol) {
+    if (protocol.sessoes.isEmpty) {
+      return null;
+    }
+    final nextIndex = protocol.sessoesConcluidas;
+    if (nextIndex >= protocol.sessoes.length) {
+      return null; // Todas as sessões concluídas
+    }
+    return protocol.sessoes[nextIndex];
   }
 
   Future<void> loadActiveProtocol(String patientId) async {
@@ -61,14 +48,12 @@ class PatientProtocolsViewModel extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    final currentUser = FirebaseAuth.instance.currentUser;
-
     try {
-      _activeProtocol = await repository.fetchActiveProtocolByPatient(
-        patientId,
-      );
+      final result = await repository.fetchActiveProtocolByPatient(patientId);
+      _protocols = result != null ? [result] : [];
     } catch (e) {
       _error = 'erro ao carregar protocolo: $e';
+      _protocols = [];
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -76,7 +61,7 @@ class PatientProtocolsViewModel extends ChangeNotifier {
   }
 
   void clear() {
-    _activeProtocol = null;
+    _protocols = [];
     _error = null;
     _isLoading = false;
     notifyListeners();

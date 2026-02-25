@@ -8,11 +8,30 @@ class NewProtocolViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  List<ProtocolSession> _sessions = [];
+
   bool get isLoading => _isLoading;
   String? get error => _error;
+  List<ProtocolSession> get sessions => _sessions;
+
+  Map<int, List<ProtocolSession>> get sessionsByWeek {
+    final map = <int, List<ProtocolSession>>{};
+    for (var session in _sessions) {
+      if (!map.containsKey(session.semana)) {
+        map[session.semana] = [];
+      }
+      map[session.semana]!.add(session);
+    }
+    return map;
+  }
 
   NewProtocolViewModel({required ProtocolRepository repository})
     : _repository = repository;
+
+  void updateSessions(List<ProtocolSession> updatedSessions) {
+    _sessions = updatedSessions;
+    notifyListeners();
+  }
 
   Future<bool> saveProtocol({
     required String nome,
@@ -21,8 +40,9 @@ class NewProtocolViewModel extends ChangeNotifier {
     required String especialistaId,
     required DateTime? dataInicio,
     required DateTime? dataFim,
-    required Map<String, List<Map<String, dynamic>>> schedule,
     String? notas,
+    String? materialUrl,
+    List<String>? allowedSpecialists,
   }) async {
     _isLoading = true;
     _error = null;
@@ -37,19 +57,40 @@ class NewProtocolViewModel extends ChangeNotifier {
       if (dataFim.isBefore(dataInicio)) {
         throw Exception("A data final não pode ser antes da inicial.");
       }
-      if (schedule.isEmpty) {
-        throw Exception("Adicione exercícios ao cronograma.");
+      if (_sessions.isEmpty) {
+        throw Exception("Adicione pelo menos uma sessão ao cronograma.");
+      }
+
+      for (var session in _sessions) {
+        if (session.exercises.isEmpty) {
+          throw Exception(
+            "A sessão '${session.name}' deve conter pelo menos um exercício.",
+          );
+        }
+      }
+
+      int totalEstimado = _sessions.length;
+
+      List<String> colaboradores = allowedSpecialists != null
+          ? List<String>.from(allowedSpecialists)
+          : [];
+
+      if (!colaboradores.contains(especialistaId)) {
+        colaboradores.add(especialistaId);
       }
 
       final protocol = ProtocolModel(
         nome: nome,
         pacienteId: pacienteId,
+        pacienteName: pacienteName,
         especialistaId: especialistaId,
+        especialistasColaboradores: colaboradores,
+        materialUrl: materialUrl,
         dataInicio: dataInicio,
         dataFim: dataFim,
         notas: notas ?? '',
-        totalSessoesEstimadas: schedule.length,
-        schedule: schedule,
+        totalSessoesEstimadas: totalEstimado,
+        sessoes: _sessions,
       );
 
       await _repository.createProtocol(protocol, pacienteName);

@@ -1,8 +1,15 @@
+import 'package:Ombro_Plus/models/protocol_model.dart';
+import 'package:Ombro_Plus/repositories/doctor_repository.dart';
+import 'package:Ombro_Plus/ui/doctor/protocol/protocol_schedule_editor_page.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/widgets/patient_selection_modal.dart';
+import 'package:Ombro_Plus/ui/doctor/protocol/widgets/specialist_selection_modal.dart';
+import 'package:Ombro_Plus/ui/doctor/protocol/widgets/specialist_selector.dart';
 import 'package:Ombro_Plus/ui/shared/widgets/section_title.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/widgets/patient_selector.dart';
 import 'package:Ombro_Plus/ui/doctor/protocol/widgets/schedule_button.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/new_protocol_viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/protocol_schedule_viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/specialist_selection_viewmodel.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,12 +26,14 @@ class NewProtocolPage extends StatefulWidget {
 class _NewProtocolPageState extends State<NewProtocolPage> {
   String? _selectedPatientId;
   String? _selectedPatientName;
-  Map<String, List<Map<String, dynamic>>> _protocolSchedule = {};
+  List<String> _selectedColaboradoresIds = [];
+  List<String> _selectedColaboradoresNames = [];
 
   final _protocolNameController = TextEditingController();
   final _startDateController = TextEditingController();
   final _endDateController = TextEditingController();
   final _notesController = TextEditingController();
+  final _materialUrlController = TextEditingController();
 
   @override
   void dispose() {
@@ -32,6 +41,7 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
     _startDateController.dispose();
     _endDateController.dispose();
     _notesController.dispose();
+    _materialUrlController.dispose();
     super.dispose();
   }
 
@@ -85,6 +95,36 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
     );
   }
 
+  void _openSpecialistModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) {
+          return ChangeNotifierProvider(
+            create: (_) =>
+                SpecialistSelectionViewmodel(repository: DoctorListRepository())
+                  ..init(_selectedColaboradoresIds),
+            child: SpecialistSelectionModal(
+              scrollController: scrollController,
+              onSelectionCompleted: (ids, names) {
+                setState(() {
+                  _selectedColaboradoresIds = ids;
+                  _selectedColaboradoresNames = names;
+                });
+                Navigator.pop(context);
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Future<void> _openScheduleEditor() async {
     if (_selectedPatientId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -101,21 +141,25 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
       return;
     }
 
-    final result = await Navigator.pushNamed(
+    final newProtocolViewModel = context.read<NewProtocolViewModel>();
+
+    // Esperamos o resultado (a lista de sessões) do botão Salvar
+    final result = await Navigator.push(
       context,
-      '/protocol-schedule-editor',
-      arguments: {
-        'patientId': _selectedPatientId,
-        'startDate': _parseDate(_startDateController.text)?.toIso8601String(),
-        'endDate': _parseDate(_endDateController.text)?.toIso8601String(),
-        'currentSchedule': _protocolSchedule,
-      },
+      MaterialPageRoute(
+        builder: (_) => ChangeNotifierProvider(
+          // Injetamos a ViewModel temporária passando a lista atual para o init
+          create: (_) =>
+              ProtocolScheduleViewModel()..init(newProtocolViewModel.sessions),
+          child: const ProtocolScheduleEditorPage(),
+        ),
+      ),
     );
 
-    if (result != null && result is Map<String, List<Map<String, dynamic>>>) {
-      setState(() {
-        _protocolSchedule = result;
-      });
+    // Se o usuário clicou em "Salvar", result será uma List<ProtocolSession>.
+    // Se ele usou o botão de voltar do celular, result será null e as alterações são descartadas!
+    if (result != null && result is List<ProtocolSession>) {
+      newProtocolViewModel.updateSessions(result);
     }
   }
 
@@ -138,9 +182,10 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
       pacienteId: _selectedPatientId ?? '',
       pacienteName: _selectedPatientName ?? '',
       especialistaId: specialistId,
+      allowedSpecialists: _selectedColaboradoresIds,
       dataInicio: _parseDate(_startDateController.text),
       dataFim: _parseDate(_endDateController.text),
-      schedule: _protocolSchedule,
+      materialUrl: _materialUrlController.text.trim(),
       notas: _notesController.text.trim(),
     );
 
@@ -162,9 +207,8 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = context.select<NewProtocolViewModel, bool>(
-      (vm) => vm.isLoading,
-    );
+    final viewModel = context.watch<NewProtocolViewModel>();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F6),
       appBar: AppBar(
@@ -206,16 +250,38 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
                   selectedName: _selectedPatientName,
                   onTap: _openPatientModal,
                 ),
+                SizedBox(height: 12),
+
+                SpecialistSelector(
+                  selectedNames: _selectedColaboradoresNames,
+                  onTap: _openSpecialistModal,
+                ),
                 SizedBox(height: 30),
 
-                SectionTitle(title: 'Cronograma e Datas'),
+                SectionTitle(title: 'Cronograma e Conteúdo'),
                 SizedBox(height: 12),
 
                 ScheduleButton(
                   onPressed: _openScheduleEditor,
-                  hasItems: _protocolSchedule.isNotEmpty,
+                  hasItems: viewModel.sessions.isNotEmpty,
                 ),
                 SizedBox(height: 16),
+
+                TextFormField(
+                  controller: _materialUrlController,
+                  decoration: InputDecoration(
+                    labelText: 'Link do Material (PDF/Drive)',
+                    hintText: 'Cole aqui o link do material (opcional)',
+                    prefixIcon: const Icon(Icons.link, size: 20),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+                const SectionTitle(title: 'Datas e Anotações'),
+                const SizedBox(height: 12),
 
                 Row(
                   children: [
@@ -268,7 +334,7 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: isLoading ? null : _handleSave,
+                    onPressed: viewModel.isLoading ? null : _handleSave,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0E382C),
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -277,7 +343,7 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
                       ),
                     ),
                     child: Text(
-                      isLoading ? 'Salvando...' : 'Salvar Protocolo',
+                      viewModel.isLoading ? 'Salvando...' : 'Salvar Protocolo',
                       style: GoogleFonts.openSans(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -290,7 +356,7 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
               ],
             ),
           ),
-          if (isLoading)
+          if (viewModel.isLoading)
             Container(
               color: Colors.black45,
               child: const Center(

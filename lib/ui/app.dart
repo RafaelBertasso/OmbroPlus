@@ -47,8 +47,8 @@ import 'package:Ombro_Plus/ui/patient/profile/patient_edit_profile_page.dart';
 import 'package:Ombro_Plus/ui/patient/home/patient_home_page.dart';
 import 'package:Ombro_Plus/ui/patient/chat/patient_main_chat_page.dart';
 import 'package:Ombro_Plus/ui/patient/profile/patient_profile_page.dart';
-import 'package:Ombro_Plus/ui/patient/protocols/patient_protocol_details_page.dart';
-import 'package:Ombro_Plus/ui/patient/protocols/patient_protocol_list_page.dart';
+import 'package:Ombro_Plus/ui/patient/protocol/patient_protocol_details_page.dart';
+import 'package:Ombro_Plus/ui/patient/protocol/patient_protocol_list_page.dart';
 import 'package:Ombro_Plus/ui/shared/terms_of_use_page.dart';
 import 'package:Ombro_Plus/ui/shared/user_list_page.dart';
 import 'package:Ombro_Plus/ui/doctor/dashboard/doctor_dashboard_page.dart';
@@ -221,8 +221,6 @@ class App extends StatelessWidget {
             return MaterialPageRoute(
               builder: (context) => ProtocolScheduleViewerPage(
                 protocolId: protocolId,
-                startDate: startDate,
-                endDate: endDate,
               ),
               settings: settings,
             );

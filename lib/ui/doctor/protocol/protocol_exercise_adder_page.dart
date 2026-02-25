@@ -3,7 +3,6 @@ import 'package:Ombro_Plus/models/exercise_model.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/add_exercise_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class ProtocolExerciseAdderPage extends StatefulWidget {
@@ -21,23 +20,13 @@ class _ProtocolExerciseAdderPageState extends State<ProtocolExerciseAdderPage> {
 
   TextEditingController? _autoCompleteController;
 
-  bool _isInitialized = false;
-
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_isInitialized) {
-      final args =
-          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-      if (args != null) {
-        final days = (args['protocolDays'] as List).cast<String>();
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          context.read<AddExerciseViewModel>().initialize(days);
-        });
-      }
-      _isInitialized = true;
-    }
+  void initState() {
+    super.initState();
+    // Inicializa sem argumentos de data, apenas carrega exercícios
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AddExerciseViewModel>().initialize();
+    });
   }
 
   @override
@@ -103,18 +92,23 @@ class _ProtocolExerciseAdderPageState extends State<ProtocolExerciseAdderPage> {
             color: const Color(0xFF0E382C).withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: IconButton(
-            icon: const Icon(Icons.add_box_outlined, color: Color(0xFF0E382C)),
-            tooltip: 'Criar Novo Exercício',
-            onPressed: () async {
-              final result = await Navigator.pushNamed(
-                context,
-                '/new-exercise',
-              );
-              if (result == true && mounted) {
-                viewModel.refreshExercises();
-              }
-            },
+          child: Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(
+                Icons.add_box_outlined,
+                color: Color(0xFF0E382C),
+              ),
+              tooltip: 'Novo Exercício',
+              onPressed: () async {
+                final result = await Navigator.pushNamed(
+                  context,
+                  '/new-exercise',
+                );
+                if (result == true && mounted) {
+                  viewModel.refreshExercises();
+                }
+              },
+            ),
           ),
         ),
       ],
@@ -149,6 +143,7 @@ class _ProtocolExerciseAdderPageState extends State<ProtocolExerciseAdderPage> {
                     fontSize: 12,
                   ),
                 ),
+                const SizedBox(height: 16),
               ],
             ),
           ),
@@ -190,6 +185,7 @@ class _ProtocolExerciseAdderPageState extends State<ProtocolExerciseAdderPage> {
   Widget build(BuildContext context) {
     return Consumer<AddExerciseViewModel>(
       builder: (context, viewModel, child) {
+        // Atualiza o texto do autocomplete se o exercício for selecionado via Drawer
         if (viewModel.selectedExercise != null &&
             _autoCompleteController != null) {
           if (_autoCompleteController!.text !=
@@ -211,7 +207,7 @@ class _ProtocolExerciseAdderPageState extends State<ProtocolExerciseAdderPage> {
           appBar: AppBar(
             backgroundColor: const Color(0xFF0E382C),
             title: Text(
-              'Agendar Exercício',
+              'Adicionar à Sessão',
               style: GoogleFonts.montserrat(
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
@@ -231,11 +227,16 @@ class _ProtocolExerciseAdderPageState extends State<ProtocolExerciseAdderPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SectionTitle(title: '1. Seleção e Carga'),
+                        const SectionTitle(title: '1. Seleção de Exercício'),
                         const SizedBox(height: 10),
 
                         _buildExerciseAutocomplete(viewModel),
 
+                        const SizedBox(height: 20),
+                        const Divider(),
+                        const SizedBox(height: 10),
+
+                        const SectionTitle(title: '2. Configuração da Carga'),
                         const SizedBox(height: 16),
 
                         Row(
@@ -262,47 +263,8 @@ class _ProtocolExerciseAdderPageState extends State<ProtocolExerciseAdderPage> {
                           ],
                         ),
 
-                        const SizedBox(height: 20),
-                        const Divider(),
-                        const SizedBox(height: 10),
-
-                        SectionTitle(title: '2. Dias de Aplicação'),
-
-                        TextButton(
-                          onPressed: viewModel.toggleSelectAll,
-                          child: Text(
-                            'Selecionar Todos / Desmarcar Todos',
-                            style: GoogleFonts.montserrat(
-                              color: const Color(0xFF0E382C),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-
-                        // Lista de Dias (Checkbox)
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: viewModel.selectedDays.length,
-                          itemBuilder: (context, index) {
-                            final dayIso = viewModel.selectedDays.keys
-                                .elementAt(index);
-                            final isSelected = viewModel.selectedDays[dayIso]!;
-                            final date = DateTime.parse(dayIso);
-                            final label = DateFormat(
-                              'EEE, dd/MM',
-                              'pt_BR',
-                            ).format(date); // Use pt_BR se configurado
-
-                            return CheckboxListTile(
-                              title: Text(label),
-                              value: isSelected,
-                              activeColor: const Color(0xFF0E382C),
-                              onChanged: (val) =>
-                                  viewModel.toggleDay(dayIso, val),
-                            );
-                          },
-                        ),
+                        // REMOVIDA A SEÇÃO "DIAS DE APLICAÇÃO"
+                        // Pois agora o exercício pertence à Sessão, não a uma data.
                       ],
                     ),
                   ),
@@ -334,16 +296,14 @@ class _ProtocolExerciseAdderPageState extends State<ProtocolExerciseAdderPage> {
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text(
-                                  'Selecione exercício e pelo menos um dia.',
-                                ),
+                                content: Text('Selecione um exercício válido.'),
                               ),
                             );
                           }
                         }
                       },
                       child: Text(
-                        'Adicionar ao Protocolo',
+                        'Adicionar Exercício',
                         style: GoogleFonts.montserrat(
                           fontWeight: FontWeight.bold,
                           color: Colors.white,

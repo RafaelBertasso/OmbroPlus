@@ -1,5 +1,4 @@
 import 'package:Ombro_Plus/repositories/protocol_repository.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class ExerciseDetailsViewModel extends ChangeNotifier {
@@ -55,7 +54,6 @@ class ExerciseDetailsViewModel extends ChangeNotifier {
     String protocolId,
     String patientId,
     String exerciseId,
-    List<dynamic> allDailyExercises,
   ) async {
     _isMarkingComplete = true;
     notifyListeners();
@@ -67,43 +65,16 @@ class ExerciseDetailsViewModel extends ChangeNotifier {
         exerciseId,
         true,
       );
+
       _isCompletedToday = true;
-
-      final completedSet = await repository.fetchCompletedExercisesToday(
-        protocolId,
-        patientId,
-      );
-
-      if (completedSet.length >= allDailyExercises.length) {
-        String currentPatientName = 'Paciente';
-        final user = FirebaseAuth.instance.currentUser;
-
-        if (user?.displayName != null && user!.displayName!.isNotEmpty) {
-          currentPatientName = user.displayName!;
-        } else {
-          final patientData = await repository.getPatientData(patientId);
-          if (patientData != null) {
-            currentPatientName = patientData['nome'] ?? 'Paciente';
-          }
-        }
-
-        await repository.markSessionCompleted(
-          protocolId,
-          patientId,
-          currentPatientName,
-        );
-
-        _isMarkingComplete = false;
-        notifyListeners();
-        return true;
-      }
-
       _isMarkingComplete = false;
       notifyListeners();
-      return false;
+
+      return true;
     } catch (e) {
-      _error = 'Erro ao finalizar sessão: $e';
+      _error = 'Erro ao finalizar exercício: $e';
       _isMarkingComplete = false;
+      notifyListeners();
       return false;
     }
   }

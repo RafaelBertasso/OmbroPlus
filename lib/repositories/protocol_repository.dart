@@ -102,6 +102,69 @@ class ProtocolRepository {
     }
   }
 
+  Future<bool> markFlexibleSessionCompleted({
+    required String protocolId,
+    required String patientId,
+    required String patientName,
+    required String sessionId,
+    required String sessionName,
+  }) async {
+    final todayKey = _getTodayKey();
+    final logCollection = _firestore.collection('logs_exercicios');
+    final protocolRef = _firestore.collection('protocolos').doc(protocolId);
+
+    final existingLog = await logCollection
+        .where('protocoloId', isEqualTo: protocolId)
+        .where('sessionId', isEqualTo: sessionId)
+        .limit(1)
+        .get();
+
+    if (existingLog.docs.isNotEmpty) return false;
+
+    try {
+      final bool transactionResult = await _firestore.runTransaction((
+        transaction,
+      ) async {
+        final protocolDoc = await transaction.get(protocolRef);
+        if (!protocolDoc.exists) throw Exception('Protocolo não encontrado');
+
+        final data = protocolDoc.data()!;
+        final completed = (data['sessoesConcluidas'] as int? ?? 0) + 1;
+        final total = data['totalSessoesEstimadas'] as int? ?? 0;
+
+        final newLogRef = logCollection.doc();
+        transaction.set(newLogRef, {
+          'protocoloId': protocolId,
+          'pacienteId': patientId,
+          'sessionId': sessionId,
+          'sessionName': sessionName,
+          'dataRealizacao': todayKey,
+          'timestamp': FieldValue.serverTimestamp(),
+          'sessaoFinalizada': true,
+        });
+
+        transaction.update(protocolRef, {'sessoesConcluidas': completed});
+
+        if (completed >= total && total > 0) {
+          transaction.update(protocolRef, {'status': 'finished'});
+        }
+        return true;
+      });
+      if (transactionResult) {
+        await _logActivity(
+          type: 'PROTOCOL_FINISHED',
+          patientId: patientId,
+          patientName: patientName,
+          message: '$patientName concluiu a sessão "$sessionName".',
+        );
+      }
+      return transactionResult;
+    } catch (e) {
+      print('{PROTOCOL_REPOSITORY} Erro na transação de sessão flexível: $e');
+      return false;
+    }
+  }
+
   Future<Set<String>> fetchCompletedExercisesToday(
     String protocolId,
     String patientId,
@@ -121,6 +184,51 @@ class ProtocolRepository {
           .toSet();
     } catch (e) {
       return {};
+    }
+  }
+
+  Future<Set<String>> fetchCompletedSessionIds(
+    String protocolId,
+    String patientId,
+  ) async {
+    try {
+      final snapshot = await _firestore
+          .collection('logs_exercicios')
+          .where('protocoloId', isEqualTo: protocolId)
+          .where('pacienteId', isEqualTo: patientId)
+          .where('sessaoFinalizada', isEqualTo: true)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => doc.data()['sessionId'] as String?)
+          .where((id) => id != null)
+          .cast<String>()
+          .toSet();
+    } catch (e) {
+      print('{PROTOCOL_REPO} Erro ao buscar sessões concluídas: $e');
+      return {};
+    }
+  }
+
+  Future<bool> hasCompletedSessionToday(
+    String protocolId,
+    String patientId,
+  ) async {
+    try {
+      final todayKey = _getTodayKey();
+      final snapshot = await _firestore
+          .collection('logs_exercicios')
+          .where('protocoloId', isEqualTo: protocolId)
+          .where('pacienteId', isEqualTo: patientId)
+          .where('dataRealizacao', isEqualTo: todayKey)
+          .where('sessaoFinalizada', isEqualTo: true)
+          .limit(1)
+          .get();
+
+      return snapshot.docs.isNotEmpty;
+    } catch (e) {
+      print('{PROTOCOL_REPO} Erro ao verificar sessão de hoje: $e');
+      return false;
     }
   }
 
@@ -181,7 +289,7 @@ class ProtocolRepository {
     try {
       final snapshot = await _firestore
           .collection('protocolos')
-          .where('especialistaId', isEqualTo: specialistId)
+          .where('especialistasColaboradores', arrayContains: specialistId)
           .orderBy('criadoEm', descending: true)
           .get();
 
@@ -260,22 +368,29 @@ class ProtocolRepository {
     }
   }
 
-  Future<ProtocolModel?> fetchActiveProtocolByPatient(String patientId) async {
+  Future<List<ProtocolModel>> fetchActiveProtocolsByPatient(
+    String patientId,
+  ) async {
     try {
       final snapshot = await _firestore
           .collection('protocolos')
           .where('pacienteId', isEqualTo: patientId)
           .where('status', isEqualTo: 'active')
-          .limit(1)
           .get();
-      if (snapshot.docs.isEmpty) return null;
 
-      final doc = snapshot.docs.first;
-      return ProtocolModel.fromMap(doc.data(), doc.id);
+      return snapshot.docs
+          .map((doc) => ProtocolModel.fromMap(doc.data(), doc.id))
+          .toList();
     } catch (e) {
       print("{PROTOCOL_REPOSITORY} Erro ao buscar protocolo ativo: $e");
-      return null;
+      return [];
     }
+  }
+
+  Future<ProtocolModel?> fetchActiveProtocolByPatient(String patientId) async {
+    final list = await fetchActiveProtocolsByPatient(patientId);
+    if (list.isNotEmpty) return list.first;
+    return null;
   }
 
   Future<Map<String, dynamic>?> getExerciseById(String id) async {
@@ -317,6 +432,19 @@ class ProtocolRepository {
       });
     } catch (e) {
       throw Exception('Erro ao salvar exercício: $e');
+    }
+  }
+
+  Future<void> updateProtocolCollaborators(
+    String protocolId,
+    List<String> collaborators,
+  ) async {
+    try {
+      await _firestore.collection('protocolos').doc(protocolId).update({
+        'especialistasColaboradores': collaborators,
+      });
+    } catch (e) {
+      throw Exception('Erro ao atualizar colaboradores: $e');
     }
   }
 }

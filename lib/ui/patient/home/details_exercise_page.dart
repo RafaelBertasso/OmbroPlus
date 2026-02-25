@@ -19,7 +19,6 @@ class _DetailsExercisePageState extends State<DetailsExercisePage> {
 
   String? _protocolId;
   String? _exerciseId;
-  List<dynamic>? _allDailyExercises;
 
   @override
   void initState() {
@@ -41,7 +40,7 @@ class _DetailsExercisePageState extends State<DetailsExercisePage> {
 
     _protocolId = args['protocoloId'];
     _exerciseId = args['exercicioId'];
-    _allDailyExercises = args['allDailyExercises'];
+    // Removemos a captura do _allDailyExercises, pois não usamos mais aqui!
 
     final patientId = FirebaseAuth.instance.currentUser?.uid;
 
@@ -156,8 +155,9 @@ class _DetailsExercisePageState extends State<DetailsExercisePage> {
         }
 
         final data = viewModel.exerciseData;
-        if (data == null)
+        if (data == null) {
           return const Scaffold(body: Center(child: Text("Sem dados")));
+        }
 
         final String name = data['nome'] ?? 'Exercício';
         final String description = data['descricao'] ?? 'Sem instruções';
@@ -275,30 +275,19 @@ class _DetailsExercisePageState extends State<DetailsExercisePage> {
                               : () async {
                                   final patientId =
                                       FirebaseAuth.instance.currentUser?.uid;
+
                                   if (patientId != null &&
                                       _protocolId != null &&
                                       _exerciseId != null) {
-                                    final sessionFinished = await viewModel
+                                    final success = await viewModel
                                         .markAsComplete(
                                           _protocolId!,
                                           patientId,
                                           _exerciseId!,
-                                          _allDailyExercises ?? [],
                                         );
 
                                     if (context.mounted) {
-                                      if (sessionFinished) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Sessão diária COMPLETA! Parabéns.',
-                                            ),
-                                            backgroundColor: Colors.green,
-                                          ),
-                                        );
-                                      } else {
+                                      if (success) {
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
@@ -306,11 +295,24 @@ class _DetailsExercisePageState extends State<DetailsExercisePage> {
                                             content: Text(
                                               'Exercício concluído!',
                                             ),
-                                            backgroundColor: Color(0xFF0E382C),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                        // Volta para a tela da Sessão
+                                        Navigator.pop(context, true);
+                                      } else {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              viewModel.error ??
+                                                  'Erro ao concluir exercício.',
+                                            ),
+                                            backgroundColor: Colors.red,
                                           ),
                                         );
                                       }
-                                      Navigator.pop(context, true);
                                     }
                                   }
                                 },

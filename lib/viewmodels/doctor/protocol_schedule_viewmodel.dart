@@ -1,98 +1,163 @@
+import 'package:Ombro_Plus/models/protocol_model.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class ProtocolScheduleViewModel extends ChangeNotifier {
-  DateTime _selectedDate = DateTime.now();
-  List<DateTime> _protocolDays = [];
-  Map<String, List<Map<String, dynamic>>> _schedule = {};
-  bool _isLoading = false;
+  List<ProtocolSession> _sessions = [];
 
-  DateTime get selectedDate => _selectedDate;
-  List<DateTime> get protocolDays => _protocolDays;
-  Map<String, List<Map<String, dynamic>>> get schedule => _schedule;
-  bool get isLoading => _isLoading;
+  List<ProtocolSession> get sessions => _sessions;
 
-  void initialize(
-    DateTime start,
-    DateTime end,
-    Map<String, dynamic>? initialSchedule,
-  ) {
-    _isLoading = true;
-    notifyListeners();
-
-    _protocolDays = _generateDays(start, end);
-
-    final now = DateTime.now();
-    _selectedDate = _protocolDays.firstWhere(
-      (day) => day.isAfter(now.subtract(const Duration(days: 1))),
-      orElse: () => _protocolDays.first,
-    );
-
-    if (initialSchedule != null) {
-      _schedule = _castSchedule(initialSchedule);
-    }
-
-    _isLoading = false;
-    notifyListeners();
-  }
-
-  void selectDate(DateTime date) {
-    _selectedDate = date;
-    notifyListeners();
-  }
-
-  void addExercises(Map<String, dynamic> result) {
-    final List<String> daysIso = (result['diasIso'] as List).cast<String>();
-
-    final exerciseDetails = {
-      'exercicioId': result['exercicioId'],
-      'title': result['exercicioNome'],
-      'subtitle': '${result['series']} séries x ${result['repeticoes']} reps',
-      'series': result['series'],
-      'repeticoes': result['repeticoes'],
-    };
-
-    for (var dayIso in daysIso) {
-      final day = DateTime.parse(dayIso);
-      final dateKey = DateFormat('yyyy-MM-dd').format(day);
-
-      _schedule.putIfAbsent(dateKey, () => []).add(Map.from(exerciseDetails));
-    }
-    notifyListeners();
-  }
-
-  void removeExercise(String dateKey, int index) {
-    if (_schedule.containsKey(dateKey) && _schedule[dateKey]!.length > index) {
-      _schedule[dateKey]!.removeAt(index);
-      if (_schedule[dateKey]!.isEmpty) {
-        _schedule.remove(dateKey);
+  Map<int, List<ProtocolSession>> get sessionsByWeek {
+    final map = <int, List<ProtocolSession>>{};
+    for (var session in _sessions) {
+      if (!map.containsKey(session.semana)) {
+        map[session.semana] = [];
       }
+      map[session.semana]!.add(session);
+    }
+    return map;
+  }
+
+  void init(List<ProtocolSession> initialSessions) {
+    _sessions = initialSessions
+        .map(
+          (s) => ProtocolSession(
+            id: s.id,
+            semana: s.semana,
+            name: s.name,
+            exercises: s.exercises
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList(),
+          ),
+        )
+        .toList();
+  }
+
+  void addWeek() {
+    final currentWeeks = sessionsByWeek.keys.toList();
+    final nextWeek = currentWeeks.isEmpty
+        ? 1
+        : currentWeeks.reduce((a, b) => a > b ? a : b) + 1;
+
+    _sessions.add(
+      ProtocolSession(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        semana: nextWeek,
+        name: 'Sessão 1',
+        exercises: [],
+      ),
+    );
+    notifyListeners();
+  }
+
+  void addSessionToWeek(int week) {
+    final sessionsInThisWeek = _sessions.where((s) => s.semana == week).length;
+    _sessions.add(
+      ProtocolSession(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        semana: week,
+        name: 'Sessão ${sessionsInThisWeek + 1}',
+        exercises: [],
+      ),
+    );
+    notifyListeners();
+  }
+
+  void removeSession(String sessionId) {
+    final index = _sessions.indexWhere((s) => s.id == sessionId);
+    if (index == -1) return;
+
+    final week = _sessions[index].semana;
+
+    _sessions.removeAt(index);
+
+    int sessionCounter = 1;
+    for (int i = 0; i < _sessions.length; i++) {
+      if (_sessions[i].semana == week) {
+        final current = _sessions[i];
+
+        if (current.name.startsWith('Sessão')) {
+          _sessions[i] = ProtocolSession(
+            id: current.id,
+            semana: current.semana,
+            name: 'Sessão $sessionCounter',
+            exercises: current.exercises,
+          );
+        }
+        sessionCounter++;
+      }
+    }
+
+    notifyListeners();
+  }
+
+  void removeWeek(int week) {
+    _sessions.removeWhere((s) => s.semana == week);
+
+    for (int i = 0; i < _sessions.length; i++) {
+      if (_sessions[i].semana > week) {
+        final current = _sessions[i];
+
+        _sessions[i] = ProtocolSession(
+          id: current.id,
+          semana: current.semana - 1,
+          name: current.name,
+          exercises: current.exercises,
+        );
+      }
+    }
+    notifyListeners();
+  }
+
+  void renameSession(String sessionId, String newName) {
+    final index = _sessions.indexWhere((s) => s.id == sessionId);
+    if (index != -1) {
+      final current = _sessions[index];
+      _sessions[index] = ProtocolSession(
+        id: current.id,
+        semana: current.semana,
+        name: newName,
+        exercises: current.exercises,
+      );
       notifyListeners();
     }
   }
 
-  List<DateTime> _generateDays(DateTime start, DateTime end) {
-    final days = <DateTime>[];
-    final diff = end.difference(start).inDays;
-    for (int i = 0; i <= diff; i++) {
-      days.add(start.add(Duration(days: i)));
+  void addExerciseToSession(String sessionId, Map<String, dynamic> exercise) {
+    final index = _sessions.indexWhere((s) => s.id == sessionId);
+    if (index != -1) {
+      final currentSession = _sessions[index];
+      final newExercises = List<Map<String, dynamic>>.from(
+        currentSession.exercises,
+      )..add(exercise);
+
+      _sessions[index] = ProtocolSession(
+        id: currentSession.id,
+        semana: currentSession.semana,
+        name: currentSession.name,
+        exercises: newExercises,
+      );
+      notifyListeners();
     }
-    return days;
   }
 
-  Map<String, List<Map<String, dynamic>>> _castSchedule(
-    Map<String, dynamic> raw,
-  ) {
-    final Map<String, List<Map<String, dynamic>>> result = {};
-    raw.forEach((key, value) {
-      if (value is List) {
-        try {
-          result[key] = value.map((e) => Map<String, dynamic>.from(e)).toList();
-        } catch (e) {
-          print("Erro ao converter dia $key: $e");
-        }
+  void removeExerciseFromSession(String sessionId, int exerciseIndex) {
+    final index = _sessions.indexWhere((s) => s.id == sessionId);
+    if (index != -1) {
+      final currentSession = _sessions[index];
+      final newExercises = List<Map<String, dynamic>>.from(
+        currentSession.exercises,
+      );
+
+      if (exerciseIndex >= 0 && exerciseIndex < newExercises.length) {
+        newExercises.removeAt(exerciseIndex);
+        _sessions[index] = ProtocolSession(
+          id: currentSession.id,
+          semana: currentSession.semana,
+          name: currentSession.name,
+          exercises: newExercises,
+        );
+        notifyListeners();
       }
-    });
-    return result;
+    }
   }
 }

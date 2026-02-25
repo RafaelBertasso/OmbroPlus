@@ -1,9 +1,11 @@
+import 'package:Ombro_Plus/ui/patient/home/session_execution_page.dart';
 import 'package:Ombro_Plus/ui/shared/widgets/app_logo.dart';
-import 'package:Ombro_Plus/ui/shared/widgets/exercise_card.dart';
 import 'package:Ombro_Plus/ui/patient/home/widgets/mini_metric_card.dart';
 import 'package:Ombro_Plus/ui/shared/widgets/navbar.dart';
 import 'package:Ombro_Plus/ui/patient/home/widgets/unread_messages_summary.dart';
 import 'package:Ombro_Plus/viewmodels/patient/patient_home_viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/patient/session_execution_viewmodel.dart';
+import 'package:Ombro_Plus/repositories/protocol_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,6 +19,9 @@ class PatientHomePage extends StatefulWidget {
 
 class _PatientHomePageState extends State<PatientHomePage> {
   final int _selectedIndex = 0;
+
+  // Variável para controlar o estado do check-in de dor na tela
+  int? _selectedPainLevel;
 
   @override
   void initState() {
@@ -51,7 +56,6 @@ class _PatientHomePageState extends State<PatientHomePage> {
       body: Column(
         children: [
           const AppLogo(),
-
           Expanded(
             child: Consumer<PatientHomeViewModel>(
               builder: (context, viewModel, child) {
@@ -61,92 +65,73 @@ class _PatientHomePageState extends State<PatientHomePage> {
                   );
                 }
 
-                final dailyData = viewModel.dailyExerciseData;
-                final dashboardData = viewModel.dashboardData;
+                if (viewModel.activeProtocols.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.healing,
+                          size: 64,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Nenhum tratamento ativo.',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 18,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
 
                 return SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 10,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Exercícios do dia',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        child: Text(
+                          viewModel.activeProtocols.length > 1
+                              ? 'Seus Tratamentos Ativos'
+                              : 'Seu Tratamento Ativo',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF0E382C),
+                          ),
                         ),
                       ),
+                      const SizedBox(height: 16),
+
+                      // --- CARROSSEL HORIZONTAL CORRIGIDO (AUTO-HEIGHT) ---
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: viewModel.activeProtocols.map((summary) {
+                            return _buildProtocolSlide(summary, context);
+                          }).toList(),
+                        ),
+                      ),
+
+                      // ---------------------------------------------------
                       const SizedBox(height: 10),
 
-                      SizedBox(
-                        height: 180,
-                        child:
-                            (dailyData == null || dailyData.exercises.isEmpty)
-                            ? Center(
-                                child: Text(
-                                  'Nenhum exercício agendado para hoje.',
-                                  style: GoogleFonts.openSans(
-                                    color: Colors.black54,
-                                  ),
-                                ),
-                              )
-                            : ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: dailyData.exercises.length,
-                                itemBuilder: (context, index) {
-                                  final exercise = dailyData.exercises[index];
-                                  final exerciseId =
-                                      exercise['exercicioId'] as String;
-                                  final isCompleted = dailyData
-                                      .completedExerciseIds
-                                      .contains(exerciseId);
+                      _buildPainCheckinCard(),
 
-                                  return Padding(
-                                    padding: const EdgeInsets.only(right: 10),
-                                    child: ExerciseCard(
-                                      title: exercise['title'].toString(),
-                                      subtitle:
-                                          '${exercise['series']} séries x ${exercise['repeticoes']} repetições',
-                                      isCompleted: isCompleted,
-                                      onTap: () {
-                                        Navigator.pushNamed(
-                                          context,
-                                          '/exercise-details',
-                                          arguments: {
-                                            'protocoloId': dailyData.protocolId,
-                                            'exercicioId': exerciseId,
-                                            'allDailyExercises':
-                                                dailyData.exercises,
-                                          },
-                                        ).then((_) {
-                                          viewModel.loadHomeData();
-                                        });
-                                      },
-                                    ),
-                                  );
-                                },
-                              ),
-                      ),
-
-                      const SizedBox(height: 30),
-
-                      Text(
-                        'Dashboard',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                      const Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 20,
                         ),
+                        child: UnreadMessagesSummary(),
                       ),
-                      const SizedBox(height: 15),
-
-                      _buildDashboardSummary(dashboardData),
-
-                      const SizedBox(height: 30),
-
-                      UnreadMessagesSummary(),
                     ],
                   ),
                 );
@@ -162,34 +147,369 @@ class _PatientHomePageState extends State<PatientHomePage> {
     );
   }
 
-  Widget _buildDashboardSummary(dynamic dashboardData) {
-    if (dashboardData == null) return const SizedBox.shrink();
+  Widget _buildPainCheckinCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 18),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.monitor_heart_outlined,
+                color: Color(0xFF0E382C),
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Como está hoje?',
+                  style: GoogleFonts.montserrat(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildPainOption(0, '😄', 'Sem Dor', Colors.green),
+              _buildPainOption(1, '😐', 'Incomoda', Colors.orange),
+              _buildPainOption(2, '😣', 'Muita Dor', Colors.red),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-    final completed = dashboardData.sessoesConcluidas ?? 0;
-    final total = dashboardData.totalSessions ?? 0;
-    final progressPercent = total == 0
-        ? 0
-        : ((completed / total) * 100).round();
+  Widget _buildPainOption(int level, String emoji, String label, Color color) {
+    final isSelected = _selectedPainLevel == level;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedPainLevel = level;
+        });
 
-    final Map<int, double> adherence = dashboardData.weeklyAdherence ?? {};
-    final daysAdhered = adherence.values.where((v) => v > 0.0).length;
-
-    return Row(
-      children: [
-        MiniMetricCard(
-          title: 'Progresso Total',
-          value: '$progressPercent',
-          subValue: '%',
-          color: Colors.black,
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Registro salvo! Isso ajuda muito a acompanhar a sua evolução.',
+            ),
+            backgroundColor: const Color(0xFF0E382C),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? color : Colors.transparent,
+            width: 2,
+          ),
         ),
-        const SizedBox(width: 10),
-        MiniMetricCard(
-          title: 'Adesão Semanal',
-          value: '$daysAdhered/7',
-          subValue: 'dias',
-          color: Colors.black,
+        child: Column(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 32)),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: GoogleFonts.openSans(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: isSelected ? color : Colors.grey.shade600,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildProtocolSlide(
+    ActiveProtocolSummary summary,
+    BuildContext context,
+  ) {
+    final protocol = summary.protocol;
+    final weeklyData = summary.weeklyData;
+
+    return Container(
+      width: MediaQuery.of(context).size.width * 0.88,
+      margin: const EdgeInsets.only(right: 16),
+      // O mainAxisSize.min aqui garante que o slide só cresça o necessário!
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            protocol.nome,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.montserrat(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                'Semana ${weeklyData.currentWeek}',
+                style: GoogleFonts.montserrat(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF0E382C),
+                ),
+              ),
+              Text(
+                '${weeklyData.completedSessionIds.length}/${weeklyData.thisWeekSessions.length} sessões',
+                style: GoogleFonts.openSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          _buildNextSessionCard(weeklyData),
+          const SizedBox(height: 16),
+
+          Row(
+            children: [
+              MiniMetricCard(
+                title: 'Progresso do Tratamento',
+                value: '${summary.progressPercent}',
+                subValue: '%',
+                color: Colors.black,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNextSessionCard(WeeklySessionData data) {
+    if (data.thisWeekSessions.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.event_busy, size: 40, color: Colors.grey.shade400),
+            const SizedBox(height: 12),
+            Text(
+              'Nenhuma sessão agendada.',
+              style: GoogleFonts.openSans(color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final nextSession = data.nextSession;
+
+    if (nextSession == null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF0E382C), Color(0xFF1A5A48)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.check_circle_outline,
+              size: 48,
+              color: Colors.white,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Semana Concluída!',
+              style: GoogleFonts.montserrat(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Você finalizou todos os treinos desta semana.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.openSans(color: Colors.white.withOpacity(0.9)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final bool isLockedToday = data.hasCompletedSessionToday;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0E382C).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Próxima Sessão',
+              style: GoogleFonts.openSans(
+                color: const Color(0xFF0E382C),
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            nextSession.name,
+            style: GoogleFonts.montserrat(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${nextSession.exercises.length} exercícios propostos',
+            style: GoogleFonts.openSans(color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 20),
+
+          if (isLockedToday)
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.timer_outlined,
+                    color: Colors.orange,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Você já treinou hoje! Descanse o corpo e volte amanhã.',
+                      style: GoogleFonts.openSans(
+                        color: Colors.orange.shade800,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: isLockedToday
+                  ? null
+                  : () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChangeNotifierProvider(
+                            create: (_) => SessionExecutionViewmodel(
+                              repository: context.read<ProtocolRepository>(),
+                            )..loadCompletedExercises(data.protocolId),
+                            child: SessionExecutionPage(
+                              protocolId: data.protocolId,
+                              session: nextSession,
+                            ),
+                          ),
+                        ),
+                      );
+
+                      if (result == true && context.mounted) {
+                        context.read<PatientHomeViewModel>().loadHomeData();
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isLockedToday
+                    ? Colors.grey.shade300
+                    : const Color(0xFF0E382C),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Text(
+                isLockedToday ? 'Volte Amanhã' : 'Começar Agora',
+                style: GoogleFonts.openSans(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: isLockedToday ? Colors.grey.shade600 : Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,4 +1,4 @@
-import 'package:Ombro_Plus/components/activity.item.dart';
+import 'package:Ombro_Plus/ui/shared/widgets/activity_item.dart';
 import 'package:Ombro_Plus/ui/shared/widgets/navbar.dart';
 import 'package:Ombro_Plus/viewmodels/doctor/doctor_home_viewmodel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

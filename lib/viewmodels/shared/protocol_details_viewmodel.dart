@@ -10,7 +10,8 @@ class ProtocolDetailsViewModel extends ChangeNotifier {
   bool _isLoading = true;
   String? _error;
 
-  Set<String> _completedExercises = {};
+  // Substituímos os exercícios soltos pelas SESSÕES concluídas
+  Set<String> _completedSessionIds = {};
 
   ProtocolDetailsViewModel({required ProtocolRepository repository})
     : _repository = repository;
@@ -19,8 +20,9 @@ class ProtocolDetailsViewModel extends ChangeNotifier {
   Map<String, dynamic>? get patientData => _patientData;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  Set<String> get completedExercises => _completedExercises;
+  Set<String> get completedSessionIds => _completedSessionIds;
 
+  // Usado pelo Médico
   Future<void> loadProtocolDetails(String protocolId) async {
     _isLoading = true;
     notifyListeners();
@@ -38,24 +40,7 @@ class ProtocolDetailsViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> finalizeProtocol() async {
-    if (_protocol == null || _protocol!.id == null) return;
-
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      await _repository.updateProtocolStatus(_protocol!.id!, 'finalized');
-
-      _protocol = _protocol!.copyWith(status: 'finalized');
-    } catch (e) {
-      print("Erro ao finalizar: $e");
-    }
-
-    _isLoading = false;
-    notifyListeners();
-  }
-
+  // Usado pelo Paciente na Visão Geral
   Future<void> loadProtocolData(String protocolId, String patientId) async {
     _isLoading = true;
     _error = null;
@@ -65,7 +50,8 @@ class ProtocolDetailsViewModel extends ChangeNotifier {
       _protocol = await _repository.getProtocolById(protocolId);
 
       if (_protocol != null) {
-        _completedExercises = await _repository.fetchCompletedExercisesToday(
+        // Agora buscamos as sessões finalizadas para pintar os checks na tela
+        _completedSessionIds = await _repository.fetchCompletedSessionIds(
           protocolId,
           patientId,
         );
@@ -78,56 +64,43 @@ class ProtocolDetailsViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> toggleExercise(
-    String exerciseId,
-    String patientId,
-    bool value,
-  ) async {
-    if (_protocol == null) return;
+  Future<void> finalizeProtocol() async {
+    if (_protocol == null || _protocol!.id == null) return;
 
-    if (value) {
-      _completedExercises.add(exerciseId);
-    } else {
-      _completedExercises.remove(exerciseId);
-    }
-    notifyListeners();
-
-    try {
-      await _repository.logExerciseCompletion(
-        _protocol!.id as String,
-        patientId,
-        exerciseId,
-        value,
-      );
-    } catch (e) {
-      if (value) {
-        _completedExercises.remove(exerciseId);
-      } else {
-        _completedExercises.add(exerciseId);
-      }
-      _error = "Erro ao salvar progresso";
-      notifyListeners();
-    }
-  }
-
-  Future<bool> finishSession(String patientId, String patientName) async {
-    if (_protocol == null) return false;
     _isLoading = true;
     notifyListeners();
 
     try {
-      final success = await _repository.markSessionCompleted(
-        _protocol!.id as String,
-        patientId,
-        patientName,
-      );
-      return success;
+      await _repository.updateProtocolStatus(_protocol!.id!, 'finalized');
+      _protocol = _protocol!.copyWith(status: 'finalized');
     } catch (e) {
-      _error = "Erro ao finalizar sessão: $e";
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      print("Erro ao finalizar: $e");
     }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> updateCollaborators(List<String> newCollaborators) async {
+    if (_protocol == null || _protocol!.id == null) return;
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _repository.updateProtocolCollaborators(
+        _protocol!.id!,
+        newCollaborators,
+      );
+      _protocol = _protocol!.copyWith(
+        especialistasColaboradores: newCollaborators,
+      );
+    } catch (e) {
+      _error = 'Erro ao atualizar colaboradores: $e';
+      print(_error);
+    }
+
+    _isLoading = false;
+    notifyListeners();
   }
 }
