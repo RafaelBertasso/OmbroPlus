@@ -4,7 +4,11 @@ import 'package:flutter/material.dart';
 class ProtocolScheduleViewModel extends ChangeNotifier {
   List<ProtocolSession> _sessions = [];
 
+  // Variável para armazenar o limite máximo de semanas
+  int _maxWeeks = 999;
+
   List<ProtocolSession> get sessions => _sessions;
+  int get maxWeeks => _maxWeeks; // Getter para a view consultar, se quiser
 
   Map<int, List<ProtocolSession>> get sessionsByWeek {
     final map = <int, List<ProtocolSession>>{};
@@ -17,7 +21,10 @@ class ProtocolScheduleViewModel extends ChangeNotifier {
     return map;
   }
 
-  void init(List<ProtocolSession> initialSessions) {
+  // O init agora recebe o maxWeeks calculado lá na tela de NewProtocolPage
+  void init(List<ProtocolSession> initialSessions, int maxWeeksLimit) {
+    _maxWeeks = maxWeeksLimit;
+
     _sessions = initialSessions
         .map(
           (s) => ProtocolSession(
@@ -32,11 +39,18 @@ class ProtocolScheduleViewModel extends ChangeNotifier {
         .toList();
   }
 
-  void addWeek() {
+  // Alterado para retornar bool.
+  // Retorna true se adicionou, false se bateu no limite.
+  bool addWeek() {
     final currentWeeks = sessionsByWeek.keys.toList();
     final nextWeek = currentWeeks.isEmpty
         ? 1
         : currentWeeks.reduce((a, b) => a > b ? a : b) + 1;
+
+    // A trava de segurança!
+    if (nextWeek > _maxWeeks) {
+      return false; // Não deixa adicionar
+    }
 
     _sessions.add(
       ProtocolSession(
@@ -46,7 +60,9 @@ class ProtocolScheduleViewModel extends ChangeNotifier {
         exercises: [],
       ),
     );
+
     notifyListeners();
+    return true;
   }
 
   void addSessionToWeek(int week) {
@@ -70,6 +86,7 @@ class ProtocolScheduleViewModel extends ChangeNotifier {
 
     _sessions.removeAt(index);
 
+    // Reordena o nome das sessões para não ficar "Sessão 1", "Sessão 3"...
     int sessionCounter = 1;
     for (int i = 0; i < _sessions.length; i++) {
       if (_sessions[i].semana == week) {
@@ -93,6 +110,7 @@ class ProtocolScheduleViewModel extends ChangeNotifier {
   void removeWeek(int week) {
     _sessions.removeWhere((s) => s.semana == week);
 
+    // Se remover a semana 2, a semana 3 passa a ser a 2, a 4 passa a ser a 3...
     for (int i = 0; i < _sessions.length; i++) {
       if (_sessions[i].semana > week) {
         final current = _sessions[i];

@@ -343,7 +343,19 @@ class ProtocolScheduleEditorPage extends StatelessWidget {
                   },
                 ),
           floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => viewModel.addWeek(),
+            onPressed: () {
+              bool added = viewModel.addWeek();
+              if (!added && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Limite atingido! O protocolo só comporta ${viewModel.maxWeeks} semana(s).',
+                    ),
+                    backgroundColor: Colors.orange.shade800,
+                  ),
+                );
+              }
+            },
             backgroundColor: const Color(0xFF0E382C),
             icon: const Icon(Icons.add, color: Colors.white),
             label: Text(

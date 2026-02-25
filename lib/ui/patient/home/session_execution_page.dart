@@ -99,9 +99,9 @@ class SessionExecutionPage extends StatelessWidget {
                       Icons.chevron_right,
                       color: Colors.grey,
                     ),
-                    onTap: () {
+                    onTap: () async {
                       if (exerciseId != null) {
-                        Navigator.pushNamed(
+                        await Navigator.pushNamed(
                           context,
                           '/exercise-details',
                           arguments: {

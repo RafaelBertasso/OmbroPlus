@@ -82,6 +82,8 @@ class _PatientProtocolDetailsPageState
     List<ProtocolSession> sessions,
     Set<String> completedSessionIds,
     String protocolId,
+    DateTime?
+    dataInicio, // Passamos a data de início para calcular a semana atual
   ) {
     if (sessions.isEmpty) {
       return const Padding(
@@ -90,7 +92,15 @@ class _PatientProtocolDetailsPageState
       );
     }
 
-    // 1. Agrupa as sessões por semana
+    // --- CÁLCULO DA SEMANA ATUAL ---
+    int currentWeek = 1;
+    final now = DateTime.now();
+    if (dataInicio != null && now.isAfter(dataInicio)) {
+      final diffInDays = now.difference(dataInicio).inDays;
+      currentWeek = (diffInDays ~/ 7) + 1;
+    }
+    // -------------------------------
+
     final sessionsByWeek = <int, List<ProtocolSession>>{};
     for (var session in sessions) {
       if (!sessionsByWeek.containsKey(session.semana)) {
@@ -99,7 +109,6 @@ class _PatientProtocolDetailsPageState
       sessionsByWeek[session.semana]!.add(session);
     }
 
-    // 2. Ordena as semanas (Semana 1, Semana 2...)
     final weeks = sessionsByWeek.keys.toList()..sort();
 
     return Column(
@@ -108,28 +117,53 @@ class _PatientProtocolDetailsPageState
         const SectionTitle(title: 'Cronograma do Tratamento'),
         const SizedBox(height: 16),
 
-        // 3. Renderiza o bloco de cada semana
         ...weeks.map((week) {
           final weekSessions = sessionsByWeek[week]!;
+          // Verifica se a semana inteira está no futuro
+          final isLockedWeek = week > currentWeek;
 
           return Padding(
             padding: const EdgeInsets.only(bottom: 24.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Cabeçalho da Semana
-                Text(
-                  'Semana $week',
-                  style: GoogleFonts.montserrat(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF0E382C),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Semana $week',
+                      style: GoogleFonts.montserrat(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: isLockedWeek
+                            ? Colors.grey.shade600
+                            : const Color(0xFF0E382C),
+                      ),
+                    ),
+                    if (isLockedWeek)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'Em breve',
+                          style: GoogleFonts.openSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 const Divider(),
                 const SizedBox(height: 8),
 
-                // Sessões daquela semana
                 ...weekSessions.map((session) {
                   final isCompleted = completedSessionIds.contains(session.id);
 
@@ -143,8 +177,9 @@ class _PatientProtocolDetailsPageState
                           : BorderSide.none,
                     ),
                     child: ExpansionTile(
-                      // Abre automaticamente a primeira sessão pendente
+                      // Mantém fechado se for uma semana bloqueada
                       initiallyExpanded:
+                          !isLockedWeek &&
                           !isCompleted &&
                           session ==
                               weekSessions.firstWhere(
@@ -163,11 +198,19 @@ class _PatientProtocolDetailsPageState
                       leading: CircleAvatar(
                         backgroundColor: isCompleted
                             ? Colors.green.withOpacity(0.1)
+                            : isLockedWeek
+                            ? Colors.grey.withOpacity(0.2)
                             : const Color(0xFF0E382C).withOpacity(0.1),
                         child: Icon(
-                          isCompleted ? Icons.check : Icons.fitness_center,
+                          isCompleted
+                              ? Icons.check
+                              : isLockedWeek
+                              ? Icons.lock_outline
+                              : Icons.fitness_center,
                           color: isCompleted
                               ? Colors.green
+                              : isLockedWeek
+                              ? Colors.grey.shade600
                               : const Color(0xFF0E382C),
                           size: 20,
                         ),
@@ -177,14 +220,16 @@ class _PatientProtocolDetailsPageState
                         style: GoogleFonts.montserrat(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: Colors.black87,
+                          color: isLockedWeek
+                              ? Colors.grey.shade600
+                              : Colors.black87,
                         ),
                       ),
                       subtitle: Text(
                         '${session.exercises.length} exercícios',
                         style: GoogleFonts.openSans(
                           fontSize: 12,
-                          color: Colors.grey.shade600,
+                          color: Colors.grey.shade500,
                         ),
                       ),
                       children: [
@@ -192,7 +237,7 @@ class _PatientProtocolDetailsPageState
                         _buildExercisesList(session.exercises),
                         const SizedBox(height: 12),
 
-                        // Botão de Ação
+                        // Botão de Ação Dinâmico
                         Padding(
                           padding: const EdgeInsets.all(16),
                           child: SizedBox(
@@ -226,9 +271,37 @@ class _PatientProtocolDetailsPageState
                                       ],
                                     ),
                                   )
+                                : isLockedWeek
+                                ? Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade200,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.lock_clock,
+                                          color: Colors.grey.shade600,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          "Liberada na Semana $week",
+                                          style: GoogleFonts.openSans(
+                                            color: Colors.grey.shade600,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
                                 : ElevatedButton.icon(
                                     onPressed: () async {
-                                      // Navega para a tela de Execução da Sessão!
                                       final result = await Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -251,7 +324,6 @@ class _PatientProtocolDetailsPageState
                                         ),
                                       );
 
-                                      // Se voltou com "true" (concluiu), recarrega a tela de detalhes
                                       if (result == true && context.mounted) {
                                         final userId = FirebaseAuth
                                             .instance
@@ -425,11 +497,11 @@ class _PatientProtocolDetailsPageState
 
                 const SizedBox(height: 24),
 
-                // Lista de Sessões atualizada usando a nova árvore de semanas!
                 _buildSessionsTree(
                   protocol.sessoes,
                   viewModel.completedSessionIds,
                   protocol.id!,
+                  protocol.dataInicio, // Passando a data!
                 ),
 
                 const SizedBox(height: 50),

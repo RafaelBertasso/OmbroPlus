@@ -125,6 +125,14 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
     );
   }
 
+  DateTime? _parseDate(String date) {
+    try {
+      return DateFormat('dd/MM/yyyy').parse(date);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _openScheduleEditor() async {
     if (_selectedPatientId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -141,33 +149,46 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
       return;
     }
 
+    // --- CÁLCULO DO LIMITE DE SEMANAS ---
+    final start = _parseDate(_startDateController.text);
+    final end = _parseDate(_endDateController.text);
+
+    if (start == null || end == null || end.isBefore(start)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Por favor, certifique-se que a data final é após a inicial.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    // Calcula a diferença em dias (+1 para ser inclusivo)
+    final int diffDays = end.difference(start).inDays + 1;
+
+    // Divide por 7 e arredonda para cima para descobrir o máximo de semanas!
+    int maxWeeks = (diffDays / 7).ceil();
+    if (maxWeeks < 1) maxWeeks = 1; // Segurança mínima
+    // ------------------------------------
+
     final newProtocolViewModel = context.read<NewProtocolViewModel>();
 
-    // Esperamos o resultado (a lista de sessões) do botão Salvar
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => ChangeNotifierProvider(
-          // Injetamos a ViewModel temporária passando a lista atual para o init
+          // Aqui nós passamos o NOVO limite de semanas como segundo parâmetro!
           create: (_) =>
-              ProtocolScheduleViewModel()..init(newProtocolViewModel.sessions),
+              ProtocolScheduleViewModel()
+                ..init(newProtocolViewModel.sessions, maxWeeks),
           child: const ProtocolScheduleEditorPage(),
         ),
       ),
     );
 
-    // Se o usuário clicou em "Salvar", result será uma List<ProtocolSession>.
-    // Se ele usou o botão de voltar do celular, result será null e as alterações são descartadas!
     if (result != null && result is List<ProtocolSession>) {
       newProtocolViewModel.updateSessions(result);
-    }
-  }
-
-  DateTime? _parseDate(String date) {
-    try {
-      return DateFormat('dd/MM/yyyy').parse(date);
-    } catch (_) {
-      return null;
     }
   }
 
@@ -258,30 +279,8 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
                 ),
                 SizedBox(height: 30),
 
-                SectionTitle(title: 'Cronograma e Conteúdo'),
+                SectionTitle(title: 'Datas e Anotações'),
                 SizedBox(height: 12),
-
-                ScheduleButton(
-                  onPressed: _openScheduleEditor,
-                  hasItems: viewModel.sessions.isNotEmpty,
-                ),
-                SizedBox(height: 16),
-
-                TextFormField(
-                  controller: _materialUrlController,
-                  decoration: InputDecoration(
-                    labelText: 'Link do Material (PDF/Drive)',
-                    hintText: 'Cole aqui o link do material (opcional)',
-                    prefixIcon: const Icon(Icons.link, size: 20),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 30),
-                const SectionTitle(title: 'Datas e Anotações'),
-                const SizedBox(height: 12),
 
                 Row(
                   children: [
@@ -316,7 +315,30 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
                     ),
                   ],
                 ),
-                SizedBox(height: 26),
+                SizedBox(height: 30),
+
+                SectionTitle(title: 'Cronograma e Conteúdo'),
+                SizedBox(height: 12),
+
+                ScheduleButton(
+                  onPressed: _openScheduleEditor,
+                  hasItems: viewModel.sessions.isNotEmpty,
+                ),
+                SizedBox(height: 16),
+
+                TextFormField(
+                  controller: _materialUrlController,
+                  decoration: InputDecoration(
+                    labelText: 'Link do Material (PDF/Drive)',
+                    hintText: 'Cole aqui o link do material (opcional)',
+                    prefixIcon: const Icon(Icons.link, size: 20),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 26),
 
                 TextFormField(
                   controller: _notesController,
