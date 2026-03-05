@@ -183,6 +183,7 @@ class _ProtocolExerciseAdderPageState extends State<ProtocolExerciseAdderPage> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
     return Consumer<AddExerciseViewModel>(
       builder: (context, viewModel, child) {
         // Atualiza o texto do autocomplete se o exercício for selecionado via Drawer
@@ -262,9 +263,6 @@ class _ProtocolExerciseAdderPageState extends State<ProtocolExerciseAdderPage> {
                             ),
                           ],
                         ),
-
-                        // REMOVIDA A SEÇÃO "DIAS DE APLICAÇÃO"
-                        // Pois agora o exercício pertence à Sessão, não a uma data.
                       ],
                     ),
                   ),
@@ -272,6 +270,7 @@ class _ProtocolExerciseAdderPageState extends State<ProtocolExerciseAdderPage> {
 
                 // Botão Salvar Fixo no Rodapé
                 Container(
+                  margin: EdgeInsets.only(bottom: bottomPadding + 30),
                   padding: const EdgeInsets.all(20),
                   color: Colors.white,
                   child: SizedBox(

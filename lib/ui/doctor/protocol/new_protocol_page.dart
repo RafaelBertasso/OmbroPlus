@@ -230,6 +230,7 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
   Widget build(BuildContext context) {
     final viewModel = context.watch<NewProtocolViewModel>();
 
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F6),
       appBar: AppBar(
@@ -353,7 +354,8 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
                 ),
                 SizedBox(height: 30),
 
-                SizedBox(
+                Container(
+                  margin: EdgeInsets.only(bottom: bottomPadding + 15),
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: viewModel.isLoading ? null : _handleSave,

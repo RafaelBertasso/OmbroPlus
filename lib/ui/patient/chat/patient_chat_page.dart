@@ -238,6 +238,8 @@ class _PatientChatPageState extends State<PatientChatPage> {
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final nameToDisplay = args?['name'] as String? ?? 'Especialista';
 
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F6),
       appBar: AppBar(
@@ -339,6 +341,7 @@ class _PatientChatPageState extends State<PatientChatPage> {
 
               // Barra de Input
               Container(
+                margin: EdgeInsets.only(bottom: bottomPadding + 50),
                 color: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,

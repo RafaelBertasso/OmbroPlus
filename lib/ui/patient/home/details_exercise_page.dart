@@ -114,6 +114,7 @@ class _DetailsExercisePageState extends State<DetailsExercisePage> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
     return Consumer<ExerciseDetailsViewModel>(
       builder: (context, viewModel, child) {
         if (!viewModel.isLoading && viewModel.exerciseData != null) {
@@ -266,91 +267,89 @@ class _DetailsExercisePageState extends State<DetailsExercisePage> {
                       ),
                       const SizedBox(height: 40),
 
-                      SizedBox(
-                        width: double.infinity,
-                        height: 54,
-                        child: ElevatedButton.icon(
-                          onPressed: isCompletedToday || isMarking
-                              ? null
-                              : () async {
-                                  final patientId =
-                                      FirebaseAuth.instance.currentUser?.uid;
-
-                                  if (patientId != null &&
-                                      _protocolId != null &&
-                                      _exerciseId != null) {
-                                    final success = await viewModel
-                                        .markAsComplete(
-                                          _protocolId!,
-                                          patientId,
-                                          _exerciseId!,
-                                        );
-
-                                    if (context.mounted) {
-                                      if (success) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Exercício concluído!',
-                                            ),
-                                            backgroundColor: Colors.green,
-                                          ),
-                                        );
-                                        // Volta para a tela da Sessão
-                                        Navigator.pop(context, true);
-                                      } else {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              viewModel.error ??
-                                                  'Erro ao concluir exercício.',
-                                            ),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  }
-                                },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: buttonColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 2,
-                          ),
-                          icon: isMarking
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2.5,
-                                  ),
-                                )
-                              : Icon(
-                                  isCompletedToday
-                                      ? Icons.done_all
-                                      : Icons.check_circle_outline,
-                                  color: Colors.white,
-                                  size: 28,
-                                ),
-                          label: Text(
-                            isMarking ? "SALVANDO..." : buttonText,
-                            style: GoogleFonts.montserrat(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
                       const SizedBox(height: 20),
                     ],
+                  ),
+                ),
+              ),
+              Container(
+                margin: EdgeInsets.only(
+                  bottom: bottomPadding + 50,
+                  right: 10,
+                  left: 10,
+                ),
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton.icon(
+                  onPressed: isCompletedToday || isMarking
+                      ? null
+                      : () async {
+                          final patientId =
+                              FirebaseAuth.instance.currentUser?.uid;
+
+                          if (patientId != null &&
+                              _protocolId != null &&
+                              _exerciseId != null) {
+                            final success = await viewModel.markAsComplete(
+                              _protocolId!,
+                              patientId,
+                              _exerciseId!,
+                            );
+
+                            if (context.mounted) {
+                              if (success) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Exercício concluído!'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                                // Volta para a tela da Sessão
+                                Navigator.pop(context, true);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      viewModel.error ??
+                                          'Erro ao concluir exercício.',
+                                    ),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: buttonColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
+                  ),
+                  icon: isMarking
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : Icon(
+                          isCompletedToday
+                              ? Icons.done_all
+                              : Icons.check_circle_outline,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                  label: Text(
+                    isMarking ? "SALVANDO..." : buttonText,
+                    style: GoogleFonts.montserrat(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
