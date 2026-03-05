@@ -290,14 +290,6 @@ class _PatientHomePageState extends State<PatientHomePage> {
                   color: const Color(0xFF0E382C),
                 ),
               ),
-              Text(
-                '${weeklyData.completedSessionIds.length}/${weeklyData.thisWeekSessions.length} sessões',
-                style: GoogleFonts.openSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade600,
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 12),

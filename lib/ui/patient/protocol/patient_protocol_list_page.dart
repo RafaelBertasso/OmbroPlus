@@ -24,7 +24,7 @@ class _PatientProtocolPageState extends State<PatientProtocolPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId != null) {
-        context.read<PatientProtocolsViewModel>().loadActiveProtocol(userId);
+        context.read<PatientProtocolsViewModel>().loadActiveProtocols(userId);
       }
     });
   }

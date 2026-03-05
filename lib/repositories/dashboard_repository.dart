@@ -8,7 +8,7 @@ class DashboardRepository {
   DashboardRepository({FirebaseFirestore? firestore})
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  Future<DashboardData?> fetchActiveProtocolData(
+  Future<List<Map<String, String>>> fetchActiveProtocolsList(
     String patientId, {
     String? specialistId,
   }) async {
@@ -16,10 +16,45 @@ class DashboardRepository {
       Query query = _firestore
           .collection('protocolos')
           .where('pacienteId', isEqualTo: patientId)
-          .where('status', isEqualTo: 'active')
-          .limit(1);
+          .where('status', isEqualTo: 'active');
+
       if (specialistId != null) {
         query = query.where('especialistaId', isEqualTo: specialistId);
+      }
+      final snapshot = await query.get();
+
+      return snapshot.docs.map((doc) {
+        return {
+          'id': doc.id,
+          'nome':
+              (doc.data() as Map<String, dynamic>)['nome'] as String? ??
+              'Sem nome',
+        };
+      }).toList();
+    } catch (e) {
+      print("{DASH_REPO} Erro na lista de protocolos: $e");
+      return [];
+    }
+  }
+
+  Future<DashboardData?> fetchActiveProtocolData(
+    String patientId, {
+    String? specialistId,
+    String? protocolId,
+  }) async {
+    try {
+      Query query = _firestore
+          .collection('protocolos')
+          .where('pacienteId', isEqualTo: patientId)
+          .where('status', isEqualTo: 'active');
+
+      if (specialistId != null) {
+        query = query.where('especialistaId', isEqualTo: specialistId);
+      }
+      if (protocolId != null) {
+        query = query.where(FieldPath.documentId, isEqualTo: protocolId);
+      } else {
+        query = query.limit(1);
       }
 
       final snapshot = await query.get();
@@ -31,7 +66,7 @@ class DashboardRepository {
 
       final protocolModel = ProtocolModel.fromMap(dataMap, docId);
 
-      final weeklyAdherence = await _fetchWeeklyAdherence(patientId);
+      final weeklyAdherence = await _fetchWeeklyAdherence(patientId, docId);
 
       return DashboardData(
         protocol: protocolModel,
@@ -81,7 +116,10 @@ class DashboardRepository {
     }
   }
 
-  Future<Map<int, double>> _fetchWeeklyAdherence(String patientId) async {
+  Future<Map<int, double>> _fetchWeeklyAdherence(
+    String patientId,
+    String protocolId,
+  ) async {
     final today = DateTime.now();
     final sevenDaysAgo = today.subtract(const Duration(days: 6));
     final startOfPeriod = DateTime(
@@ -94,6 +132,7 @@ class DashboardRepository {
       final snapshot = await _firestore
           .collection('logs_exercicios')
           .where('pacienteId', isEqualTo: patientId)
+          .where('protocoloId', isEqualTo: protocolId)
           .where('sessaoFinalizada', isEqualTo: true)
           .where(
             'timestamp',

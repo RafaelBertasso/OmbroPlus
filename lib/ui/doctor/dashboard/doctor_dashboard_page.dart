@@ -70,6 +70,8 @@ class _DoctorDashboardPageState extends State<DoctorDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final specialistId = FirebaseAuth.instance.currentUser?.uid;
+
     return Consumer<DashboardDoctorViewModel>(
       builder: (context, viewModel, child) {
         final bool isValidSelection =
@@ -90,28 +92,26 @@ class _DoctorDashboardPageState extends State<DoctorDashboardPage> {
                 SectionTitle(title: 'Visão Geral do Paciente'),
                 SizedBox(height: 15),
 
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      isExpanded: true,
-                      hint: Text(
-                        viewModel.isLoadingPatients
-                            ? "Carregando pacientes..."
-                            : "Selecione um paciente",
-                        style: GoogleFonts.openSans(color: Colors.black54),
+                // Dropdown 1: Seleção de Paciente
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    return PopupMenuButton<String>(
+                      constraints: BoxConstraints(
+                        minWidth: constraints.maxWidth,
+                        maxWidth: constraints.maxWidth,
                       ),
-                      value: dropdownValue,
-                      items: viewModel.patients.map((p) {
-                        return DropdownMenuItem<String>(
+                      initialValue: dropdownValue,
+                      offset: const Offset(0, 56),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      color: Colors.white,
+                      elevation: 4,
+                      onSelected: viewModel.isLoadingData
+                          ? null
+                          : _onPatientSelected,
+                      itemBuilder: (context) => viewModel.patients.map((p) {
+                        return PopupMenuItem<String>(
                           value: p['id'],
                           child: Text(
                             p['nome'] ?? 'Sem nome',
@@ -121,13 +121,138 @@ class _DoctorDashboardPageState extends State<DoctorDashboardPage> {
                           ),
                         );
                       }).toList(),
-                      onChanged: viewModel.isLoadingData
-                          ? null
-                          : _onPatientSelected,
-                    ),
-                  ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                dropdownValue != null
+                                    ? (viewModel.patients.firstWhere(
+                                            (p) => p['id'] == dropdownValue,
+                                            orElse: () => {'nome': 'Sem nome'},
+                                          )['nome'] ??
+                                          'Sem nome')
+                                    : (viewModel.isLoadingPatients
+                                          ? "Carregando pacientes..."
+                                          : "Selecione um paciente"),
+                                style: GoogleFonts.openSans(
+                                  color: dropdownValue != null
+                                      ? Colors.black87
+                                      : Colors.black54,
+                                  fontWeight: dropdownValue != null
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const Icon(
+                              Icons.arrow_drop_down,
+                              color: Colors.black54,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
-                SizedBox(height: 25),
+                SizedBox(height: 15),
+
+                // Dropdown 2: Seleção de Protocolo
+                if (_selectedPatientId != null && !viewModel.isLoadingData) ...[
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      return PopupMenuButton<String>(
+                        constraints: BoxConstraints(
+                          minWidth: constraints.maxWidth,
+                          maxWidth: constraints.maxWidth,
+                        ),
+                        initialValue: viewModel.selectedProtocolId,
+                        offset: const Offset(0, 56),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        color: Colors.white,
+                        elevation: 4,
+                        onSelected: (newProtocolId) {
+                          if (specialistId != null) {
+                            viewModel.selectProtocol(
+                              _selectedPatientId!,
+                              specialistId,
+                              newProtocolId,
+                            );
+                          }
+                        },
+                        itemBuilder: (context) =>
+                            viewModel.activeProtocols.map((p) {
+                              return PopupMenuItem<String>(
+                                value: p['id'],
+                                child: Text(
+                                  p['nome'] ?? 'Sem nome',
+                                  style: GoogleFonts.openSans(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue.shade900,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.blue.shade200),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  viewModel.selectedProtocolId != null
+                                      ? (viewModel.activeProtocols.firstWhere(
+                                              (p) =>
+                                                  p['id'] ==
+                                                  viewModel.selectedProtocolId,
+                                              orElse: () => {
+                                                'nome': 'Sem nome',
+                                              },
+                                            )['nome'] ??
+                                            'Sem nome')
+                                      : "Selecione o protocolo",
+                                  style: GoogleFonts.openSans(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue.shade900,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Icon(
+                                Icons.swap_vert,
+                                color: Colors.blue.shade800,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  SizedBox(height: 15),
+                ],
 
                 if (viewModel.isLoadingData)
                   Padding(
@@ -213,30 +338,6 @@ class _DoctorDashboardPageState extends State<DoctorDashboardPage> {
         GraphicCard(values: chartValues, title: 'Adesão Semanal'),
 
         SizedBox(height: 20),
-
-        if (data.protocol != null)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Color(0xFFE0F2E8),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, color: Color(0xFF0E382C)),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    "Protocolo Ativo: ${data.protocol!.nome}",
-                    style: GoogleFonts.openSans(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0E382C),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
       ],
     );
   }

@@ -43,16 +43,18 @@ class PatientProtocolsViewModel extends ChangeNotifier {
     return protocol.sessoes[nextIndex];
   }
 
-  Future<void> loadActiveProtocol(String patientId) async {
+  // Mudamos o nome para o plural e usamos o método que traz a lista!
+  Future<void> loadActiveProtocols(String patientId) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final result = await repository.fetchActiveProtocolByPatient(patientId);
-      _protocols = result != null ? [result] : [];
+      // Chama o método plural que já existia no seu Repositório
+      final result = await repository.fetchActiveProtocolsByPatient(patientId);
+      _protocols = result;
     } catch (e) {
-      _error = 'erro ao carregar protocolo: $e';
+      _error = 'Erro ao carregar protocolos: $e';
       _protocols = [];
     } finally {
       _isLoading = false;

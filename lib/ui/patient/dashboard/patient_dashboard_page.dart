@@ -171,6 +171,7 @@ class _PatientDashboardPageState extends State<PatientDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F6),
       body: Column(
@@ -209,23 +210,128 @@ class _PatientDashboardPageState extends State<PatientDashboardPage> {
                             ),
                           ),
                         ),
-                        SizedBox(height: 25),
+                        SizedBox(height: 20),
 
-                        GraphicCard(
-                          title: 'Status do Protocolo',
-                          values: const [],
-                          content: _buildProgressChart(
-                            completedSessions,
-                            totalSessions,
+                        // --- NOVO SELETOR DE PROTOCOLOS ---
+                        // --- NOVO SELETOR DE PROTOCOLOS ---
+                        if (viewModel.protocols.length > 1) ...[
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              return PopupMenuButton<String>(
+                                // A mágica acontece aqui: força a largura mínima e máxima a ser igual à do botão!
+                                constraints: BoxConstraints(
+                                  minWidth: constraints.maxWidth,
+                                  maxWidth: constraints.maxWidth,
+                                ),
+                                initialValue: viewModel.selectedProtocolId,
+                                offset: const Offset(0, 56),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                color: Colors.white,
+                                elevation: 4,
+                                onSelected: (newProtocolId) {
+                                  if (userId != null) {
+                                    viewModel.selectProtocol(
+                                      userId,
+                                      newProtocolId,
+                                    );
+                                  }
+                                },
+                                itemBuilder: (context) =>
+                                    viewModel.protocols.map((p) {
+                                      return PopupMenuItem<String>(
+                                        value: p['id'],
+                                        child: Text(
+                                          p['nome'] ?? 'Sem nome',
+                                          style: GoogleFonts.openSans(
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF0E382C),
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 16,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          viewModel.selectedProtocolId != null
+                                              ? (viewModel.protocols.firstWhere(
+                                                      (p) =>
+                                                          p['id'] ==
+                                                          viewModel
+                                                              .selectedProtocolId,
+                                                      orElse: () => {
+                                                        'nome': 'Sem nome',
+                                                      },
+                                                    )['nome'] ??
+                                                    'Sem nome')
+                                              : "Selecione o protocolo",
+                                          style: GoogleFonts.openSans(
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF0E382C),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const Icon(
+                                        Icons.arrow_drop_down,
+                                        color: Color(0xFF0E382C),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                        ),
-                        SizedBox(height: 25),
+                          SizedBox(height: 25),
+                        ],
 
-                        GraphicCard(
-                          title: 'Adesão Semanal',
-                          values: const [],
-                          content: _buildBarChart(adherence),
-                        ),
+                        // ----------------------------------
+                        if (data == null)
+                          Padding(
+                            padding: const EdgeInsets.all(40),
+                            child: Center(
+                              child: Text(
+                                'Nenhum protocolo ativo.',
+                                style: GoogleFonts.openSans(
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ),
+                          )
+                        else ...[
+                          GraphicCard(
+                            title: 'Status do Protocolo',
+                            values: const [],
+                            content: _buildProgressChart(
+                              completedSessions,
+                              totalSessions,
+                            ),
+                          ),
+                          SizedBox(height: 25),
+
+                          GraphicCard(
+                            title: 'Adesão Semanal',
+                            values: const [],
+                            content: _buildBarChart(adherence),
+                          ),
+                        ],
                       ],
                     ),
                   ),

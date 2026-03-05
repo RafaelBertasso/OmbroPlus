@@ -74,8 +74,8 @@ class PatientHomeViewModel extends ChangeNotifier {
         final weeklyData = await _calculateWeeklySessions(protocol, userId);
 
         if (weeklyData != null) {
-          final completed = protocol.sessoesConcluidas ?? 0;
-          final total = protocol.totalSessoesEstimadas ?? 0;
+          final completed = protocol.sessoesConcluidas;
+          final total = protocol.totalSessoesEstimadas;
           final progressPercent = total == 0
               ? 0
               : ((completed / total) * 100).round();
@@ -109,8 +109,8 @@ class PatientHomeViewModel extends ChangeNotifier {
     final now = DateTime.now();
     int currentWeek = 1;
 
-    if (now.isAfter(protocol.dataInicio!)) {
-      final diffInDays = now.difference(protocol.dataInicio!).inDays;
+    if (now.isAfter(protocol.dataInicio)) {
+      final diffInDays = now.difference(protocol.dataInicio).inDays;
       currentWeek = (diffInDays ~/ 7) + 1;
     }
 
