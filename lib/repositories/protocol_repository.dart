@@ -387,12 +387,6 @@ class ProtocolRepository {
     }
   }
 
-  Future<ProtocolModel?> fetchActiveProtocolByPatient(String patientId) async {
-    final list = await fetchActiveProtocolsByPatient(patientId);
-    if (list.isNotEmpty) return list.first;
-    return null;
-  }
-
   Future<Map<String, dynamic>?> getExerciseById(String id) async {
     try {
       final doc = await _firestore.collection('exercicios').doc(id).get();

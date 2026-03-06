@@ -15,14 +15,14 @@ class PatientDetailsViewModel extends ChangeNotifier {
   });
 
   PatientModel? _patient;
-  ProtocolModel? _activeProtocol;
+  List<ProtocolModel> _activeProtocols = [];
   List<DateTime> _completedSessionDays = [];
 
   bool _isLoading = true;
   String? _error;
 
   PatientModel? get patient => _patient;
-  ProtocolModel? get activeProtocol => _activeProtocol;
+  List<ProtocolModel> get activeProtocols => _activeProtocols;
   List<DateTime> get completedSessionDays => _completedSessionDays;
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -48,19 +48,18 @@ class PatientDetailsViewModel extends ChangeNotifier {
         return;
       }
 
-      _activeProtocol = await protocolRepository.fetchActiveProtocolByPatient(
+      _activeProtocols = await protocolRepository.fetchActiveProtocolsByPatient(
         patientId,
       );
 
       List<Map<String, dynamic>> logs = [];
 
-      if (_activeProtocol != null) {
-        logs = await patientRepository.getPatientExerciseLogs(
+      for (var protocol in _activeProtocols) {
+        final protocolLogs = await patientRepository.getPatientExerciseLogs(
           patientId,
-          protocolId: _activeProtocol!.id,
+          protocolId: protocol.id,
         );
-      } else {
-        logs = [];
+        logs.addAll(protocolLogs);
       }
 
       final Set<DateTime> uniqueDays = {};

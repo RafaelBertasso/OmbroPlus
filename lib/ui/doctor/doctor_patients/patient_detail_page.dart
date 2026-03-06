@@ -149,10 +149,9 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
             return const Center(child: Text("Dados não disponíveis."));
           }
 
-          final activeProtocol = viewModel.activeProtocol;
-          // Placeholder para diagnóstico se não existir no model ainda
-          // Você pode adicionar 'diagnostico' no PatientModel se quiser
-          const String mainDiagnosis = 'Ficha não preenchida';
+          final activeProtocols = viewModel.activeProtocols;
+          final String mainDiagnosis =
+              patient.diagnosticoPrincipal ?? 'Ficha não preenchida';
 
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
@@ -202,7 +201,6 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
 
                       const SizedBox(height: 16),
 
-                      // Botão Editar
                       SizedBox(
                         width: double.infinity,
                         height: 50,
@@ -220,7 +218,6 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                             ),
                           ),
                           onPressed: () {
-                            // Navegar para edição (pode precisar de refatoração futura)
                             Navigator.pushNamed(
                               context,
                               '/patient-edit-profile',
@@ -284,9 +281,9 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
 
               const SizedBox(height: 28),
 
-              // Seção de Protocolo Ativo
+              // Nova Seção de Protocolos Ativos
               Text(
-                'Estágio Atual',
+                'Protocolos Ativos',
                 style: GoogleFonts.montserrat(
                   fontWeight: FontWeight.bold,
                   fontSize: 17,
@@ -294,31 +291,55 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
               ),
               const SizedBox(height: 10),
 
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF4F7F6),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 6,
-                      offset: Offset(0, 2),
+              if (viewModel.activeProtocols.isEmpty)
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF4F7F6),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 17,
+                    vertical: 16,
+                  ),
+                  child: Text(
+                    'Nenhum protocolo ativo encontrado',
+                    style: GoogleFonts.openSans(
+                      fontSize: 15,
+                      color: Colors.black54,
                     ),
-                  ],
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 17,
-                  vertical: 16,
-                ),
-                child: activeProtocol == null
-                    ? Text(
-                        'Nenhum protocolo ativo encontrado',
-                        style: GoogleFonts.openSans(
-                          fontSize: 15,
-                          color: Colors.black54,
-                        ),
-                      )
-                    : Row(
+                  ),
+                )
+              else
+                // Cria uma coluna com um card para CADA protocolo
+                Column(
+                  children: viewModel.activeProtocols.map((protocol) {
+                    return Container(
+                      margin: const EdgeInsets.only(
+                        bottom: 12,
+                      ), // Espaço entre os protocolos
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF4F7F6),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 6,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 17,
+                        vertical: 16,
+                      ),
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
@@ -339,7 +360,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  activeProtocol.nome,
+                                  protocol.nome,
                                   style: GoogleFonts.montserrat(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
@@ -350,7 +371,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Início: ${DateFormat('dd/MM/yyyy').format(activeProtocol.dataInicio)}',
+                                  'Início: ${DateFormat('dd/MM/yyyy').format(protocol.dataInicio)}',
                                   style: GoogleFonts.openSans(
                                     fontSize: 15,
                                     color: Colors.black54,
@@ -361,10 +382,8 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                                   onPressed: () {
                                     Navigator.pushNamed(
                                       context,
-                                      '/protocol-details', // Rota de detalhes do médico
-                                      arguments: {
-                                        'protocoloId': activeProtocol.id,
-                                      },
+                                      '/protocol-details',
+                                      arguments: {'protocoloId': protocol.id},
                                     );
                                   },
                                   child: Text(
@@ -381,7 +400,9 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                           ),
                         ],
                       ),
-              ),
+                    );
+                  }).toList(),
+                ),
 
               const SizedBox(height: 24),
 

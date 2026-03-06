@@ -10,6 +10,7 @@ class PatientModel {
   final String? sexo;
   final DateTime? dataNascimento;
   final DateTime? dataCadastro;
+  final String? diagnosticoPrincipal;
 
   PatientModel({
     required this.id,
@@ -21,6 +22,7 @@ class PatientModel {
     this.especialistaId,
     this.dataCadastro,
     this.dataNascimento,
+    this.diagnosticoPrincipal,
   });
 
   factory PatientModel.fromMap(Map<String, dynamic> map, String docId) {
@@ -32,6 +34,7 @@ class PatientModel {
       profileImage: map['profileImage'],
       sexo: map['sexo'],
       especialistaId: map['especialistaId'],
+      diagnosticoPrincipal: map['diagnosticoPrincipal'],
       dataNascimento: map['data_nascimento'] is Timestamp
           ? (map['data_nascimento'] as Timestamp).toDate()
           : null,
@@ -49,7 +52,9 @@ class PatientModel {
       'profileImage': profileImage,
       'especialistaId': especialistaId,
       'sexo': sexo,
-      'data_nascimento': dataNascimento != null ? Timestamp.fromDate(dataNascimento!) : null
+      'data_nascimento': dataNascimento != null
+          ? Timestamp.fromDate(dataNascimento!)
+          : null,
     };
   }
 }
