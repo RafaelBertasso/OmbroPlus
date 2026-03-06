@@ -128,6 +128,7 @@ class _PatientProfilePageState extends State<PatientProfilePage> {
             children: [
               SizedBox(
                 height: 300,
+                width: double.infinity,
                 child: Stack(
                   alignment: Alignment.topCenter,
                   children: [
@@ -173,7 +174,7 @@ class _PatientProfilePageState extends State<PatientProfilePage> {
                                 ),
                               ),
                               child: const Icon(
-                                Icons.photo_camera,
+                                Icons.photo,
                                 color: Color(0xFF0E382C),
                                 size: 20,
                               ),
@@ -193,6 +194,7 @@ class _PatientProfilePageState extends State<PatientProfilePage> {
                               fontWeight: FontWeight.w700,
                               color: Colors.black,
                             ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             userData['diagnosticoPrincipal'] ??

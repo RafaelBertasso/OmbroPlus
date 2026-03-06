@@ -148,6 +148,7 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
               // Cabeçalho com Logo e Foto
               SizedBox(
                 height: 300,
+                width: double.infinity,
                 child: Stack(
                   alignment: Alignment.topCenter,
                   children: [
@@ -201,6 +202,22 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
                             ),
                           ],
                         ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 100,
+                      child: Column(
+                        children: [
+                          Text(
+                            nome,
+                            style: GoogleFonts.montserrat(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
                     ),
                   ],
