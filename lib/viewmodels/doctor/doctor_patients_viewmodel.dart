@@ -1,12 +1,17 @@
 import 'package:Ombro_Plus/models/patient_model.dart';
+import 'package:Ombro_Plus/repositories/auth_repository.dart';
 import 'package:Ombro_Plus/repositories/doctor_patient_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/widgets.dart';
 
 class DoctorPatientsViewModel extends ChangeNotifier {
   final DoctorPatientRepository repository;
+  final AuthRepository authRepository;
 
-  DoctorPatientsViewModel({required this.repository});
+  DoctorPatientsViewModel({
+    required this.repository,
+    required this.authRepository,
+  });
 
   List<PatientModel> _patients = [];
   List<PatientModel> _filteredPatients = [];
@@ -91,6 +96,45 @@ class DoctorPatientsViewModel extends ChangeNotifier {
       }
     } catch (e) {
       _error = e.toString();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> createNewPatientAccount({
+    required String email,
+    required String password,
+    required String nome,
+    required String phone,
+    required String birthDate,
+    required int age,
+    required String sex,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) throw Exception('Médico não logado.');
+
+      await authRepository.registerPatientByDoctor(
+        email: email,
+        password: password,
+        nome: nome,
+        phone: phone,
+        birthDate: birthDate,
+        age: age,
+        sex: sex,
+        specialistId: currentUser.uid,
+      );
+
+      await fetchPatients(currentUser.uid);
+      return true;
+    } catch (e) {
+      _error = e.toString().replaceAll('Exception: ', '');
       return false;
     } finally {
       _isLoading = false;

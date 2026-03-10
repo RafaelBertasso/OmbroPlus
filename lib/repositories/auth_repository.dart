@@ -196,4 +196,52 @@ class AuthRepository {
       throw Exception('Erro inesperado: $e');
     }
   }
+
+  Future<void> registerPatientByDoctor({
+    required String email,
+    required String password,
+    required String nome,
+    required String phone,
+    required String birthDate,
+    required int age,
+    required String sex,
+    required String specialistId,
+  }) async {
+    FirebaseApp? tempApp;
+    try {
+      tempApp = await Firebase.initializeApp(
+        name: 'SecondaryAppForPatientRegistration',
+        options: Firebase.app().options,
+      );
+      final tempAuth = FirebaseAuth.instanceFor(app: tempApp);
+
+      UserCredential userCredential = await tempAuth
+          .createUserWithEmailAndPassword(email: email, password: password);
+
+      final String newUid = userCredential.user!.uid;
+
+      final patientData = {
+        'nome': nome,
+        'email': email,
+        'telefone': phone,
+        'data_nascimento': birthDate,
+        'idade': age,
+        'sexo': sex,
+        'role': 'patient',
+        'especialistaId': specialistId,
+        'criadoEm': FieldValue.serverTimestamp(),
+        'protocoloAtivoId': null,
+        'criadoPeloEspecialista': true,
+      };
+      await _firestore.collection('pacientes').doc(newUid).set(patientData);
+
+      await tempAuth.signOut();
+    } catch (e) {
+      rethrow;
+    } finally {
+      if (tempApp != null) {
+        await tempApp.delete();
+      }
+    }
+  }
 }

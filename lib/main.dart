@@ -121,6 +121,7 @@ void main() async {
         ChangeNotifierProvider<DoctorPatientsViewModel>(
           create: (context) => DoctorPatientsViewModel(
             repository: context.read<DoctorPatientRepository>(),
+            authRepository: context.read<AuthRepository>(),
           ),
         ),
 

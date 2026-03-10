@@ -54,6 +54,7 @@ class _InviteCodeSheetState extends State<InviteCodeSheet> {
 
   @override
   Widget build(BuildContext context) {
+
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
     return Container(
       padding: EdgeInsets.fromLTRB(24, 24, 24, bottomPadding + 24),
@@ -112,32 +113,35 @@ class _InviteCodeSheetState extends State<InviteCodeSheet> {
           ),
           SizedBox(height: 24),
 
-          ElevatedButton(
-            onPressed: _localLoading ? null : _verifyCode,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF0E382C),
-              padding: EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          Container(
+            margin: EdgeInsets.only(bottom: bottomPadding + 50),
+            child: ElevatedButton(
+              onPressed: _localLoading ? null : _verifyCode,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF0E382C),
+                padding: EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
               ),
-              elevation: 0,
+              child: _localLoading
+                  ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      'VERIFICAR CÓDIGO',
+                      style: GoogleFonts.montserrat(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
             ),
-            child: _localLoading
-                ? SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : Text(
-                    'VERIFICAR CÓDIGO',
-                    style: GoogleFonts.montserrat(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
           ),
         ],
       ),

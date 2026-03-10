@@ -1,4 +1,5 @@
 import 'package:Ombro_Plus/viewmodels/auth/auth_viewmodel.dart';
+import 'package:Ombro_Plus/viewmodels/doctor/doctor_patients_viewmodel.dart'; // NOVO IMPORT
 import 'package:flutter/material.dart';
 import 'package:flutter_multi_formatter/formatters/phone_input_formatter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -33,6 +34,8 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
   String? _inviteCode;
   String? _specialistId;
 
+  bool _isDoctorCreating = false; // NOVA VARIÁVEL PARA O FLUXO DO MÉDICO
+
   final maskFormatter = MaskTextInputFormatter(
     mask: '##/##/####',
     filter: {"#": RegExp(r'[0-9]')},
@@ -45,6 +48,8 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
     final args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     if (args != null) {
+      // Verifica se a tela foi aberta pelo médico
+      _isDoctorCreating = args['isDoctorCreating'] ?? false;
       _inviteCode = args['inviteCode'];
       _specialistId = args['specialistId'];
     }
@@ -131,7 +136,9 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
       return;
     }
 
-    if (_inviteCode == null || _specialistId == null) {
+    // ALTERAÇÃO: O erro de código de convite ausente agora só
+    // trava se for o próprio paciente se cadastrando
+    if (!_isDoctorCreating && (_inviteCode == null || _specialistId == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Erro de fluxo: Código de convite ausente.'),
@@ -148,26 +155,56 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
       return;
     }
 
-    final viewModel = context.read<AuthViewModel>();
+    // --- NOVA LÓGICA DIVIDIDA ---
+    if (_isDoctorCreating) {
+      // 1. FLUXO DO MÉDICO CRIANDO O PACIENTE
+      final viewModel = context.read<DoctorPatientsViewModel>();
 
-    final success = await viewModel.registerPatient(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
-      nome: _nameController.text.trim(),
-      phone: _phoneController.text.trim(),
-      birthDate: _birthDateController.text.trim(),
-      age: age!,
-      sex: finalSex,
-      inviteCode: _inviteCode!,
-      specialistId: _specialistId!,
-    );
-
-    if (success && mounted) {
-      Navigator.popUntil(context, (route) => route.isFirst);
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(viewModel.error ?? 'Erro ao cadastrar')),
+      final success = await viewModel.createNewPatientAccount(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        nome: _nameController.text.trim(),
+        phone: _phoneController.text.trim(),
+        birthDate: _birthDateController.text.trim(),
+        age: age!,
+        sex: finalSex,
       );
+
+      if (success && mounted) {
+        Navigator.pop(context); // Volta para a lista de pacientes
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Paciente criado com sucesso!')),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(viewModel.error ?? 'Erro ao cadastrar paciente'),
+          ),
+        );
+      }
+    } else {
+      // 2. FLUXO ORIGINAL DO PACIENTE SE CADASTRANDO VIA CONVITE
+      final viewModel = context.read<AuthViewModel>();
+
+      final success = await viewModel.registerPatient(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        nome: _nameController.text.trim(),
+        phone: _phoneController.text.trim(),
+        birthDate: _birthDateController.text.trim(),
+        age: age!,
+        sex: finalSex,
+        inviteCode: _inviteCode!,
+        specialistId: _specialistId!,
+      );
+
+      if (success && mounted) {
+        Navigator.popUntil(context, (route) => route.isFirst);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(viewModel.error ?? 'Erro ao cadastrar')),
+        );
+      }
     }
   }
 
@@ -182,7 +219,11 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = context.select<AuthViewModel, bool>((vm) => vm.isLoading);
+    // ALTERAÇÃO: O ícone de carregamento agora lê do viewModel certo
+    final isLoading = _isDoctorCreating
+        ? context.select<DoctorPatientsViewModel, bool>((vm) => vm.isLoading)
+        : context.select<AuthViewModel, bool>((vm) => vm.isLoading);
+
     return Scaffold(
       backgroundColor: Color(0xFFF4F7F6),
       body: SafeArea(
@@ -207,7 +248,6 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
                 ],
               ),
             ),
-
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(24),
@@ -216,6 +256,19 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Se for o médico, podemos dar um pequeno título na tela!
+                      if (_isDoctorCreating)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 24.0),
+                          child: Text(
+                            'Dados do Novo Paciente',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF0E382C),
+                            ),
+                          ),
+                        ),
                       TextFormField(
                         controller: _nameController,
                         textCapitalization: TextCapitalization.words,
@@ -224,7 +277,6 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
                             v!.isEmpty ? 'Campo obrigatório' : null,
                       ),
                       SizedBox(height: 16),
-
                       Row(
                         children: [
                           Expanded(
@@ -250,7 +302,6 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
                         ],
                       ),
                       SizedBox(height: 16),
-
                       Text('Sexo', style: GoogleFonts.openSans(fontSize: 16)),
                       Row(
                         children: [
@@ -266,7 +317,6 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
                             fillColor: radioFillColor(),
                             onChanged: (v) => setState(() => sex = v!),
                           ),
-
                           SizedBox(width: 10),
                           Expanded(
                             child: TextFormField(
@@ -289,7 +339,6 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
                         ],
                       ),
                       SizedBox(height: 16),
-
                       Text(
                         'Contatos',
                         style: GoogleFonts.openSans(fontSize: 16),
@@ -320,7 +369,6 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
                             v!.length < 14 ? 'Telefone inválido' : null,
                       ),
                       SizedBox(height: 16),
-
                       ValueListenableBuilder<bool>(
                         valueListenable: _obscurePassword,
                         builder: (context, obscure, _) {
@@ -328,7 +376,7 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
                             controller: _passwordController,
                             obscureText: obscure,
                             decoration: InputDecoration(
-                              labelText: 'Senha',
+                              labelText: 'Senha Inicial',
                               suffixIcon: IconButton(
                                 onPressed: () =>
                                     _obscurePassword.value = !obscure,
@@ -345,7 +393,6 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
                         },
                       ),
                       SizedBox(height: 16),
-
                       ValueListenableBuilder<bool>(
                         valueListenable: _obscureConfirmPassword,
                         builder: (context, obscure, _) {
@@ -371,7 +418,6 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
                         },
                       ),
                       SizedBox(height: 30),
-
                       SizedBox(
                         width: double.infinity,
                         height: 50,
@@ -386,7 +432,9 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
                           child: isLoading
                               ? CircularProgressIndicator(color: Colors.white)
                               : Text(
-                                  'Cadastrar',
+                                  _isDoctorCreating
+                                      ? 'Criar Paciente'
+                                      : 'Cadastrar',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,

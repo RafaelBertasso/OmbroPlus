@@ -15,6 +15,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final ValueNotifier<bool> _obscurePassword = ValueNotifier<bool>(true);
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -102,21 +103,25 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 SizedBox(height: 16),
 
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  validator: (value) => (value == null || value.isEmpty)
-                      ? 'Digite sua senha'
-                      : null,
-                  decoration: InputDecoration(
-                    labelText: 'Senha',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
+                ValueListenableBuilder<bool>(
+                  valueListenable: _obscurePassword,
+                  builder: (context, obscure, _) {
+                    return TextFormField(
+                      controller: _passwordController,
+                      obscureText: obscure,
+                      decoration: InputDecoration(
+                        labelText: 'Senha Inicial',
+                        suffixIcon: IconButton(
+                          onPressed: () => _obscurePassword.value = !obscure,
+                          icon: Icon(
+                            obscure ? Icons.visibility_off : Icons.visibility,
+                          ),
+                        ),
+                      ),
+                      validator: (v) =>
+                          v!.length < 6 ? 'Mínimo 6 caracteres' : null,
+                    );
+                  },
                 ),
 
                 Align(

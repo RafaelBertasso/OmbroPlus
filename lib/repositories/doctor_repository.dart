@@ -21,4 +21,6 @@ class DoctorListRepository {
       throw Exception('Erro ao buscar especialistas: $e');
     }
   }
+
+  // Future<bool> createPatientAccountForDoctor({required String name, required String email, required String password})
 }
