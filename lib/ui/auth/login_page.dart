@@ -110,7 +110,8 @@ class _LoginPageState extends State<LoginPage> {
                       controller: _passwordController,
                       obscureText: obscure,
                       decoration: InputDecoration(
-                        labelText: 'Senha Inicial',
+                        labelText: 'Senha',
+                        prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           onPressed: () => _obscurePassword.value = !obscure,
                           icon: Icon(

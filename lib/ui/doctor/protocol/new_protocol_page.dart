@@ -149,7 +149,6 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
       return;
     }
 
-    // --- CÁLCULO DO LIMITE DE SEMANAS ---
     final start = _parseDate(_startDateController.text);
     final end = _parseDate(_endDateController.text);
 
@@ -164,13 +163,10 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
       return;
     }
 
-    // Calcula a diferença em dias (+1 para ser inclusivo)
     final int diffDays = end.difference(start).inDays + 1;
 
-    // Divide por 7 e arredonda para cima para descobrir o máximo de semanas!
     int maxWeeks = (diffDays / 7).ceil();
-    if (maxWeeks < 1) maxWeeks = 1; // Segurança mínima
-    // ------------------------------------
+    if (maxWeeks < 1) maxWeeks = 1;
 
     final newProtocolViewModel = context.read<NewProtocolViewModel>();
 
@@ -178,7 +174,6 @@ class _NewProtocolPageState extends State<NewProtocolPage> {
       context,
       MaterialPageRoute(
         builder: (_) => ChangeNotifierProvider(
-          // Aqui nós passamos o NOVO limite de semanas como segundo parâmetro!
           create: (_) =>
               ProtocolScheduleViewModel()
                 ..init(newProtocolViewModel.sessions, maxWeeks),

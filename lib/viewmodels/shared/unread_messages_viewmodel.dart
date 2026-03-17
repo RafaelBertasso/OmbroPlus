@@ -12,9 +12,16 @@ class UnreadMessagesViewmodel extends ChangeNotifier {
   );
 
   bool _isLoading = true;
+  bool _isDisposed = false;
 
   ChatSummary get summary => _summary;
   bool get isLoading => _isLoading;
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
 
   Future<void> fetchSummary() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -26,7 +33,7 @@ class UnreadMessagesViewmodel extends ChangeNotifier {
         lastUnreadTime: '',
       );
       _isLoading = false;
-      notifyListeners();
+      if (!_isDisposed) return notifyListeners();
       return;
     }
 
@@ -76,8 +83,10 @@ class UnreadMessagesViewmodel extends ChangeNotifier {
         lastUnreadTime: '',
       );
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (!_isDisposed) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 }

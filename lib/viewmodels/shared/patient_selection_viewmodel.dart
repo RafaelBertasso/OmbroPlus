@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class PatientSelectionViewmodel extends ChangeNotifier {
@@ -12,8 +13,12 @@ class PatientSelectionViewmodel extends ChangeNotifier {
   }
 
   Stream<QuerySnapshot> get patientsStream {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return Stream.empty();
+
     return FirebaseFirestore.instance
         .collection('pacientes')
+        .where('especialistaId', isEqualTo: uid)
         .orderBy('nome')
         .snapshots();
   }

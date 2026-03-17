@@ -210,14 +210,8 @@ class App extends StatelessWidget {
         if (settings.name == '/protocol-schedule-viewer') {
           final arguments = settings.arguments as Map<String, dynamic>?;
           final String? protocolId = arguments?['protocolId'] as String?;
-          final String? startDateString = arguments?['startDate'] as String?;
-          final String? endDateString = arguments?['endDate'] as String?;
 
-          if (protocolId != null &&
-              startDateString != null &&
-              endDateString != null) {
-            final startDate = DateTime.parse(startDateString);
-            final endDate = DateTime.parse(endDateString);
+          if (protocolId != null) {
             return MaterialPageRoute(
               builder: (context) => ProtocolScheduleViewerPage(
                 protocolId: protocolId,

@@ -13,6 +13,20 @@ class ProtocolScheduleViewerViewModel extends ChangeNotifier {
 
   List<ProtocolSession> get sessions => _protocol?.sessoes ?? [];
 
+  Map<int, List<ProtocolSession>> get sessionsByWeek {
+    final Map<int, List<ProtocolSession>> map = {};
+    for (var session in sessions) {
+      map.putIfAbsent(session.semana, () => []).add(session);
+    }
+    return map;
+  }
+
+  List<int> get sortedWeeks {
+    final keys = sessionsByWeek.keys.toList();
+    keys.sort();
+    return keys;
+  }
+
   ProtocolScheduleViewerViewModel({required ProtocolRepository repository})
     : _repository = repository;
 

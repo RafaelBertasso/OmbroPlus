@@ -22,12 +22,69 @@ class _InviteCodeSheetState extends State<InviteCodeSheet> {
 
   Future<void> _verifyCode() async {
     final code = _codeController.text.trim();
-    if (code.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, digite o código.')),
+
+    final messenger = ScaffoldMessenger.of(context);
+
+    void showErrorBanner(String message) {
+      messenger.clearMaterialBanners();
+
+      messenger.showMaterialBanner(
+        MaterialBanner(
+          padding: EdgeInsets.zero,
+          dividerColor: Colors.transparent,
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: 16,
+                  left: 16,
+                  right: 16,
+                  bottom: 12,
+                ),
+                child: Center(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0.0, end: 1.0),
+                duration: const Duration(seconds: 3),
+                builder: (context, value, child) {
+                  return LinearProgressIndicator(
+                    value: value,
+                    backgroundColor: Colors.white.withOpacity(0.3),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Colors.white,
+                    ),
+                    minHeight: 4,
+                  );
+                },
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red.shade800,
+          actions: [SizedBox.shrink()],
+        ),
       );
+
+      Future.delayed(const Duration(seconds: 3), () {
+        messenger.hideCurrentMaterialBanner();
+      });
+    }
+
+    if (code.isEmpty) {
+      showErrorBanner('Por favor, digite o código.');
       return;
     }
+
     setState(() => _localLoading = true);
 
     final viewModel = context.read<AuthViewModel>();
@@ -38,6 +95,7 @@ class _InviteCodeSheetState extends State<InviteCodeSheet> {
     if (!mounted) return;
 
     if (specialistId != null) {
+      messenger.clearMaterialBanners();
       Navigator.pop(context);
 
       Navigator.pushNamed(
@@ -46,15 +104,12 @@ class _InviteCodeSheetState extends State<InviteCodeSheet> {
         arguments: {'inviteCode': code, 'specialistId': specialistId},
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(viewModel.error ?? 'Código inválido')),
-      );
+      showErrorBanner(viewModel.error ?? 'Código inválido');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
     return Container(
       padding: EdgeInsets.fromLTRB(24, 24, 24, bottomPadding + 24),

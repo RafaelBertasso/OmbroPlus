@@ -136,8 +136,6 @@ class _PatientRegisterPageState extends State<PatientRegisterPage> {
       return;
     }
 
-    // ALTERAÇÃO: O erro de código de convite ausente agora só
-    // trava se for o próprio paciente se cadastrando
     if (!_isDoctorCreating && (_inviteCode == null || _specialistId == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
