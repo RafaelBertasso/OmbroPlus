@@ -1,17 +1,20 @@
 import 'package:Ombro_Plus/models/patient_model.dart';
 import 'package:Ombro_Plus/repositories/auth_repository.dart';
 import 'package:Ombro_Plus/repositories/doctor_patient_repository.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/widgets.dart';
 
 class DoctorPatientsViewModel extends ChangeNotifier {
   final DoctorPatientRepository repository;
   final AuthRepository authRepository;
+  final FirebaseFirestore _firestore;
 
   DoctorPatientsViewModel({
     required this.repository,
     required this.authRepository,
-  });
+    FirebaseFirestore? firestore,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance;
 
   List<PatientModel> _patients = [];
   List<PatientModel> _filteredPatients = [];
@@ -30,13 +33,88 @@ class DoctorPatientsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _patients = await repository.getPatientsBySpecialist(specialistId);
+      final rawPatients = await repository.getPatientsBySpecialist(
+        specialistId,
+      );
+
+      // Busca o status de evolução de cada paciente em paralelo
+      final patientsWithStatus = await Future.wait(
+        rawPatients.map((p) => _enrichWithEvolutionStatus(p, specialistId)),
+      );
+
+      _patients = patientsWithStatus;
       _filteredPatients = _patients;
     } catch (e) {
       _error = e.toString();
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  /// Calcula o status de evolução com base no protocolo ativo do paciente.
+  ///
+  /// Lógica:
+  /// - Sem protocolo ativo → semProtocolo (cinza)
+  /// - sessoesConcluidas >= sessoesEsperadasAteHoje → emDia (verde)
+  /// - sessoesConcluidas <  sessoesEsperadasAteHoje → atrasado (vermelho)
+  ///
+  /// "Sessões esperadas até hoje" é calculado proporcionalmente:
+  ///   floor((diasDecorridos / duracaoTotalDias) * totalSessoesEstimadas)
+  Future<PatientModel> _enrichWithEvolutionStatus(
+    PatientModel patient,
+    String specialistId,
+  ) async {
+    try {
+      final snapshot = await _firestore
+          .collection('protocolos')
+          .where('pacienteId', isEqualTo: patient.id)
+          .where('especialistaId', isEqualTo: specialistId)
+          .where('status', isEqualTo: 'active')
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) {
+        return patient.copyWithStatus(EvolutionStatus.semProtocolo);
+      }
+
+      final data = snapshot.docs.first.data();
+
+      final dataInicio = data['dataInicio'] is Timestamp
+          ? (data['dataInicio'] as Timestamp).toDate()
+          : null;
+      final dataFim = data['dataFim'] is Timestamp
+          ? (data['dataFim'] as Timestamp).toDate()
+          : null;
+      final totalSessoes =
+          (data['totalSessoesEstimadas'] as num?)?.toInt() ?? 0;
+      final sessoesConcluidas =
+          (data['sessoesConcluidas'] as num?)?.toInt() ?? 0;
+
+      if (dataInicio == null || dataFim == null || totalSessoes == 0) {
+        return patient.copyWithStatus(EvolutionStatus.semProtocolo);
+      }
+
+      final hoje = DateTime.now();
+      final duracaoTotal = dataFim.difference(dataInicio).inDays;
+      final diasDecorridos = hoje
+          .difference(dataInicio)
+          .inDays
+          .clamp(0, duracaoTotal);
+
+      // Proporção de sessões que deveriam ter sido feitas até hoje
+      final sessoesEsperadas = duracaoTotal > 0
+          ? (diasDecorridos / duracaoTotal * totalSessoes).floor()
+          : 0;
+
+      final status = sessoesConcluidas >= sessoesEsperadas
+          ? EvolutionStatus.emDia
+          : EvolutionStatus.atrasado;
+
+      return patient.copyWithStatus(status);
+    } catch (e) {
+      // Em caso de erro na busca, retorna sem status definido
+      return patient.copyWithStatus(EvolutionStatus.semProtocolo);
     }
   }
 

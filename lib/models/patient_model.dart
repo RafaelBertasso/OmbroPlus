@@ -1,5 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+enum EvolutionStatus {
+  emDia, // Verde: sessões em dia com o esperado
+  atrasado, // Vermelho: sessões abaixo do esperado
+  semProtocolo, // Cinza: sem protocolo ativo
+}
+
 class PatientModel {
   final String id;
   final String nome;
@@ -11,6 +17,7 @@ class PatientModel {
   final DateTime? dataNascimento;
   final DateTime? dataCadastro;
   final String? diagnosticoPrincipal;
+  final EvolutionStatus evolutionStatus;
 
   PatientModel({
     required this.id,
@@ -23,6 +30,7 @@ class PatientModel {
     this.dataCadastro,
     this.dataNascimento,
     this.diagnosticoPrincipal,
+    this.evolutionStatus = EvolutionStatus.semProtocolo,
   });
 
   factory PatientModel.fromMap(Map<String, dynamic> map, String docId) {
@@ -41,6 +49,22 @@ class PatientModel {
       dataCadastro: map['data_cadastro'] is Timestamp
           ? (map['data_cadastro'] as Timestamp).toDate()
           : null,
+    );
+  }
+
+  PatientModel copyWithStatus(EvolutionStatus status) {
+    return PatientModel(
+      id: id,
+      nome: nome,
+      email: email,
+      telefone: telefone,
+      profileImage: profileImage,
+      sexo: sexo,
+      especialistaId: especialistaId,
+      dataCadastro: dataCadastro,
+      dataNascimento: dataNascimento,
+      diagnosticoPrincipal: diagnosticoPrincipal,
+      evolutionStatus: status,
     );
   }
 

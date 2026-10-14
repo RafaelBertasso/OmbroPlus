@@ -182,6 +182,8 @@ class AuthRepository {
 
       await _firestore.collection('pacientes').doc(user.uid).delete();
 
+      await _firestore.collection('protocolos').doc(user.uid).delete();
+
       await user.delete();
     } on FirebaseAuthException catch (e) {
       if (e.code == 'wrong-password') {
